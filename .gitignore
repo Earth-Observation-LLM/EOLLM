@@ -63,6 +63,11 @@ venv.bak/
 # Project-specific logs/output
 pipeline_logs/
 pipeline_logs/*
+logs/
+logs/*
+
+# Output directories
+data/*/outputs/
 
 # macOS
 .DS_Store
