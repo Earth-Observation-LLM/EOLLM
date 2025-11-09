@@ -10,7 +10,7 @@
 # ---------------------------
 llm:
   # Default provider to use (groq | ollama)
-  default_provider: "groq"
+  default_provider: "ollama"
   
   providers:
     # Groq Cloud API Configuration
@@ -25,7 +25,7 @@ llm:
     ollama:
       enabled: true
       # Vision-capable model (requires Ollama running locally)
-      model: "llama3.2-vision:11b"
+      model: "gemma3:27b"
       base_url: "http://localhost:11434"
 
 # Logging Configuration
