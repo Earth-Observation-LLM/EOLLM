@@ -7,7 +7,7 @@ which provides access to vision-capable Llama models.
 import os
 import time
 from datetime import datetime
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 from groq import Groq
 
@@ -78,22 +78,26 @@ class GroqProvider(LLMProvider):
             return config.get('api_key_env', 'GROQ_API_KEY')
         return 'GROQ_API_KEY'
     
-    def send_message(self, messages: List[Dict]) -> Tuple[str, Dict[str, Any]]:
+    def send_message(
+        self,
+        messages: List[Dict],
+        tools: Optional[List[Dict]] = None
+    ) -> Tuple[str, Dict[str, Any], Optional[List]]:
         """Send messages to Groq API and return response with statistics.
         
         This method sends messages to Groq's chat completion API using
         the OpenAI-compatible format. It supports multimodal inputs
-        (text + base64-encoded images).
+        (text + base64-encoded images) and tool calling.
         
         Args:
             messages: List of message dictionaries in OpenAI format
+            tools: Optional list of tool definitions for function calling
             
         Returns:
-            Tuple of (response_text, stats_dict) where stats includes:
-            - model: Model name used
-            - latency_ms: Request latency in milliseconds
-            - tokens_used: Total tokens (prompt + completion)
-            - timestamp: ISO timestamp of the call
+            Tuple of (response_text, stats_dict, tool_calls) where:
+            - response_text: Text response from model (may be None if tool call)
+            - stats: Statistics including model, latency_ms, tokens_used, timestamp
+            - tool_calls: List of tool calls if any, None otherwise
             
         Raises:
             RuntimeError: If API call fails
@@ -106,18 +110,34 @@ class GroqProvider(LLMProvider):
         timestamp = datetime.now().isoformat()
         
         try:
-            # Make API call with default settings (no temperature/max_tokens override)
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                stream=False
-            )
+            # Build API call parameters
+            api_params = {
+                'model': self.model,
+                'messages': messages,
+                'stream': False
+            }
+            
+            # Add tools if provided
+            if tools:
+                api_params['tools'] = tools
+                api_params['tool_choice'] = 'auto'
+            
+            # Make API call with default settings
+            response = self.client.chat.completions.create(**api_params)
             
             # Calculate latency
             latency_ms = (time.time() - start_time) * 1000
             
-            # Extract response text
-            response_text = response.choices[0].message.content
+            # Extract response message
+            response_message = response.choices[0].message
+            
+            # Extract response text (may be None if tool call)
+            response_text = response_message.content if hasattr(response_message, 'content') else None
+            
+            # Extract tool calls if present
+            tool_calls = None
+            if hasattr(response_message, 'tool_calls') and response_message.tool_calls:
+                tool_calls = response_message.tool_calls
             
             # Extract token usage
             tokens_used = -1
@@ -141,7 +161,7 @@ class GroqProvider(LLMProvider):
             if tokens_used > 0:
                 stats['tokens_per_second'] = tokens_used / (latency_ms / 1000)
             
-            return response_text, stats
+            return response_text, stats, tool_calls
             
         except Exception as e:
             # Calculate latency even for failed requests

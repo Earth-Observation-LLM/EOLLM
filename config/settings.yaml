@@ -10,7 +10,7 @@
 # ---------------------------
 llm:
   # Default provider to use (groq | ollama)
-  default_provider: "ollama"
+  default_provider: "groq"
   
   providers:
     # Groq Cloud API Configuration
@@ -75,6 +75,20 @@ research:
     
     # Maintain conversation context across satellite and street view
     conversation_mode: true
+    
+    # Zoom tool configuration
+    zoom_tool:
+      # Enable zoom/patch extraction tool
+      enabled: true
+      
+      # Maximum number of zoom requests per image
+      max_zooms_per_image: 5
+      
+      # Save extracted patches to output directory
+      save_patches: true
+      
+      # Patch image format
+      patch_format: "png"
   
   # VQA Pipeline Settings
   vqa:

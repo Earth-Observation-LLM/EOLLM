@@ -7,7 +7,7 @@ which provides access to locally-hosted vision-capable models.
 import time
 import json
 from datetime import datetime
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 import requests
 
@@ -138,21 +138,25 @@ class OllamaProvider(LLMProvider):
         
         return ollama_messages
     
-    def send_message(self, messages: List[Dict]) -> Tuple[str, Dict[str, Any]]:
+    def send_message(
+        self,
+        messages: List[Dict],
+        tools: Optional[List[Dict]] = None
+    ) -> Tuple[str, Dict[str, Any], Optional[List]]:
         """Send messages to Ollama API and return response with statistics.
         
         This method sends messages to Ollama's chat API endpoint.
-        It converts OpenAI-style messages to Ollama's format.
+        It converts OpenAI-style messages to Ollama's format and supports tool calling.
         
         Args:
             messages: List of message dictionaries in OpenAI format
+            tools: Optional list of tool definitions for function calling
             
         Returns:
-            Tuple of (response_text, stats_dict) where stats includes:
-            - model: Model name used
-            - latency_ms: Request latency in milliseconds
-            - tokens_used: Always -1 (Ollama doesn't provide this)
-            - timestamp: ISO timestamp of the call
+            Tuple of (response_text, stats_dict, tool_calls) where:
+            - response_text: Text response from model (may be None if tool call)
+            - stats: Statistics including model, latency_ms, tokens_used, timestamp
+            - tool_calls: List of tool calls if any, None otherwise
             
         Raises:
             RuntimeError: If API call fails
@@ -175,6 +179,10 @@ class OllamaProvider(LLMProvider):
                 'stream': False
             }
             
+            # Add tools if provided
+            if tools:
+                payload['tools'] = tools
+            
             # Make API call
             response = requests.post(
                 f"{self.base_url}/api/chat",
@@ -189,7 +197,13 @@ class OllamaProvider(LLMProvider):
             
             # Parse response
             response_data = response.json()
-            response_text = response_data.get('message', {}).get('content', '')
+            message_data = response_data.get('message', {})
+            response_text = message_data.get('content', '')
+            
+            # Extract tool calls if present
+            tool_calls = None
+            if 'tool_calls' in message_data and message_data['tool_calls']:
+                tool_calls = message_data['tool_calls']
             
             # Build statistics dictionary
             stats = {
@@ -201,7 +215,7 @@ class OllamaProvider(LLMProvider):
                 'error': None
             }
             
-            return response_text, stats
+            return response_text, stats, tool_calls
             
         except requests.exceptions.ConnectionError as e:
             # Calculate latency even for failed requests

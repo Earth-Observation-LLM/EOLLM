@@ -123,11 +123,21 @@ class PathsConfig(BaseModel):
     data_root: str = "data"
 
 
+class ZoomToolConfig(BaseModel):
+    """Configuration for zoom/patch extraction tool."""
+    
+    enabled: bool = True
+    max_zooms_per_image: int = Field(default=5, ge=1, le=10)
+    save_patches: bool = True
+    patch_format: str = Field(default="png", pattern="^(png|jpg|jpeg)$")
+
+
 class LabelingResearchConfig(BaseModel):
     """Research settings for labeling pipeline."""
     
     max_retries: int = Field(default=3, ge=1, le=10)
     conversation_mode: bool = True
+    zoom_tool: ZoomToolConfig = Field(default_factory=ZoomToolConfig)
 
 
 class VQAResearchConfig(BaseModel):
