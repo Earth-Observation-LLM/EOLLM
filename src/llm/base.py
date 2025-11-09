@@ -5,7 +5,7 @@ ensuring consistent behavior across different API backends (Groq, Ollama, etc.).
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 
 
 class LLMProvider(ABC):
@@ -59,7 +59,11 @@ class LLMProvider(ABC):
             raise ValueError("Configuration must include 'model' key")
     
     @abstractmethod
-    def send_message(self, messages: List[Dict]) -> Tuple[str, Dict[str, Any]]:
+    def send_message(
+        self,
+        messages: List[Dict],
+        tools: Optional[List[Dict]] = None
+    ) -> Tuple[str, Dict[str, Any], Optional[List]]:
         """Send messages to the LLM and return response with statistics.
         
         This is the core method that must be implemented by all providers.
@@ -71,13 +75,14 @@ class LLMProvider(ABC):
                      Each message has 'role' and 'content'.
                      Content can be string or list of content items
                      (text, images).
+            tools: Optional list of tool definitions in OpenAI format.
+                  Used for function calling / tool use.
         
         Returns:
-            Tuple of (response_text, stats_dict) where stats_dict must include:
-            - model: str - Model name used
-            - latency_ms: float - Request latency in milliseconds
-            - tokens_used: int - Total tokens used (or -1 if unavailable)
-            - timestamp: str - ISO format timestamp of the call
+            Tuple of (response_text, stats_dict, tool_calls) where:
+            - response_text: str - Text response from model
+            - stats_dict: Dict with model, latency_ms, tokens_used, timestamp
+            - tool_calls: Optional[List] - Tool calls made by model (None if no tools)
             
         Raises:
             RuntimeError: If API call fails after retries
@@ -87,7 +92,7 @@ class LLMProvider(ABC):
             >>> messages = [
             ...     {"role": "user", "content": "Hello!"}
             ... ]
-            >>> response, stats = provider.send_message(messages)
+            >>> response, stats, tool_calls = provider.send_message(messages)
             >>> print(f"Response: {response}")
             >>> print(f"Latency: {stats['latency_ms']}ms")
         """

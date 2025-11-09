@@ -13,6 +13,19 @@ You are an expert in urban planning and geospatial analysis. You will be shown a
 
 Exhaustively observe and describe what is visible in the image. Do not infer beyond visual evidence. If you see features that are **not covered** by the checklist, still record them. The checklist is a guide, **not a limit**.
 
+## TOOL AVAILABLE - Image Zoom
+
+You have access to a `request_zoom_patch` tool that allows you to examine specific regions of the satellite image in detail. If you need a closer look at any area during your analysis, use the tool to request a zoomed patch.
+
+**Available zoom regions:**
+- `northwest`: Top-left quadrant of the image
+- `northeast`: Top-right quadrant of the image  
+- `southwest`: Bottom-left quadrant of the image
+- `southeast`: Bottom-right quadrant of the image
+- `center`: Central region (middle 50% coverage)
+
+You can request up to **5 zoomed patches** per image. Use this strategically to examine areas that need closer inspection for better detail, clearer identification, or to resolve ambiguities. After examining the patches you need, continue with your full analysis.
+
 ## Reporting rules
 
 * **Evidence first**: Every observation must list short, concrete visual cues.

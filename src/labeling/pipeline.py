@@ -132,12 +132,17 @@ class LabelingPipeline:
         conversation = []
         
         try:
+            # Get output directory for this pair
+            output_path = input_handler.get_output_path_for_pair(pair.id)
+            output_dir = output_path.parent if output_path else None
+            
             # Phase 1: Satellite annotation
             self.logger.log_satellite_phase()
             satellite_result = self.annotator.annotate_satellite(
                 pair.satellite,
                 conversation,
-                pair.id
+                pair.id,
+                output_dir
             )
             
             # Phase 2: Street view annotation
@@ -145,7 +150,8 @@ class LabelingPipeline:
             street_result = self.annotator.annotate_street_view(
                 pair.street_view,
                 conversation,
-                pair.id
+                pair.id,
+                output_dir
             )
             
             # Build complete result

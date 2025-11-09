@@ -21,18 +21,8 @@
         "year": 2023,
         "notes": "Bus station area - current state"
       }
-    },
-    {
-      "id": "timko_comparison",
-      "satellite": "/home/ezel/Development/EOLLM/data/timko-1-old-new/satelite.png",
-      "street_view": "/home/ezel/Development/EOLLM/data/timko-1-old-new/old.png",
-      "output_json": "data/timko-1-old-new/outputs/{timestamp}_{hash}_{source_name}.json",
-      "metadata": {
-        "location": "Timko Area",
-        "year": "mixed",
-        "notes": "Temporal comparison study"
-      }
     }
+    
   ]
 }
 

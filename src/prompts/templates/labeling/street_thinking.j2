@@ -12,7 +12,20 @@ You are inspecting a **street-level image** from the same area as a prior satell
 
 ## Mission
 
-Systematically **observe, transcribe, and classify** features visible at ground level. Prioritize **verifiable cues** (text, markings, materials, fixtures). If something important appears that isn’t listed, still record it (open taxonomy).
+Systematically **observe, transcribe, and classify** features visible at ground level. Prioritize **verifiable cues** (text, markings, materials, fixtures). If something important appears that isn't listed, still record it (open taxonomy).
+
+## TOOL AVAILABLE - Image Zoom
+
+You have access to a `request_zoom_patch` tool that allows you to examine specific regions of the street view image in detail. If you need a closer look at any area during your analysis, use the tool to request a zoomed patch.
+
+**Available zoom regions:**
+- `northwest`: Top-left quadrant of the image
+- `northeast`: Top-right quadrant of the image  
+- `southwest`: Bottom-left quadrant of the image
+- `southeast`: Bottom-right quadrant of the image
+- `center`: Central region (middle 50% coverage)
+
+You can request up to **5 zoomed patches** per image. Use this strategically to examine areas that need closer inspection — for example, to read distant signage, identify architectural details, examine surface conditions, or resolve ambiguities. After examining the patches you need, continue with your full analysis.
 
 ## Reporting Rules
 

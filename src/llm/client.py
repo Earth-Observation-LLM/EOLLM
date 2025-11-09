@@ -55,8 +55,9 @@ class LLMClient:
         self,
         messages: List[Dict],
         phase: Optional[str] = None,
-        pair_id: Optional[str] = None
-    ) -> Tuple[str, Dict[str, Any]]:
+        pair_id: Optional[str] = None,
+        tools: Optional[List[Dict]] = None
+    ) -> Tuple[str, Dict[str, Any], Optional[List]]:
         """Send messages to LLM and return response with statistics.
         
         This method sends messages to the underlying provider and optionally
@@ -66,9 +67,10 @@ class LLMClient:
             messages: List of message dictionaries in OpenAI format
             phase: Optional phase name for logging (e.g., 'satellite_thinking')
             pair_id: Optional pair ID for logging context
+            tools: Optional list of tool definitions for function calling
             
         Returns:
-            Tuple of (response_text, stats_dict)
+            Tuple of (response_text, stats_dict, tool_calls)
             
         Raises:
             RuntimeError: If LLM call fails
@@ -76,7 +78,7 @@ class LLMClient:
         Example:
             >>> client = LLMClient('groq', config, logger)
             >>> messages = [{"role": "user", "content": "Hello!"}]
-            >>> response, stats = client.send_message(
+            >>> response, stats, tool_calls = client.send_message(
             ...     messages,
             ...     phase='greeting',
             ...     pair_id='test_001'
@@ -84,13 +86,13 @@ class LLMClient:
         """
         try:
             # Send message to provider
-            response_text, stats = self.provider.send_message(messages)
+            response_text, stats, tool_calls = self.provider.send_message(messages, tools)
             
             # Log the call if logger is available
             if self.logger is not None:
-                self._log_call(messages, response_text, stats, phase, pair_id)
+                self._log_call(messages, response_text, stats, phase, pair_id, tool_calls)
             
-            return response_text, stats
+            return response_text, stats, tool_calls
             
         except Exception as e:
             # Log failed call if logger is available
@@ -102,7 +104,7 @@ class LLMClient:
                     'latency_ms': 0,
                     'tokens_used': -1
                 }
-                self._log_call(messages, None, error_stats, phase, pair_id)
+                self._log_call(messages, None, error_stats, phase, pair_id, None)
             
             raise RuntimeError(f"LLM call failed: {e}") from e
     
@@ -112,7 +114,8 @@ class LLMClient:
         response: Optional[str],
         stats: Dict[str, Any],
         phase: Optional[str],
-        pair_id: Optional[str]
+        pair_id: Optional[str],
+        tool_calls: Optional[List] = None
     ) -> None:
         """Log an LLM call.
         
@@ -122,11 +125,16 @@ class LLMClient:
             stats: Statistics dictionary
             phase: Phase name
             pair_id: Pair ID
+            tool_calls: Tool calls made by LLM (None if no tools)
         """
         if not hasattr(self.logger, 'log_llm_call'):
             return
         
         try:
+            # Add tool_calls to stats if present (for logging only)
+            if tool_calls:
+                stats['tool_calls'] = tool_calls
+            
             self.logger.log_llm_call(
                 messages=messages,
                 response=response,
