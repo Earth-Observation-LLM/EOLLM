@@ -2,15 +2,53 @@
 {# Context variables:
    - None required (follows thinking step)
 #}
-Based on your street-level observations, provide a concise annotation.
+# Street View Annotation Prompt — Priority-first, detailed, evidence-only
 
-Requirements:
-- Maximum 2 lines
-- Priority-based description
-- Include: visible signage/text, building types, vehicle composition (personal vs commercial)
-- Assess area characteristics (central vs peripheral, clean vs unkempt, organized vs chaotic)
-- Determine commercial vs residential nature
-- Note any indicators of economic activity or area development level
+You are annotating a **street-level image** of the same area previously examined from satellite. Use **only** what the street view visibly shows and what the immediate prior street-view observations already stated. Do **not** introduce new claims or speculate.
 
-Provide the street view annotation now:
+## Constraints
 
+* **Locations:** left, center, right, foreground, midground, background. Add compass directions only if clearly indicated by cues.
+* **Confidence words:** **high** (multiple clear cues, unobstructed), **mid** (partial cues or mild occlusion/angle), **low** (weak or conflicting cues).
+* **Wording only:** use quantity and scale words (single, few, several, many, dense, sparse, continuous; very small, small, medium, large, very large). No numeric counts.
+* **Privacy:** redact license plates and personal phone numbers; do not characterize individuals.
+* **Evidence-only:** tie each claim to visible cues (signs, materials, markings, fixtures, activity posture). Do not exceed the confidence of prior observations.
+
+## What to produce (priority order)
+
+1. **Dominant land-use** decision (commercial, residential, industrial, institutional, transport hub, mixed-use, or uncertain) with confidence and the key **visible cues**.
+2. **Visible signage/text** (verbatim) and branding that define street character; note language/script.
+3. **Building types & facade condition** (ground-floor use, upper-floor cues, materials, condition).
+4. **Vehicle composition** (personal vs commercial/fleet) and curb use (parking, loading, bus stop).
+5. **Area characteristics**: central vs peripheral; clean vs unkempt; organized vs chaotic—each with confidence and supporting cues.
+6. **Sustainability/green indicators** (street trees, planters, EV chargers, permeable pavers, green walls/roofs if visible).
+7. **Economic activity indicators** (evidence-only): open storefronts, delivery activity, construction/renovation, density of signage/advertising, visible modern fixtures (EV chargers, new street furniture), storefront turnover cues (temporary banners, papered windows).
+8. **Construction/hazards** if present (scaffolding, resurfacing, barriers, damaged facades).
+9. **Material ambiguities** that affect interpretation (what’s unclear and why).
+
+## Output
+
+Write a **clear narrative** (length can be detailed; prioritize the most important features first). Then provide a compact labeled summary. Use words only.
+
+```
+[Priority narrative — start with land use + key cues; then signage/text; buildings & facades; vehicles & curb use; area characteristics; sustainability; economic indicators; construction/hazards; close with any important ambiguities.]
+
+— Summary —
+Land use: <classification> (<confidence>) — <key visible cues>
+Signage & text: <verbatim highlights + script/language where apparent>
+Building types & facades: <ground-floor use; upper-floor cues; materials; condition>
+Vehicles & curb use: <personal vs commercial mix; curb purpose; parking organization>
+Area characteristics: <central/peripheral; clean/unkempt; organized/chaotic> (<confidence>) — <supporting cues>
+Sustainability: <street trees/planters/EV chargers/permeable/green walls or roofs; or none noted>
+Economic indicators: <open shops/delivery activity/construction/advertising density/modern fixtures; evidence-only>
+Construction & hazards: <scaffolding/resurfacing/barriers/damage; or none>
+Ambiguities: <what remains unclear and why; directions/positions>
+```
+
+### Confidence calibration (use consistently)
+
+* **High:** multiple diagnostic cues are visible and unobstructed (e.g., open storefronts with branded fascia and active entry; bus stop pole, shelter, and route board; loading bay with dock doors and fleet vans).
+* **Mid:** cues are present but partially occluded or faded; pattern fits but not definitive.
+* **Low:** single weak cue or conflicting signals; heavy occlusion or glare.
+
+This keeps your labels rich, ordered by importance, and auditor-friendly—while staying brutally honest about what the camera actually shows.
