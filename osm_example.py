@@ -40,7 +40,35 @@ try:
     print(f"Total elements: {result['summary']['total_elements']}")
     print(f"Total landmarks: {result['summary']['total_landmarks']}")
     print(f"Distinct types: {result['summary']['distinct_types']}")
+    print(f"Area classification: {result['summary']['area_classification']}")
     print(f"Notes: {result['summary']['notes']}")
+    print()
+
+    print("=" * 60)
+    print("BUILDING ANALYSIS")
+    print("=" * 60)
+    buildings = result['summary']['buildings']
+    print(f"Total buildings: {buildings['total']}")
+    print(f"Building density: {buildings['density_per_km2']:.2f} buildings/km²")
+    print(f"Residential: {buildings['residential']} ({buildings['residential_ratio']:.1%})")
+    print(f"Commercial: {buildings['commercial']} ({buildings['commercial_ratio']:.1%})")
+    print(f"Industrial: {buildings['industrial']}")
+    print(f"Other: {buildings['other']}")
+    if buildings['types']:
+        print("\nTop building types:")
+        for btype, count in list(buildings['types'].items())[:5]:
+            print(f"  {btype}: {count}")
+    print()
+
+    print("=" * 60)
+    print("AMENITIES")
+    print("=" * 60)
+    amenities = result['summary']['amenities']
+    print(f"Total amenities: {amenities['total']}")
+    if amenities['types']:
+        print("\nTop amenity types:")
+        for atype, count in list(amenities['types'].items())[:5]:
+            print(f"  {atype}: {count}")
     print()
 
     print("=" * 60)

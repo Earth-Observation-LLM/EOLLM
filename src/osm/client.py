@@ -332,18 +332,136 @@ class OSMClient:
 
         return organizations
 
+    def _analyze_buildings(self, landmarks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze building statistics and types."""
+        buildings = [lm for lm in landmarks if lm['primary_type'].startswith('building:')]
+
+        if not buildings:
+            return {
+                'total_count': 0,
+                'types': {},
+                'residential_count': 0,
+                'commercial_count': 0,
+                'industrial_count': 0,
+                'other_count': 0
+            }
+
+        # Categorize building types
+        residential_types = {'house', 'apartments', 'residential', 'detached', 'terrace',
+                           'dormitory', 'semidetached_house', 'bungalow'}
+        commercial_types = {'commercial', 'retail', 'office', 'supermarket', 'shop',
+                          'mall', 'kiosk', 'hotel'}
+        industrial_types = {'industrial', 'warehouse', 'factory', 'manufacture'}
+
+        residential_count = 0
+        commercial_count = 0
+        industrial_count = 0
+        other_count = 0
+        building_types = Counter()
+
+        for building in buildings:
+            building_type = building['primary_type'].replace('building:', '')
+            building_types[building_type] += 1
+
+            if building_type in residential_types:
+                residential_count += 1
+            elif building_type in commercial_types:
+                commercial_count += 1
+            elif building_type in industrial_types:
+                industrial_count += 1
+            else:
+                other_count += 1
+
+        return {
+            'total_count': len(buildings),
+            'types': dict(building_types.most_common(10)),
+            'residential_count': residential_count,
+            'commercial_count': commercial_count,
+            'industrial_count': industrial_count,
+            'other_count': other_count
+        }
+
+    def _analyze_amenities(self, landmarks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze amenity distribution."""
+        amenities = [lm for lm in landmarks if lm['primary_type'].startswith('amenity:')]
+
+        if not amenities:
+            return {'total_count': 0, 'types': {}}
+
+        amenity_types = Counter(
+            lm['primary_type'].replace('amenity:', '')
+            for lm in amenities
+        )
+
+        return {
+            'total_count': len(amenities),
+            'types': dict(amenity_types.most_common(10))
+        }
+
+    def _classify_area_type(self, building_stats: Dict[str, Any],
+                           amenity_stats: Dict[str, Any],
+                           landmarks: List[Dict[str, Any]]) -> str:
+        """Classify the overall area type based on landmark composition."""
+        total_buildings = building_stats['total_count']
+
+        if total_buildings == 0:
+            return 'undeveloped or natural'
+
+        residential = building_stats['residential_count']
+        commercial = building_stats['commercial_count']
+        industrial = building_stats['industrial_count']
+
+        # Calculate ratios
+        total_categorized = residential + commercial + industrial
+        if total_categorized == 0:
+            return 'mixed urban'
+
+        res_ratio = residential / total_categorized
+        com_ratio = commercial / total_categorized
+        ind_ratio = industrial / total_categorized
+
+        # Classification logic
+        if ind_ratio > 0.4:
+            return 'industrial'
+        elif res_ratio > 0.6:
+            if amenity_stats['total_count'] > total_buildings * 0.1:
+                return 'residential with amenities'
+            return 'predominantly residential'
+        elif com_ratio > 0.4:
+            return 'commercial district'
+        elif res_ratio > 0.3 and com_ratio > 0.2:
+            return 'mixed-use urban'
+        else:
+            return 'mixed urban'
+
     def _build_summary(
         self,
         total_elements: int,
         landmarks: List[Dict[str, Any]],
-        type_dist: Dict[str, int]
+        type_dist: Dict[str, int],
+        bbox_area: float
     ) -> Dict[str, Any]:
-        """Build summary statistics."""
+        """Build comprehensive summary statistics."""
         top_types = [
             {'type': t, 'count': c}
             for t, c in sorted(type_dist.items(), key=lambda x: x[1], reverse=True)[:5]
         ]
 
+        # Analyze buildings
+        building_stats = self._analyze_buildings(landmarks)
+
+        # Analyze amenities
+        amenity_stats = self._analyze_amenities(landmarks)
+
+        # Calculate building density (buildings per km²)
+        # Convert square degrees to approximate km² (at mid-latitudes, 1° ≈ 111km)
+        area_km2 = bbox_area * (111.0 ** 2)
+        building_density = building_stats['total_count'] / area_km2 if area_km2 > 0 else 0
+
+        # Classify area type
+        area_type = self._classify_area_type(building_stats, amenity_stats, landmarks)
+
+        # Generate notes
         if top_types:
             top_two = top_types[:2]
             if len(top_two) == 1:
@@ -353,11 +471,37 @@ class OSMClient:
         else:
             notes = "No significant landmarks detected in this area."
 
+        # Commercial vs residential ratio
+        total_categorized = (building_stats['residential_count'] +
+                           building_stats['commercial_count'])
+        if total_categorized > 0:
+            commercial_ratio = building_stats['commercial_count'] / total_categorized
+            residential_ratio = building_stats['residential_count'] / total_categorized
+        else:
+            commercial_ratio = 0.0
+            residential_ratio = 0.0
+
         return {
             'total_elements': total_elements,
             'total_landmarks': len(landmarks),
             'distinct_types': len(type_dist),
             'top_types': top_types,
+            'buildings': {
+                'total': building_stats['total_count'],
+                'density_per_km2': round(building_density, 2),
+                'types': building_stats['types'],
+                'residential': building_stats['residential_count'],
+                'commercial': building_stats['commercial_count'],
+                'industrial': building_stats['industrial_count'],
+                'other': building_stats['other_count'],
+                'commercial_ratio': round(commercial_ratio, 3),
+                'residential_ratio': round(residential_ratio, 3)
+            },
+            'amenities': {
+                'total': amenity_stats['total_count'],
+                'types': amenity_stats['types']
+            },
+            'area_classification': area_type,
             'notes': notes
         }
 
@@ -400,7 +544,7 @@ class OSMClient:
 
         area = (bbox['right'] - bbox['left']) * (bbox['top'] - bbox['bottom'])
 
-        summary = self._build_summary(total_elements, landmarks, type_distribution)
+        summary = self._build_summary(total_elements, landmarks, type_distribution, area)
 
         return {
             'bbox': {

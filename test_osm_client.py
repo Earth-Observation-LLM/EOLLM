@@ -314,6 +314,19 @@ class TestOSMClient:
             assert isinstance(summary['notes'], str)
             assert len(summary['notes']) > 0
 
+            # Check new building statistics
+            assert 'buildings' in summary
+            assert 'amenities' in summary
+            assert 'area_classification' in summary
+
+            assert isinstance(summary['buildings'], dict)
+            assert 'total' in summary['buildings']
+            assert 'density_per_km2' in summary['buildings']
+            assert 'residential' in summary['buildings']
+            assert 'commercial' in summary['buildings']
+            assert 'commercial_ratio' in summary['buildings']
+            assert 'residential_ratio' in summary['buildings']
+
     def test_describe_landmark_coordinates(self):
         """Test that node landmarks have coordinates."""
         client = OSMClient()

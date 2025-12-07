@@ -372,21 +372,39 @@ result = client.describe(top_left, bottom_right)
 - **Landmark Extraction**: Identifies named places, buildings, amenities, shops, etc.
 - **Type Classification**: Categorizes landmarks by primary type (amenity, shop, building, etc.)
 - **Organization Detection**: Extracts operator, owner, brand, and network information
-- **Area Summary**: Generates human-readable summary with statistics
+- **Building Analysis**: Density, type distribution, commercial vs residential ratios
+- **Amenity Analysis**: Distribution of services and facilities
+- **Area Classification**: Automatic urban area type identification
+- **Comprehensive Statistics**: Detailed summary with actionable insights
 
 ### Output Structure
 
 ```python
 {
-    "bbox": {...},                 # Normalized bounding box
+    "bbox": {...},                 # Normalized bounding box with area
     "landmarks": [...],            # List of identified landmarks
     "type_distribution": {...},    # Count by landmark type
     "organizations": [...],        # Organization-related features
-    "summary": {                   # Aggregate statistics
+    "summary": {
         "total_elements": int,
         "total_landmarks": int,
         "distinct_types": int,
         "top_types": [...],
+        "buildings": {
+            "total": int,
+            "density_per_km2": float,     # Buildings per square kilometer
+            "types": {...},                # Top 10 building types
+            "residential": int,
+            "commercial": int,
+            "industrial": int,
+            "commercial_ratio": float,     # Commercial/(Commercial+Residential)
+            "residential_ratio": float     # Residential/(Commercial+Residential)
+        },
+        "amenities": {
+            "total": int,
+            "types": {...}                 # Top 10 amenity types
+        },
+        "area_classification": str,        # e.g., "commercial district"
         "notes": str
     }
 }
