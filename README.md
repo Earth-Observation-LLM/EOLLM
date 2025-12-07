@@ -346,3 +346,79 @@ Version 2.0 - Professional Research Pipeline
 **Python**: 3.8+  
 **Status**: Production Ready
 
+---
+
+## OpenStreetMap API Integration
+
+The project includes an OpenStreetMap (OSM) API v0.6 client for extracting geographic context about areas:
+
+### OSM Client Module
+
+```python
+from src.osm import OSMClient
+
+client = OSMClient()
+
+# Define bounding box (north-west corner, south-east corner)
+top_left = (40.7589, 29.9510)      # (lat, lon)
+bottom_right = (40.7588, 29.9520)
+
+# Get area description
+result = client.describe(top_left, bottom_right)
+```
+
+### Features
+
+- **Landmark Extraction**: Identifies named places, buildings, amenities, shops, etc.
+- **Type Classification**: Categorizes landmarks by primary type (amenity, shop, building, etc.)
+- **Organization Detection**: Extracts operator, owner, brand, and network information
+- **Area Summary**: Generates human-readable summary with statistics
+
+### Output Structure
+
+```python
+{
+    "bbox": {...},                 # Normalized bounding box
+    "landmarks": [...],            # List of identified landmarks
+    "type_distribution": {...},    # Count by landmark type
+    "organizations": [...],        # Organization-related features
+    "summary": {                   # Aggregate statistics
+        "total_elements": int,
+        "total_landmarks": int,
+        "distinct_types": int,
+        "top_types": [...],
+        "notes": str
+    }
+}
+```
+
+### Configuration
+
+Set optional environment variables:
+
+```bash
+# Optional: custom OSM API endpoint
+export OSM_API_BASE_URL="https://api.openstreetmap.org"
+
+# Optional: API key (if using proxy/hosted instance)
+export OSM_API_KEY="your_api_key"
+```
+
+### Example Usage
+
+```bash
+# Run example script
+python osm_example.py
+```
+
+### Testing
+
+```bash
+# Run unit tests (mocked HTTP)
+pytest test_osm_client.py -v -m "not integration"
+
+# Run all tests including integration
+pytest test_osm_client.py -v
+```
+
+---
