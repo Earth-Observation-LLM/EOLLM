@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urban VQA Dataset Viewer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3349;
+      --accent: #4f8ef7;
+      --accent2: #7c5cbf;
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --yellow: #f1c40f;
+      --text: #e0e4f0;
+      --muted: #7a80a0;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+    .logo span { color: var(--accent); }
+
+    .dataset-info {
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── FILTERS ── */
+    .filters {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .search-box {
+      margin-left: auto;
+    }
+    .search-box input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-box input:focus { border-color: var(--accent); }
+    .search-box input::placeholder { color: var(--muted); }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      padding: 10px 28px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stats-bar .count { color: var(--accent); font-weight: 600; }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      padding: 0 28px 40px;
+    }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 680px)  { .grid { grid-template-columns: 1fr; } }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 32px rgba(79,142,247,0.15);
+    }
+
+    .card-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
+      background: var(--surface2);
+    }
+    .card-thumb-placeholder {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .card-body {
+      padding: 12px 14px 14px;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 9px;
+      border-radius: 12px;
+    }
+    .badge-city  { background: rgba(79,142,247,0.18); color: #7ab4fb; }
+    .badge-topic { background: rgba(124,92,191,0.22); color: #b094e8; }
+    .badge-diff-easy   { background: rgba(46,204,113,0.18); color: #5de49a; }
+    .badge-diff-medium { background: rgba(241,196,15,0.18); color: #f5d752; }
+    .badge-diff-hard   { background: rgba(231,76,60,0.18);  color: #f1846f; }
+
+    .card-neighborhood {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-road {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-question {
+      font-size: 0.8rem;
+      color: #b0b8d0;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-answer {
+      font-size: 0.78rem;
+      background: rgba(46,204,113,0.12);
+      border: 1px solid rgba(46,204,113,0.3);
+      color: var(--green);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-weight: 500;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+    .empty .icon { font-size: 3rem; margin-bottom: 14px; }
+
+    /* ── LOADING ── */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: var(--muted);
+      gap: 16px;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px;
+      overflow-y: auto;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 1100px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .modal-close:hover { color: var(--text); border-color: var(--text); }
+
+    .modal-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-right: 56px;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .modal-subtitle {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .modal-nav {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .modal-nav-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: border-color 0.15s;
+    }
+    .modal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .modal-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .modal-nav-pos { font-size: 0.78rem; color: var(--muted); align-self: center; }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    @media (max-width: 800px) { .modal-body { grid-template-columns: 1fr; } }
+
+    /* Images panel */
+    .images-panel {
+      padding: 20px;
+      border-right: 1px solid var(--border);
+    }
+    @media (max-width: 800px) { .images-panel { border-right: none; border-bottom: 1px solid var(--border); } }
+
+    .section-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .sat-img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      background: var(--surface2);
+      margin-bottom: 16px;
+    }
+
+    .sv-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .sv-item { position: relative; }
+    .sv-img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+      background: var(--surface2);
+    }
+    .sv-label {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Info panel */
+    .info-panel {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      max-height: 680px;
+    }
+
+    .question-text {
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      line-height: 1.4;
+      transition: border-color 0.1s;
+    }
+    .option.correct {
+      background: rgba(46,204,113,0.1);
+      border-color: rgba(46,204,113,0.4);
+      color: #5de49a;
+    }
+    .option.incorrect {
+      background: transparent;
+      color: var(--muted);
+    }
+    .option-key {
+      font-weight: 700;
+      min-width: 20px;
+      color: inherit;
+    }
+    .option.correct .option-key::after { content: ' \2713'; }
+
+    /* Metadata table */
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .meta-table tr { border-bottom: 1px solid var(--border); }
+    .meta-table tr:last-child { border-bottom: none; }
+    .meta-table td {
+      padding: 7px 4px;
+      vertical-align: top;
+    }
+    .meta-table td:first-child {
+      color: var(--muted);
+      width: 46%;
+      padding-right: 10px;
+    }
+    .meta-table td:last-child {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .map-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.82rem;
+      padding: 7px 14px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .map-link:hover { background: rgba(79,142,247,0.12); }
+
+    .amenity-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    .amenity-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .error-banner {
+      background: rgba(231,76,60,0.12);
+      border: 1px solid rgba(231,76,60,0.3);
+      color: #f1846f;
+      padding: 16px 28px;
+      font-size: 0.88rem;
+      display: none;
+    }
+    .error-banner.visible { display: block; }
+
+    hr.divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Urban <span>VQA</span></div>
+  <div class="dataset-info">Visual Question Answering &mdash; Urban Environments</div>
+</header>
+
+<div class="filters">
+  <div class="filter-group">
+    <span class="filter-label">City</span>
+    <button class="filter-btn active" data-filter="city" data-value="all">All</button>
+    <button class="filter-btn" data-filter="city" data-value="New York City">NYC</button>
+    <button class="filter-btn" data-filter="city" data-value="Paris">Paris</button>
+    <button class="filter-btn" data-filter="city" data-value="London">London</button>
+    <button class="filter-btn" data-filter="city" data-value="Singapore">Singapore</button>
+    <button class="filter-btn" data-filter="city" data-value="São Paulo">S&atilde;o Paulo</button>
+    <button class="filter-btn" data-filter="city" data-value="Amsterdam">Amsterdam</button>
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">Topic</span>
+    <button class="filter-btn active" data-filter="topic" data-value="all">All</button>
+    <button class="filter-btn" data-filter="topic" data-value="land_use">Land Use</button>
+    <button class="filter-btn" data-filter="topic" data-value="building_height">Building Height</button>
+    <button class="filter-btn" data-filter="topic" data-value="urban_density">Urban Density</button>
+    <button class="filter-btn" data-filter="topic" data-value="road_type">Road Type</button>
+    <button class="filter-btn" data-filter="topic" data-value="green_space">Green Space</button>
+    <button class="filter-btn" data-filter="topic" data-value="amenity_richness">Amenity Richness</button>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search neighborhood, road..." />
+  </div>
+</div>
+
+<div class="error-banner" id="errorBanner"></div>
+
+<div class="stats-bar">
+  Showing <span class="count" id="visibleCount">0</span> of <span class="count" id="totalCount">0</span> samples
+</div>
+
+<div class="grid" id="grid">
+  <div class="loading" style="grid-column:1/-1">
+    <div class="spinner"></div>
+    <div>Loading dataset&hellip;</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="modalClose" title="Close">&#x2715;</button>
+
+    <div class="modal-header" id="modalHeader">
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+      <div class="modal-nav">
+        <button class="modal-nav-btn" id="modalPrev">&#8592; Prev</button>
+        <span class="modal-nav-pos" id="modalPos"></span>
+        <button class="modal-nav-btn" id="modalNext">Next &#8594;</button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="images-panel">
+        <div class="section-label">Satellite View</div>
+        <img class="sat-img" id="modalSatImg" src="" alt="Satellite" />
+
+        <div class="section-label">Street View</div>
+        <div class="sv-grid">
+          <div class="sv-item">
+            <img class="sv-img" id="svFwd" src="" alt="Along forward" />
+            <span class="sv-label">Along &rarr;</span>
+          </div>
+          <div class="sv-item">
+            <img class="sv-img" id="svBwd" src="" alt="Along backward" />
+            <span class="sv-label">Along &larr;</span>
+          </div>
+          <div class="sv-item">
+            <img class="sv-img" id="svLeft" src="" alt="Cross left" />
+            <span class="sv-label">Cross &#x2197;</span>
+          </div>
+          <div class="sv-item">
+            <img class="sv-img" id="svRight" src="" alt="Cross right" />
+            <span class="sv-label">Cross &#x2198;</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <!-- Question & Options -->
+        <div>
+          <div class="section-label">Question</div>
+          <div class="question-text" id="modalQuestion"></div>
+          <div class="options-list" id="modalOptions"></div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Metadata -->
+        <div>
+          <div class="section-label">Metadata</div>
+          <table class="meta-table" id="modalMeta"></table>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Amenities -->
+        <div id="amenitySection">
+          <div class="section-label">Nearby Amenities</div>
+          <div class="amenity-tags" id="modalAmenities"></div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Map link -->
+        <div>
+          <a class="map-link" id="modalMapLink" href="#" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            View on Google Maps
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = '../output/';
+  let allSamples = [];
+  let filteredSamples = [];
+  let activeFilters = { city: 'all', topic: 'all' };
+  let searchQuery = '';
+  let currentModalIdx = 0;
+
+  // ── Fetch & parse JSONL ──────────────────────────────────────────────────────
+  async function loadDataset() {
+    try {
+      const res = await fetch('../output/dataset.jsonl');
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const text = await res.text();
+      allSamples = text.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+      document.getElementById('totalCount').textContent = allSamples.length;
+      applyFilters();
+    } catch (err) {
+      showError(`Failed to load dataset: ${err.message}. Make sure you are running a local server (use serve.sh).`);
+      document.getElementById('grid').innerHTML = '';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorBanner');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  // ── Filtering ────────────────────────────────────────────────────────────────
+  function applyFilters() {
+    const q = searchQuery.toLowerCase();
+    filteredSamples = allSamples.filter(s => {
+      if (activeFilters.city !== 'all' && s.location.city !== activeFilters.city) return false;
+      if (activeFilters.topic !== 'all' && s.topic !== activeFilters.topic) return false;
+      if (q) {
+        const haystack = [
+          s.location.neighborhood, s.location.road_name,
+          s.location.city, s.topic, s.question
+        ].join(' ').toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+    document.getElementById('visibleCount').textContent = filteredSamples.length;
+    renderGrid();
+  }
+
+  // ── Topic label map ──────────────────────────────────────────────────────────
+  const TOPIC_LABELS = {
+    land_use: 'Land Use',
+    building_height: 'Bldg Height',
+    urban_density: 'Urban Density',
+    road_type: 'Road Type',
+    green_space: 'Green Space',
+    amenity_richness: 'Amenities',
+  };
+
+  // ── City short name map ──────────────────────────────────────────────────────
+  const CITY_SHORT = {
+    'New York City': 'NYC',
+    'Paris': 'Paris',
+    'London': 'London',
+    'Singapore': 'SGP',
+    'São Paulo': 'SP',
+    'Amsterdam': 'AMS',
+  };
+
+  // ── Render grid ──────────────────────────────────────────────────────────────
+  function renderGrid() {
+    const grid = document.getElementById('grid');
+    if (filteredSamples.length === 0) {
+      grid.innerHTML = `<div class="empty"><div class="icon">&#128269;</div><div>No samples match your filters.</div></div>`;
+      return;
+    }
+    grid.innerHTML = filteredSamples.map((s, i) => cardHTML(s, i)).join('');
+    grid.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => openModal(parseInt(card.dataset.idx)));
+    });
+  }
+
+  function cardHTML(s, idx) {
+    const cityShort = CITY_SHORT[s.location.city] || s.location.city;
+    const topicLabel = TOPIC_LABELS[s.topic] || s.topic;
+    const diffClass = `badge-diff-${s.difficulty || 'easy'}`;
+    const satSrc = BASE + s.images.satellite;
+    const correctText = `${s.answer}) ${s.options[s.answer]}`;
+
+    return `
+      <div class="card" data-idx="${idx}">
+        <img class="card-thumb" src="${satSrc}" alt="Satellite" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="card-thumb-placeholder" style="display:none">No image</div>
+        <div class="card-body">
+          <div class="card-badges">
+            <span class="badge badge-city">${cityShort}</span>
+            <span class="badge badge-topic">${topicLabel}</span>
+            <span class="badge ${diffClass}">${s.difficulty || 'easy'}</span>
+          </div>
+          <div class="card-neighborhood">${escHtml(s.location.neighborhood)}</div>
+          <div class="card-road">${escHtml(s.location.road_name)}</div>
+          <div class="card-question">${escHtml(s.question)}</div>
+          <div class="card-answer">&#10003; ${escHtml(correctText)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────────────────
+  function openModal(idx) {
+    currentModalIdx = idx;
+    renderModal(filteredSamples[idx], idx);
+    document.getElementById('modalOverlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function renderModal(s, idx) {
+    // Header
+    document.getElementById('modalTitle').textContent =
+      `${s.location.neighborhood} — ${s.location.city}`;
+    document.getElementById('modalSubtitle').textContent =
+      `${s.sample_id}  ·  ${s.location.road_name}  ·  ${TOPIC_LABELS[s.topic] || s.topic}`;
+
+    // Nav
+    document.getElementById('modalPos').textContent = `${idx + 1} / ${filteredSamples.length}`;
+    document.getElementById('modalPrev').disabled = idx === 0;
+    document.getElementById('modalNext').disabled = idx === filteredSamples.length - 1;
+
+    // Images
+    const imgBase = BASE;
+    document.getElementById('modalSatImg').src = imgBase + s.images.satellite;
+    document.getElementById('svFwd').src   = imgBase + s.images.streetview_along_fwd;
+    document.getElementById('svBwd').src   = imgBase + s.images.streetview_along_bwd;
+    document.getElementById('svLeft').src  = imgBase + s.images.streetview_cross_left;
+    document.getElementById('svRight').src = imgBase + s.images.streetview_cross_right;
+
+    // Question
+    document.getElementById('modalQuestion').textContent = s.question;
+
+    // Options
+    const optEl = document.getElementById('modalOptions');
+    optEl.innerHTML = Object.entries(s.options).map(([key, val]) => {
+      const cls = key === s.answer ? 'option correct' : 'option incorrect';
+      return `<div class="${cls}"><span class="option-key">${key}</span><span>${escHtml(val)}</span></div>`;
+    }).join('');
+
+    // Metadata
+    const m = s.metadata || {};
+    const loc = s.location;
+    const rows = [
+      ['City', loc.city],
+      ['Neighborhood', loc.neighborhood],
+      ['Road', loc.road_name],
+      ['Road Type', m.road_type || loc.road_type || '—'],
+      ['Land Use', m.land_use_label || m.land_use_category || '—'],
+      ['Buildings (200m)', m.osm_building_count_200m ?? '—'],
+      ['Median Floors', m.osm_median_building_levels ?? '—'],
+      ['Amenity Count', m.osm_amenity_count_200m ?? '—'],
+      ['Has Park Nearby', m.osm_has_park_200m != null ? (m.osm_has_park_200m ? 'Yes' : 'No') : '—'],
+      ['Satellite Source', s.images.satellite_source || '—'],
+      ['Satellite Date', s.images.satellite_date || '—'],
+      ['Street View Date', s.images.streetview_date || '—'],
+      ['Difficulty', s.difficulty || '—'],
+      ['Generation', s.generation_method || '—'],
+    ];
+    document.getElementById('modalMeta').innerHTML = rows.map(([k, v]) =>
+      `<tr><td>${escHtml(k)}</td><td>${escHtml(String(v))}</td></tr>`
+    ).join('');
+
+    // Amenities
+    const amenities = m.osm_amenity_types || [];
+    const amenEl = document.getElementById('modalAmenities');
+    const amenSection = document.getElementById('amenitySection');
+    if (amenities.length) {
+      amenSection.style.display = '';
+      amenEl.innerHTML = amenities.map(a =>
+        `<span class="amenity-tag">${escHtml(a.replace(/_/g, ' '))}</span>`
+      ).join('');
+    } else {
+      amenSection.style.display = 'none';
+    }
+
+    // Map link
+    const lat = loc.latitude;
+    const lon = loc.longitude;
+    document.getElementById('modalMapLink').href =
+      `https://www.google.com/maps/@${lat},${lon},17z`;
+  }
+
+  // ── Event listeners ──────────────────────────────────────────────────────────
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  });
+
+  document.getElementById('modalPrev').addEventListener('click', () => {
+    if (currentModalIdx > 0) {
+      currentModalIdx--;
+      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
+    }
+  });
+
+  document.getElementById('modalNext').addEventListener('click', () => {
+    if (currentModalIdx < filteredSamples.length - 1) {
+      currentModalIdx++;
+      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('modalOverlay').classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'ArrowLeft'  && currentModalIdx > 0) {
+      currentModalIdx--;
+      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
+    }
+    if (e.key === 'ArrowRight' && currentModalIdx < filteredSamples.length - 1) {
+      currentModalIdx++;
+      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
+    }
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filterType = btn.dataset.filter;
+      document.querySelectorAll(`.filter-btn[data-filter="${filterType}"]`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilters[filterType] = btn.dataset.value;
+      applyFilters();
+    });
+  });
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    applyFilters();
+  });
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Boot ─────────────────────────────────────────────────────────────────────
+  loadDataset();
+</script>
+</body>
+</html>
