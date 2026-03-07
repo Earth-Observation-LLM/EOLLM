@@ -86,5 +86,9 @@ Desktop.ini
 # Misc
 *.swp
 *~
-# End Generation Here
-```
+
+# API keys / secrets
+api_keys.env
+
+# Generated output (images, datasets)
+output/
