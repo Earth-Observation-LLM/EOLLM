@@ -92,3 +92,6 @@ api_keys.env
 
 # Generated output (images, datasets)
 output/
+
+# Downloaded OSM data (run setup_data.sh to regenerate)
+data/
