@@ -7,35 +7,49 @@ import os
 import json
 import random
 from collections import Counter
+from question_templates import QUESTION_TEMPLATES
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def _shuffle_options(correct, distractors):
-    """Shuffle options and return (options_dict, answer_key)."""
+def _shuffle_options(correct, distractors, sample_id="", topic=""):
+    """Shuffle options and return (options_dict, answer_key).
+
+    Uses a per-question seed derived from sample_id + topic so that
+    the shuffle is reproducible but the answer key distribution is
+    uniform across the dataset (not biased by processing order).
+    """
     options_list = [correct] + distractors[:3]
-    random.shuffle(options_list)
+    rng = random.Random(f"{sample_id}_{topic}")
+    rng.shuffle(options_list)
     answer_key = chr(65 + options_list.index(correct))
     options = {chr(65 + i): opt for i, opt in enumerate(options_list)}
     return options, answer_key
 
 
 def generate_questions(sample):
-    """Generate all possible MCQs from a sample's metadata."""
+    """Generate all possible MCQs from a sample's metadata.
+
+    Each question uses a per-sample RNG seeded from sample_id so that
+    distractor selection, question template choice, and option shuffling
+    are all reproducible but varied across samples.
+    """
     from config import (LAND_USE_CATEGORIES, BUILDING_HEIGHT_CATEGORIES,
                         ROAD_LABELS, URBAN_DENSITY_CATEGORIES)
     questions = []
+    sid = sample.get("sample_id", "")
+    # Per-sample RNG for distractor and template selection
+    rng = random.Random(f"{sid}_qgen")
 
     # --- LAND USE ---
     lu_cat = sample.get("land_use_category")
     if lu_cat and lu_cat in LAND_USE_CATEGORIES:
         correct = LAND_USE_CATEGORIES[lu_cat]
         distractors = [v for k, v in LAND_USE_CATEGORIES.items() if k != lu_cat]
-        # Prefer plausible distractors
-        random.shuffle(distractors)
-        opts, ans = _shuffle_options(correct, distractors[:3])
+        rng.shuffle(distractors)
+        opts, ans = _shuffle_options(correct, distractors[:3], sid, "land_use")
         questions.append({
-            "question": "What is the primary land use character of this area?",
+            "question": rng.choice(QUESTION_TEMPLATES["land_use"]),
             "options": opts, "answer": ans,
             "topic": "land_use", "difficulty": "easy",
         })
@@ -52,9 +66,9 @@ def generate_questions(sample):
         if correct:
             distractors = [label for label, _, _ in BUILDING_HEIGHT_CATEGORIES
                            if label != correct]
-            opts, ans = _shuffle_options(correct, distractors)
+            opts, ans = _shuffle_options(correct, distractors, sid, "building_height")
             questions.append({
-                "question": "What building height category best describes the dominant structures in this area?",
+                "question": rng.choice(QUESTION_TEMPLATES["building_height"]),
                 "options": opts, "answer": ans,
                 "topic": "building_height", "difficulty": "easy",
             })
@@ -64,10 +78,10 @@ def generate_questions(sample):
     if road_type and road_type in ROAD_LABELS:
         correct = ROAD_LABELS[road_type]
         distractors = [v for k, v in ROAD_LABELS.items() if k != road_type]
-        random.shuffle(distractors)
-        opts, ans = _shuffle_options(correct, distractors[:3])
+        rng.shuffle(distractors)
+        opts, ans = _shuffle_options(correct, distractors[:3], sid, "road_type")
         questions.append({
-            "question": "What type of road infrastructure is dominant at this location?",
+            "question": rng.choice(QUESTION_TEMPLATES["road_type"]),
             "options": opts, "answer": ans,
             "topic": "road_type", "difficulty": "easy",
         })
@@ -84,9 +98,9 @@ def generate_questions(sample):
         if correct:
             distractors = [label for label, _, _ in URBAN_DENSITY_CATEGORIES
                            if label != correct]
-            opts, ans = _shuffle_options(correct, distractors)
+            opts, ans = _shuffle_options(correct, distractors, sid, "urban_density")
             questions.append({
-                "question": "What is the approximate urban density level of this area based on building concentration?",
+                "question": rng.choice(QUESTION_TEMPLATES["urban_density"]),
                 "options": opts, "answer": ans,
                 "topic": "urban_density", "difficulty": "medium",
             })
@@ -100,9 +114,9 @@ def generate_questions(sample):
             "The area is primarily industrial with no recreational space",
             "Only small private gardens exist, no public green space",
         ]
-        opts, ans = _shuffle_options(correct, distractors)
+        opts, ans = _shuffle_options(correct, distractors, sid, "green_space")
         questions.append({
-            "question": "Is there publicly accessible green space or parkland near this location?",
+            "question": rng.choice(QUESTION_TEMPLATES["green_space"]),
             "options": opts, "answer": ans,
             "topic": "green_space", "difficulty": "easy",
         })
@@ -113,9 +127,9 @@ def generate_questions(sample):
             "Yes, several pocket parks and green corridors exist",
             "The area has extensive waterfront promenades and green space",
         ]
-        opts, ans = _shuffle_options(correct, distractors)
+        opts, ans = _shuffle_options(correct, distractors, sid, "green_space")
         questions.append({
-            "question": "Is there publicly accessible green space or parkland near this location?",
+            "question": rng.choice(QUESTION_TEMPLATES["green_space"]),
             "options": opts, "answer": ans,
             "topic": "green_space", "difficulty": "easy",
         })
@@ -152,9 +166,9 @@ def generate_questions(sample):
                 "Moderate — some neighborhood shops and cafes",
                 "Low — few services, primarily residential",
             ]
-        opts, ans = _shuffle_options(correct, distractors)
+        opts, ans = _shuffle_options(correct, distractors, sid, "amenity_richness")
         questions.append({
-            "question": "What is the level of commercial amenity presence in this area?",
+            "question": rng.choice(QUESTION_TEMPLATES["amenity_richness"]),
             "options": opts, "answer": ans,
             "topic": "amenity_richness", "difficulty": "medium",
         })
@@ -216,7 +230,6 @@ def run(samples=None):
         csv_path = os.path.join(ROOT, "output", "metadata_raw.csv")
         samples = pd.read_csv(csv_path).to_dict('records')
 
-    random.seed(42)
     used_topics = Counter()
 
     for i, sample in enumerate(samples):

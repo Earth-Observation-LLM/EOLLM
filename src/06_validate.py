@@ -18,9 +18,13 @@ def validate_sample(sample):
     options = sample.get("options", {})
     if isinstance(options, str):
         try:
-            options = json.loads(options.replace("'", '"'))
-        except Exception:
-            options = {}
+            options = json.loads(options)
+        except json.JSONDecodeError:
+            try:
+                import ast
+                options = ast.literal_eval(options)
+            except Exception:
+                options = {}
 
     if not sample.get("question"):
         issues.append("CRITICAL: No question generated")
@@ -33,13 +37,14 @@ def validate_sample(sample):
         if len(vals) != 4:
             issues.append(f"WARNING: Expected 4 options, got {len(vals)}")
 
-    # Satellite image
+    # Satellite image — missing or tiny images are CRITICAL since the model
+    # cannot learn from blank/corrupt imagery
     sat_path = os.path.join(ROOT, "output", "images", "sat",
                             f"{sample['sample_id']}.png")
     if not os.path.exists(sat_path):
-        issues.append("WARNING: Missing satellite image")
+        issues.append("CRITICAL: Missing satellite image")
     elif os.path.getsize(sat_path) < 5000:
-        issues.append("WARNING: Satellite image too small")
+        issues.append("CRITICAL: Satellite image too small (likely blank/cloud)")
 
     # Street view images
     sv_labels = ["along_fwd", "along_bwd", "cross_left", "cross_right"]
@@ -98,7 +103,12 @@ def validate_dataset(samples):
 
 
 def run(samples=None):
-    """Main entry point."""
+    """Main entry point.
+
+    Validates all samples and REMOVES those with CRITICAL issues from the
+    returned list. This ensures the final dataset.jsonl only contains
+    usable training samples.
+    """
     print("[Step 6/6] Validating dataset...")
 
     if samples is None:
@@ -106,7 +116,8 @@ def run(samples=None):
         csv_path = os.path.join(ROOT, "output", "metadata_raw.csv")
         samples = pd.read_csv(csv_path).to_dict('records')
 
-    valid_count = 0
+    valid_samples = []
+    rejected_samples = []
     all_issues = []
 
     for i, sample in enumerate(samples):
@@ -121,10 +132,12 @@ def run(samples=None):
             print(f"    - {issue}")
 
         if is_valid:
-            valid_count += 1
+            valid_samples.append(sample)
+        else:
+            rejected_samples.append(sample)
         all_issues.extend(issues)
 
-    ds_issues = validate_dataset(samples)
+    ds_issues = validate_dataset(valid_samples)
     if ds_issues:
         print("\n  Dataset-level issues:")
         for issue in ds_issues:
@@ -134,9 +147,13 @@ def run(samples=None):
     crit = sum(1 for i in all_issues if "CRITICAL" in i)
     warn = sum(1 for i in all_issues if "WARNING" in i)
     info = sum(1 for i in all_issues if "INFO" in i)
-    print(f"\n  Summary: {valid_count}/{len(samples)} valid "
+    print(f"\n  Summary: {len(valid_samples)}/{len(samples)} valid, "
+          f"{len(rejected_samples)} rejected "
           f"({crit} critical, {warn} warnings, {info} info)")
-    return samples
+    if rejected_samples:
+        print(f"  Rejected samples: "
+              f"{[s['sample_id'] for s in rejected_samples]}")
+    return valid_samples
 
 
 if __name__ == "__main__":

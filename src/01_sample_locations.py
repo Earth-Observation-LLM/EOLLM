@@ -214,7 +214,8 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
 
     # Infer land use category from OSM data
     land_use_category = infer_land_use(
-        dominant_landuse, btype_counter, amenity_types, has_park, building_count
+        dominant_landuse, btype_counter, amenity_types, has_park, building_count,
+        amenity_count
     )
 
     return {
@@ -230,14 +231,20 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
 
 
 def infer_land_use(dominant_landuse, btype_counter, amenity_types, has_park,
-                   building_count=0):
+                   building_count=0, amenity_count=0):
     """Infer a standardized land use category from OSM data.
-    Only classify as open_space if the area is predominantly park/green
-    (few buildings). Otherwise parks nearby are just context."""
 
-    # Only classify as open_space if the area is genuinely dominated by green space.
-    # "grass" in OSM often means traffic islands / medians, not parks.
-    # Require very low building count to be considered true open space.
+    The logic uses a priority cascade:
+      1. Explicit landuse tag from OSM (strongest signal)
+      2. Building type distribution (structural signal)
+      3. Amenity density ratio (functional signal)
+      4. Fallback to "residential" (most common real-world default)
+
+    "mixed" is only assigned when there is genuine evidence of multiple
+    competing uses, not as a catch-all default.
+    """
+
+    # --- Open space: only when genuinely dominated by green/recreation ---
     if dominant_landuse == "recreation_ground":
         return "open_space"
     if dominant_landuse in ("grass", "forest", "meadow") and building_count < 15:
@@ -245,6 +252,7 @@ def infer_land_use(dominant_landuse, btype_counter, amenity_types, has_park,
     if has_park and building_count < 10:
         return "open_space"
 
+    # --- Explicit OSM landuse tag (strongest signal) ---
     if dominant_landuse in ("industrial", "railway"):
         return "industrial"
     if dominant_landuse in ("retail", "commercial"):
@@ -252,7 +260,7 @@ def infer_land_use(dominant_landuse, btype_counter, amenity_types, has_park,
     if dominant_landuse in ("residential",):
         return "residential"
 
-    # Infer from building types
+    # --- Infer from building type distribution ---
     top_btype = btype_counter.most_common(1)[0][0] if btype_counter else None
     if top_btype in ("commercial", "office", "retail", "supermarket"):
         return "commercial"
@@ -265,12 +273,32 @@ def infer_land_use(dominant_landuse, btype_counter, amenity_types, has_park,
                      "civic", "government"):
         return "institutional"
 
-    # Infer from amenities
-    commercial_amenities = {"restaurant", "cafe", "bar", "shop", "bank", "fast_food"}
-    if set(amenity_types) & commercial_amenities:
-        return "mixed"
+    # --- Mixed use: require genuine evidence of BOTH residential buildings
+    #     AND significant commercial amenity density ---
+    commercial_amenities = {"restaurant", "cafe", "bar", "shop", "bank",
+                            "fast_food", "pharmacy", "marketplace"}
+    has_commercial = len(set(amenity_types) & commercial_amenities) >= 2
+    residential_btypes = {"apartments", "house", "detached", "terrace",
+                          "residential", "semidetached_house"}
+    has_residential_buildings = bool(set(btype_counter.keys()) & residential_btypes)
 
-    return "mixed"  # default
+    if has_commercial and has_residential_buildings:
+        return "mixed"
+    # High amenity density relative to buildings also suggests mixed/commercial
+    if amenity_count >= 10 and building_count > 0:
+        ratio = amenity_count / building_count
+        if ratio > 0.3 and has_residential_buildings:
+            return "mixed"
+        if ratio > 0.3:
+            return "commercial"
+
+    # --- Default: residential (the most common real-world land use) ---
+    # This is far more accurate than "mixed" as a fallback, since most urban
+    # areas without strong commercial/industrial signals are residential.
+    if building_count > 0:
+        return "residential"
+
+    return "mixed"  # truly ambiguous (no buildings, no landuse tag)
 
 
 def compute_bearing(lat1, lon1, lat2, lon2):
@@ -305,6 +333,7 @@ def run_city(city_key, city_cfg, num_samples=10):
 
     seeds = city_cfg["seeds"][:num_samples]
     samples = []
+    skipped = []
 
     for i, (name, lat, lon, expected_char) in enumerate(seeds):
         sample_id = f"{city_key}_{i+1:04d}"
@@ -312,7 +341,9 @@ def run_city(city_key, city_cfg, num_samples=10):
 
         road_info = snap_to_road(lat, lon, road_nodes)
         if road_info is None:
-            print(f"      SKIPPED: no road found")
+            print(f"      SKIPPED: no road found within snap radius")
+            skipped.append({"sample_id": sample_id, "name": name,
+                            "reason": "no_road_within_radius"})
             continue
 
         slat, slon = road_info["lat"], road_info["lon"]
@@ -345,6 +376,9 @@ def run_city(city_key, city_cfg, num_samples=10):
               f"bldgs={context['osm_building_count']}, "
               f"levels={context['osm_median_levels']}")
 
+    if skipped:
+        print(f"    WARNING: {len(skipped)}/{len(seeds)} seeds skipped: "
+              f"{[s['name'] for s in skipped]}")
     return samples
 
 

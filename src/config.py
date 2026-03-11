@@ -136,10 +136,13 @@ OSM_QUERY_TEMPLATE = """
 out tags center;
 """
 
-# Lightweight query: roads only (much smaller, for road snapping)
+# Lightweight query: roads only (much smaller, for road snapping).
+# Motorways are excluded: they often run through tunnels/elevated sections
+# where Street View imagery is useless for urban VQA, and they bias the
+# road_type answer distribution toward a single category.
 OSM_ROADS_QUERY_TEMPLATE = """
 [out:json][timeout:120];
-way["highway"~"^(primary|secondary|tertiary|residential|trunk)$"]
+way["highway"~"^(primary|secondary|tertiary|residential|trunk)$"]["tunnel"!="yes"]["covered"!="yes"]
   ({s},{w},{n},{e});
 out body geom;
 """

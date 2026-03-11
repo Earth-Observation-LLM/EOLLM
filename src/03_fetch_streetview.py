@@ -1,14 +1,23 @@
 """
 Step 3: Download Google Street View images with road-aligned headings.
 City-agnostic — works globally.
+
+Includes detection for tunnel/underground imagery that passes Google's
+"outdoor" source filter but is useless for urban VQA tasks.
 """
 
 import os
 import time
+import math
 import requests
 import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Max distance (meters) between requested location and the panorama that
+# Google returns. If the pano is farther than this, Google likely snapped
+# to a different road (e.g. a nearby highway tunnel).
+SV_MAX_SNAP_DISTANCE_M = 80
 
 
 def load_api_key():
@@ -22,15 +31,68 @@ def load_api_key():
     raise ValueError("GOOGLE_STREETVIEW_KEY not found in api_keys.env")
 
 
+def _haversine_m(lat1, lon1, lat2, lon2):
+    """Distance in meters between two lat/lon points."""
+    R = 6_371_000
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlon / 2) ** 2)
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _is_tunnel_image(image_bytes):
+    """Heuristic: detect tunnel / underground Street View images.
+
+    Tunnel images under artificial fluorescent lighting have an extreme
+    color channel imbalance (strong yellow/orange cast) that outdoor images
+    almost never exhibit. We detect this by comparing the spread between
+    the mean R, G, B values.
+
+    Normal outdoor images: channel spread < 25
+    Tunnel images:         channel spread > 40 (yellowish cast)
+    """
+    try:
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        r, g, b = img.split()
+        n = img.size[0] * img.size[1]
+        r_mean = sum(r.getdata()) / n
+        g_mean = sum(g.getdata()) / n
+        b_mean = sum(b.getdata()) / n
+        color_spread = max(r_mean, g_mean, b_mean) - min(r_mean, g_mean, b_mean)
+        return color_spread > 40
+    except ImportError:
+        return False
+    except Exception:
+        return False
+
+
 def check_sv_coverage(lat, lon, api_key):
-    """Check if outdoor Street View coverage exists at this location."""
+    """Check if outdoor Street View coverage exists at this location.
+
+    Also verifies the returned panorama is close to the requested location
+    (rejects cases where Google snaps to a tunnel/highway far away).
+    """
     url = "https://maps.googleapis.com/maps/api/streetview/metadata"
     params = {"location": f"{lat},{lon}", "key": api_key, "source": "outdoor"}
     resp = requests.get(url, params=params, timeout=10)
     data = resp.json()
     if data.get("status") == "OK":
+        # Check if the panorama location is too far from the requested point
+        pano_loc = data.get("location", {})
+        pano_lat = pano_loc.get("lat")
+        pano_lng = pano_loc.get("lng")
+        snap_dist = None
+        if pano_lat is not None and pano_lng is not None:
+            snap_dist = _haversine_m(lat, lon, pano_lat, pano_lng)
+            if snap_dist > SV_MAX_SNAP_DISTANCE_M:
+                return {"status": "SNAP_TOO_FAR",
+                        "snap_distance_m": round(snap_dist, 1)}
         return {"pano_id": data.get("pano_id"), "date": data.get("date", "unknown"),
-                "status": "OK"}
+                "status": "OK", "snap_distance_m": round(snap_dist, 1) if snap_dist else None}
     return {"status": data.get("status", "UNKNOWN")}
 
 
@@ -57,15 +119,19 @@ def fetch_streetview(lat, lon, sample_id, road_bearing, api_key):
             resp = requests.get(base_url, params=params, timeout=15)
             ct = resp.headers.get('content-type', '')
             if resp.status_code == 200 and ct.startswith('image'):
-                path = os.path.join(
-                    ROOT, "output", "images", "sv", f"{sample_id}_{label}.jpg"
-                )
-                with open(path, 'wb') as f:
-                    f.write(resp.content)
-                fsize = os.path.getsize(path)
+                fsize = len(resp.content)
                 if fsize < 5000:
                     results[label] = None
+                elif _is_tunnel_image(resp.content):
+                    print(f"      {label}: rejected (tunnel/dark image)")
+                    results[label] = None
                 else:
+                    path = os.path.join(
+                        ROOT, "output", "images", "sv",
+                        f"{sample_id}_{label}.jpg"
+                    )
+                    with open(path, 'wb') as f:
+                        f.write(resp.content)
                     results[label] = path
             else:
                 results[label] = None

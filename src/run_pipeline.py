@@ -36,15 +36,19 @@ def build_jsonl_record(sample):
         "streetview_cross_right": f"images/sv/{sid}_cross_right.jpg",
         "streetview_source": "Google Street View",
         "streetview_road_bearing": sample.get("road_bearing"),
-        "streetview_date": sample.get("sv_date") if sample.get("sv_date") == sample.get("sv_date") else None,
+        "streetview_date": sample.get("sv_date") if isinstance(sample.get("sv_date"), str) else None,
     }
 
     options = sample.get("options", {})
     if isinstance(options, str):
         try:
-            options = json.loads(options.replace("'", '"'))
-        except Exception:
-            options = {}
+            options = json.loads(options)
+        except json.JSONDecodeError:
+            try:
+                import ast
+                options = ast.literal_eval(options)
+            except Exception:
+                options = {}
 
     # Parse list/dict fields that may be serialized as strings
     amenity_types = sample.get("osm_amenity_types", [])

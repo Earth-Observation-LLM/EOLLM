@@ -54,8 +54,13 @@ def fetch_naip_tile(lat, lon, sample_id, buffer_m=250, px=512):
     return save_path, date_info, "NAIP"
 
 
-def fetch_s2_tile(lat, lon, sample_id, buffer_m=250, px=512):
-    """Download a Sentinel-2 tile (global, 10m resolution)."""
+def fetch_s2_tile(lat, lon, sample_id, buffer_m=500, px=512):
+    """Download a Sentinel-2 tile (global, 10m resolution).
+
+    Buffer is 500m so that at 10m/pixel the native footprint is ~100px,
+    and GEE returns a 512x512 image with ~5x oversampling — enough detail
+    to see roads, building blocks, and green areas without Minecraft pixels.
+    """
     ee = get_ee()
     from config import S2_DATE_RANGE, S2_CLOUD_THRESHOLD
     point = ee.Geometry.Point([lon, lat])
@@ -66,13 +71,14 @@ def fetch_s2_tile(lat, lon, sample_id, buffer_m=250, px=512):
           .sort("CLOUDY_PIXEL_PERCENTAGE")
           .mosaic())
     region = point.buffer(buffer_m).bounds()
-    # Apply simple brightness scaling for better visual quality
     s2_rgb = s2.select(['B4', 'B3', 'B2']).multiply(0.0001)  # to reflectance [0,1]
+    # Use meters_per_pixel to let GEE serve at native resolution (10m)
+    # instead of forcing 512px onto a tiny area.
     url = s2_rgb.getThumbURL({
         'region': region.getInfo()['coordinates'],
         'dimensions': f'{px}x{px}',
         'bands': ['B4', 'B3', 'B2'],
-        'min': 0.02, 'max': 0.2, 'format': 'png',
+        'min': 0.02, 'max': 0.25, 'format': 'png',
     })
     save_path = os.path.join(ROOT, "output", "images", "sat", f"{sample_id}.png")
     urllib.request.urlretrieve(url, save_path)
