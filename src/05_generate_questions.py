@@ -35,7 +35,10 @@ def generate_questions(sample):
     are all reproducible but varied across samples.
     """
     from config import (LAND_USE_CATEGORIES, BUILDING_HEIGHT_CATEGORIES,
-                        ROAD_LABELS, URBAN_DENSITY_CATEGORIES)
+                        ROAD_LABELS, URBAN_DENSITY_CATEGORIES,
+                        ROAD_SURFACE_BINS, ROAD_SURFACE_OPTIONS,
+                        JUNCTION_TYPES, WATER_PROXIMITY_BINS,
+                        TRANSIT_DENSITY_BINS)
     questions = []
     sid = sample.get("sample_id", "")
     # Per-sample RNG for distractor and template selection
@@ -173,6 +176,72 @@ def generate_questions(sample):
             "topic": "amenity_richness", "difficulty": "medium",
         })
 
+    # --- ROAD SURFACE ---
+    surface = sample.get("osm_road_surface")
+    if surface and surface in ROAD_SURFACE_BINS:
+        correct = ROAD_SURFACE_BINS[surface]
+        distractors = [opt for opt in ROAD_SURFACE_OPTIONS if opt != correct]
+        rng.shuffle(distractors)
+        opts, ans = _shuffle_options(correct, distractors[:3], sid, "road_surface")
+        questions.append({
+            "question": rng.choice(QUESTION_TEMPLATES["road_surface"]),
+            "options": opts, "answer": ans,
+            "topic": "road_surface", "difficulty": "easy",
+        })
+
+    # --- JUNCTION TYPE ---
+    jtype = sample.get("osm_junction_type")
+    if jtype and jtype in JUNCTION_TYPES:
+        correct = JUNCTION_TYPES[jtype]
+        distractors = [v for k, v in JUNCTION_TYPES.items() if k != jtype]
+        rng.shuffle(distractors)
+        opts, ans = _shuffle_options(correct, distractors[:3], sid, "junction_type")
+        questions.append({
+            "question": rng.choice(QUESTION_TEMPLATES["junction_type"]),
+            "options": opts, "answer": ans,
+            "topic": "junction_type", "difficulty": "medium",
+        })
+
+    # --- WATER PROXIMITY ---
+    water_dist = sample.get("osm_water_distance_m")
+    if water_dist is not None:
+        correct = None
+        for label, lo, hi in WATER_PROXIMITY_BINS:
+            if lo <= water_dist < hi:
+                correct = label
+                break
+        if correct:
+            distractors = [label for label, _, _ in WATER_PROXIMITY_BINS
+                           if label != correct]
+            if len(distractors) < 3:
+                distractors.append("A seasonal water body may be present")
+            rng.shuffle(distractors)
+            opts, ans = _shuffle_options(correct, distractors[:3], sid, "water_proximity")
+            questions.append({
+                "question": rng.choice(QUESTION_TEMPLATES["water_proximity"]),
+                "options": opts, "answer": ans,
+                "topic": "water_proximity", "difficulty": "medium",
+            })
+
+    # --- TRANSIT DENSITY ---
+    transit_count = sample.get("osm_transit_stop_count")
+    if transit_count is not None:
+        correct = None
+        for label, lo, hi in TRANSIT_DENSITY_BINS:
+            if lo <= transit_count <= hi:
+                correct = label
+                break
+        if correct:
+            distractors = [label for label, _, _ in TRANSIT_DENSITY_BINS
+                           if label != correct]
+            rng.shuffle(distractors)
+            opts, ans = _shuffle_options(correct, distractors[:3], sid, "transit_density")
+            questions.append({
+                "question": rng.choice(QUESTION_TEMPLATES["transit_density"]),
+                "options": opts, "answer": ans,
+                "topic": "transit_density", "difficulty": "medium",
+            })
+
     return questions
 
 
@@ -214,6 +283,15 @@ def select_best_question(sample, questions, used_topics_counter):
         elif topic == "green_space":
             score += 3
         elif topic == "amenity_richness":
+            score += 2
+        elif topic == "road_surface":
+            score += 4
+        elif topic == "junction_type":
+            jtype = sample.get("osm_junction_type", "")
+            score += 5 if jtype == "roundabout" else 3
+        elif topic == "water_proximity":
+            score += 4
+        elif topic == "transit_density":
             score += 2
 
         scored.append((score, q))
