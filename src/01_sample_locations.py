@@ -112,10 +112,14 @@ def load_context_index(context_json_path):
     with open(context_json_path) as f:
         data = json.load(f)
 
-    buildings = []  # (lat, lon, levels, building_type)
-    amenities = []  # (lat, lon, amenity_type)
-    landuse = []    # (lat, lon, landuse_type)
-    parks = []      # (lat, lon)
+    buildings = []        # (lat, lon, levels, building_type)
+    amenities = []        # (lat, lon, amenity_type)
+    landuse = []          # (lat, lon, landuse_type)
+    parks = []            # (lat, lon)
+    traffic_signals = []  # (lat, lon)
+    water_features = []   # (lat, lon, type)
+    transit_stops = []    # (lat, lon, type)
+    roads_with_tags = []  # (lat, lon, tags_dict)
 
     for elem in data.get("elements", []):
         tags = elem.get("tags", {})
@@ -123,6 +127,11 @@ def load_context_index(context_json_path):
         center = elem.get("center", {})
         lat = center.get("lat")
         lon = center.get("lon")
+
+        # Nodes don't have center — use direct lat/lon
+        if lat is None or lon is None:
+            lat = elem.get("lat")
+            lon = elem.get("lon")
         if lat is None or lon is None:
             continue
 
@@ -146,7 +155,33 @@ def load_context_index(context_json_path):
         if tags.get("leisure") == "park":
             parks.append((lat, lon))
 
-    return {"buildings": buildings, "amenities": amenities, "landuse": landuse, "parks": parks}
+        # Highway ways with surface/junction tags
+        if tags.get("highway") in ("primary", "secondary", "tertiary",
+                                    "residential", "trunk", "motorway"):
+            roads_with_tags.append((lat, lon, tags))
+
+        # Traffic signals nodes
+        if tags.get("highway") == "traffic_signals":
+            traffic_signals.append((lat, lon))
+
+        # Water features
+        if tags.get("natural") == "water" or "waterway" in tags:
+            water_features.append((lat, lon, tags.get("waterway", "water")))
+
+        # Transit stops
+        if tags.get("highway") == "bus_stop":
+            transit_stops.append((lat, lon, "bus_stop"))
+        if tags.get("railway") in ("station", "tram_stop"):
+            transit_stops.append((lat, lon, tags["railway"]))
+        if tags.get("public_transport") == "stop_position":
+            transit_stops.append((lat, lon, "stop_position"))
+
+    return {
+        "buildings": buildings, "amenities": amenities,
+        "landuse": landuse, "parks": parks,
+        "traffic_signals": traffic_signals, "water_features": water_features,
+        "transit_stops": transit_stops, "roads_with_tags": roads_with_tags,
+    }
 
 
 def snap_to_road(lat, lon, road_nodes, radius_deg=0.002):
@@ -167,6 +202,17 @@ def snap_to_road(lat, lon, road_nodes, radius_deg=0.002):
         "road_bearing": round(best[2], 1),
         "road_name": best[3], "highway_type": best[4],
     }
+
+
+def _haversine_m(lat1, lon1, lat2, lon2):
+    """Distance in meters between two lat/lon points."""
+    R = 6_371_000
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlon / 2) ** 2)
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 def get_local_context(lat, lon, context_idx, radius_deg=0.002):
@@ -218,6 +264,66 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
         amenity_count
     )
 
+    # --- Road surface: most common surface tag on nearby roads ---
+    surface_counter = Counter()
+    for rlat, rlon, rtags in context_idx.get("roads_with_tags", []):
+        if abs(rlat - lat) < radius_deg and abs(rlon - lon) < radius_deg:
+            surface = rtags.get("surface")
+            if surface:
+                surface_counter[surface] += 1
+    osm_road_surface = surface_counter.most_common(1)[0][0] if surface_counter else None
+
+    # --- Junction type: detect intersection type ---
+    nearby_roads = []
+    has_roundabout = False
+    has_bridge_or_tunnel = False
+    for rlat, rlon, rtags in context_idx.get("roads_with_tags", []):
+        if abs(rlat - lat) < radius_deg and abs(rlon - lon) < radius_deg:
+            nearby_roads.append(rtags)
+            if rtags.get("junction") == "roundabout":
+                has_roundabout = True
+            if rtags.get("bridge") == "yes" or rtags.get("tunnel") == "yes":
+                has_bridge_or_tunnel = True
+
+    has_traffic_signal = any(
+        abs(slat - lat) < radius_deg and abs(slon - lon) < radius_deg
+        for slat, slon in context_idx.get("traffic_signals", [])
+    )
+
+    osm_junction_type = None
+    if len(nearby_roads) >= 2:  # at least 2 roads = intersection
+        if has_roundabout:
+            osm_junction_type = "roundabout"
+        elif has_traffic_signal:
+            osm_junction_type = "signalized"
+        elif has_bridge_or_tunnel:
+            osm_junction_type = "grade_separated"
+        else:
+            osm_junction_type = "unsignalized"
+
+    # --- Water proximity: distance to nearest water feature ---
+    osm_water_distance_m = None
+    for wlat, wlon, _ in context_idx.get("water_features", []):
+        dist = _haversine_m(lat, lon, wlat, wlon)
+        if osm_water_distance_m is None or dist < osm_water_distance_m:
+            osm_water_distance_m = dist
+
+    # --- Transit stop density: count stops within 300m, deduplicate ---
+    transit_radius_deg = 0.003  # ~300m
+    dedup_radius_deg = 0.0002  # ~20m
+    raw_stops = []
+    for tlat, tlon, ttype in context_idx.get("transit_stops", []):
+        if abs(tlat - lat) < transit_radius_deg and abs(tlon - lon) < transit_radius_deg:
+            if _haversine_m(lat, lon, tlat, tlon) <= 300:
+                raw_stops.append((tlat, tlon, ttype))
+    # Deduplicate stops within 20m of each other
+    deduped = []
+    for s in raw_stops:
+        if not any(abs(s[0] - d[0]) < dedup_radius_deg and
+                   abs(s[1] - d[1]) < dedup_radius_deg for d in deduped):
+            deduped.append(s)
+    osm_transit_stop_count = len(deduped)
+
     return {
         "osm_building_count": building_count,
         "osm_median_levels": median_levels,
@@ -227,6 +333,10 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
         "osm_has_park": has_park,
         "osm_building_types": dict(btype_counter.most_common(5)),
         "land_use_category": land_use_category,
+        "osm_road_surface": osm_road_surface,
+        "osm_junction_type": osm_junction_type,
+        "osm_water_distance_m": round(osm_water_distance_m, 1) if osm_water_distance_m is not None else None,
+        "osm_transit_stop_count": osm_transit_stop_count,
     }
 
 
