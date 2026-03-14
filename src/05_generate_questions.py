@@ -1,6 +1,6 @@
 """
-Step 5: Generate template-based MCQs from OSM metadata.
-City-agnostic — all questions derived from universal OSM data.
+Step 5: Generate template-based MCQs from OSM metadata and cross-view alignment.
+City-agnostic — questions derived from universal OSM data and coordinate geometry.
 """
 
 import os
@@ -8,6 +8,7 @@ import json
 import random
 from collections import Counter
 from question_templates import QUESTION_TEMPLATES
+from utils import bearing_to_quadrant
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -242,6 +243,65 @@ def generate_questions(sample):
                 "topic": "transit_density", "difficulty": "medium",
             })
 
+    # --- CAMERA DIRECTION (cross-view) ---
+    bearing = sample.get("road_bearing")
+    if bearing is not None:
+        try:
+            bearing = float(bearing)
+            correct = bearing_to_quadrant(bearing)
+            all_quadrants = ["Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"]
+            distractors = [q for q in all_quadrants if q != correct]
+            opts, ans = _shuffle_options(correct, distractors, sid, "camera_direction")
+            questions.append({
+                "question": rng.choice(QUESTION_TEMPLATES["camera_direction"]),
+                "options": opts, "answer": ans,
+                "topic": "camera_direction", "difficulty": "medium",
+            })
+        except (ValueError, TypeError):
+            pass
+
+    # --- MISMATCH BINARY (cross-view) ---
+    neg_sid = sample.get("mismatch_negative_sid")
+    if neg_sid:
+        mismatch_rng = random.Random(f"{sid}_mismatch")
+        show_correct = mismatch_rng.random() < 0.5
+        sample["mismatch_show_correct"] = show_correct
+        if show_correct:
+            correct = "Yes, this street view corresponds to this satellite image"
+            distractors = [
+                "No, these images show different locations",
+                "The images are from nearby but not the same spot",
+                "Cannot determine from the available imagery",
+            ]
+        else:
+            correct = "No, these images show different locations"
+            distractors = [
+                "Yes, this street view corresponds to this satellite image",
+                "The images are from the same general area",
+                "Cannot determine from the available imagery",
+            ]
+        opts, ans = _shuffle_options(correct, distractors, sid, "mismatch_binary")
+        questions.append({
+            "question": rng.choice(QUESTION_TEMPLATES["mismatch_binary"]),
+            "options": opts, "answer": ans,
+            "topic": "mismatch_binary", "difficulty": "medium",
+        })
+
+    # --- MISMATCH MCQ (cross-view, 4-SAT composite) ---
+    composite = sample.get("composite_4sat_path")
+    correct_pos = sample.get("composite_4sat_correct_pos")
+    if composite and correct_pos:
+        pos_labels = {"A": "Top-Left", "B": "Top-Right",
+                      "C": "Bottom-Left", "D": "Bottom-Right"}
+        correct = pos_labels[correct_pos]
+        distractors = [v for k, v in pos_labels.items() if k != correct_pos]
+        opts, ans = _shuffle_options(correct, distractors, sid, "mismatch_mcq")
+        questions.append({
+            "question": rng.choice(QUESTION_TEMPLATES["mismatch_mcq"]),
+            "options": opts, "answer": ans,
+            "topic": "mismatch_mcq", "difficulty": "hard",
+        })
+
     return questions
 
 
@@ -293,6 +353,12 @@ def select_best_question(sample, questions, used_topics_counter):
             score += 4
         elif topic == "transit_density":
             score += 2
+        elif topic == "camera_direction":
+            score += 3
+        elif topic == "mismatch_binary":
+            score += 3
+        elif topic == "mismatch_mcq":
+            score += 4
 
         scored.append((score, q))
 
