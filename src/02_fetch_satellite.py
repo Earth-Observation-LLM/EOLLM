@@ -23,8 +23,11 @@ def get_ee():
     return _ee
 
 
-def fetch_naip_tile(lat, lon, sample_id, buffer_m=250, px=512):
+def fetch_naip_tile(lat, lon, sample_id, buffer_m=None, px=None):
     """Download a NAIP tile (US only, 0.6m resolution)."""
+    from config import SAT_BUFFER_M, SAT_IMAGE_PX
+    buffer_m = buffer_m or SAT_BUFFER_M.get("NAIP", 250)
+    px = px or SAT_IMAGE_PX
     ee = get_ee()
     from config import NAIP_DATE_RANGE
     point = ee.Geometry.Point([lon, lat])
@@ -54,13 +57,16 @@ def fetch_naip_tile(lat, lon, sample_id, buffer_m=250, px=512):
     return save_path, date_info, "NAIP"
 
 
-def fetch_s2_tile(lat, lon, sample_id, buffer_m=500, px=512):
+def fetch_s2_tile(lat, lon, sample_id, buffer_m=None, px=None):
     """Download a Sentinel-2 tile (global, 10m resolution).
 
     Buffer is 500m so that at 10m/pixel the native footprint is ~100px,
     and GEE returns a 512x512 image with ~5x oversampling — enough detail
     to see roads, building blocks, and green areas without Minecraft pixels.
     """
+    from config import SAT_BUFFER_M, SAT_IMAGE_PX
+    buffer_m = buffer_m or SAT_BUFFER_M.get("S2", 500)
+    px = px or SAT_IMAGE_PX
     ee = get_ee()
     from config import S2_DATE_RANGE, S2_CLOUD_THRESHOLD
     point = ee.Geometry.Point([lon, lat])

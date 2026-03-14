@@ -132,6 +132,20 @@ OSM_QUERY_TEMPLATE = """
     ({s},{w},{n},{e});
   way["leisure"="park"]
     ({s},{w},{n},{e});
+  node["highway"="traffic_signals"]
+    ({s},{w},{n},{e});
+  way["natural"="water"]
+    ({s},{w},{n},{e});
+  way["waterway"]
+    ({s},{w},{n},{e});
+  node["highway"="bus_stop"]
+    ({s},{w},{n},{e});
+  node["railway"="station"]
+    ({s},{w},{n},{e});
+  node["railway"="tram_stop"]
+    ({s},{w},{n},{e});
+  node["public_transport"="stop_position"]
+    ({s},{w},{n},{e});
 );
 out tags center;
 """
@@ -184,6 +198,45 @@ URBAN_DENSITY_CATEGORIES = [
     ("High density (dense urban)",       51, 150),
     ("Very high density (urban core)",  151, 9999),
 ]
+
+# Road surface classification (from OSM surface tag)
+ROAD_SURFACE_BINS = {
+    "asphalt": "Asphalt", "paved": "Asphalt",
+    "concrete": "Concrete", "concrete:plates": "Concrete",
+    "cobblestone": "Cobblestone/Sett", "sett": "Cobblestone/Sett",
+    "paving_stones": "Cobblestone/Sett",
+    "unpaved": "Unpaved/Gravel", "gravel": "Unpaved/Gravel",
+    "dirt": "Unpaved/Gravel", "ground": "Unpaved/Gravel",
+    "sand": "Unpaved/Gravel", "compacted": "Unpaved/Gravel",
+}
+ROAD_SURFACE_OPTIONS = ["Asphalt", "Cobblestone/Sett", "Unpaved/Gravel", "Concrete"]
+
+# Junction type classification
+JUNCTION_TYPES = {
+    "roundabout": "Roundabout",
+    "signalized": "Signalized intersection",
+    "unsignalized": "Unsignalized intersection",
+    "grade_separated": "Grade-separated (overpass/underpass)",
+}
+
+# Water proximity bins (label, min_m, max_m)
+WATER_PROXIMITY_BINS = [
+    ("Yes — directly adjacent to a water body", 0, 50),
+    ("Yes — nearby but not adjacent", 50, 200),
+    ("No water body in view", 200, 99999),
+]
+
+# Transit stop density bins (label, min_count, max_count)
+TRANSIT_DENSITY_BINS = [
+    ("None (no transit stops within 300m)", 0, 0),
+    ("Low (1–2 stops)", 1, 2),
+    ("Moderate (3–5 stops)", 3, 5),
+    ("High (6+ stops)", 6, 9999),
+]
+
+# Satellite image buffer (meters) and output size (pixels)
+SAT_BUFFER_M = {"NAIP": 250, "S2": 500}
+SAT_IMAGE_PX = 512
 
 # GEE config
 GEE_PROJECT = "bitirme-489511"

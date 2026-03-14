@@ -75,6 +75,13 @@ context_query() {
   way["landuse"](${s},${w},${n},${e});
   node["amenity"](${s},${w},${n},${e});
   way["leisure"="park"](${s},${w},${n},${e});
+  node["highway"="traffic_signals"](${s},${w},${n},${e});
+  way["natural"="water"](${s},${w},${n},${e});
+  way["waterway"](${s},${w},${n},${e});
+  node["highway"="bus_stop"](${s},${w},${n},${e});
+  node["railway"="station"](${s},${w},${n},${e});
+  node["railway"="tram_stop"](${s},${w},${n},${e});
+  node["public_transport"="stop_position"](${s},${w},${n},${e});
 );
 out tags center;
 EOF
