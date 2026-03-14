@@ -77,7 +77,7 @@ def get_ee():
 def fetch_naip_tile(lat, lon, sample_id, buffer_m=None, px=None):
     """Download a NAIP tile (USA only, 0.6 m resolution)."""
     from config import SAT_BUFFER_M, SAT_IMAGE_PX, NAIP_DATE_RANGE
-    buffer_m = buffer_m or SAT_BUFFER_M.get("NAIP", 250)
+    buffer_m = buffer_m or SAT_BUFFER_M.get("NAIP", 250)  # config-driven zoom
     px = px or SAT_IMAGE_PX
     ee = get_ee()
 
@@ -122,12 +122,12 @@ def fetch_ign_tile(lat, lon, sample_id, buffer_m=None, px=None):
     Uses the IGN Géoplateforme WMS — completely free, no API key required.
     Layer: HR.ORTHOIMAGERY.ORTHOPHOTOS (0.2 m aerial survey).
     """
-    from config import SAT_IMAGE_PX
+    from config import SAT_BUFFER_M, SAT_IMAGE_PX
     px = px or SAT_IMAGE_PX
 
     # Compute bounding box in degrees from a metre buffer
     # 1 degree latitude ≈ 111 320 m; longitude shrinks with cos(lat)
-    buffer_m = buffer_m or 300   # 300 m → ~600 m side → very detailed
+    buffer_m = buffer_m or SAT_BUFFER_M.get("IGN", 200)  # config-driven zoom
     dlat = buffer_m / 111_320
     dlon = buffer_m / (111_320 * math.cos(math.radians(lat)))
 
@@ -170,11 +170,10 @@ def fetch_esri_tile(lat, lon, sample_id, buffer_m=None, px=None):
     Uses Maxar/Airbus imagery under the hood. Free, no API key needed.
     Works well for Europe, Turkey, Middle East, and most major cities worldwide.
     """
-    from config import SAT_IMAGE_PX
+    from config import SAT_BUFFER_M, SAT_IMAGE_PX
     px = px or SAT_IMAGE_PX
 
-    # 300 m buffer gives a ~600 m tile — good street-level detail
-    buffer_m = buffer_m or 300
+    buffer_m = buffer_m or SAT_BUFFER_M.get("ESRI", 200)  # config-driven zoom
     dlat = buffer_m / 111_320
     dlon = buffer_m / (111_320 * math.cos(math.radians(lat)))
 
@@ -209,11 +208,11 @@ def fetch_s2_tile(lat, lon, sample_id, buffer_m=None, px=None):
     Download a Sentinel-2 median composite (global, 10 m resolution).
     Last resort — use only when all higher-res sources fail.
     """
-    from config import SAT_IMAGE_PX, S2_DATE_RANGE, S2_CLOUD_THRESHOLD
+    from config import SAT_BUFFER_M, SAT_IMAGE_PX, S2_DATE_RANGE, S2_CLOUD_THRESHOLD
     px = px or SAT_IMAGE_PX
 
-    # Buffer calculated so 10 m/px native fills the output without upscaling
-    buffer_m = buffer_m or (px // 2 * 10)   # e.g. 512/2*10 = 2560 m
+    # S2 is 10 m/px native — default buffer keeps ~1:1 pixel mapping
+    buffer_m = buffer_m or SAT_BUFFER_M.get("S2", px // 2 * 10)  # config-driven zoom
 
     ee = get_ee()
     point = ee.Geometry.Point([lon, lat])
