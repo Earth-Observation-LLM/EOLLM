@@ -55,7 +55,7 @@ The pipeline is a linear 6-step chain. Each step's `run()` function takes a list
 
 ## Key Configuration (`src/config.py`)
 
-- **Adding a city**: append an entry to `CITIES` dict with `name`, `country`, `bbox` (S,W,N,E), `satellite_source` (`"NAIP"` for US, `"S2"` elsewhere), and a `seeds` list of `(label, lat, lon, urban_character)` tuples. No other code changes needed.
+- **Adding a city**: append an entry to `CITIES` dict with `name`, `country`, `bbox` (S,W,N,E), and a `seeds` list of `(label, lat, lon, urban_character)` tuples. Satellite source is auto-detected from coordinates (NAIP for US, IGN for France, ESRI for everywhere else, S2 as fallback). No other code changes needed.
 - **OSM data**: downloaded once per city as two Overpass queries (roads + context) and cached in `data/{city}_roads_osm.json` and `data/{city}_context_osm.json`.
 - **Question types**: `land_use`, `building_height`, `urban_density`, `road_type`, `green_space`, `amenity_richness`. Selection per sample uses a scoring heuristic for topic diversity.
 - **Reproducibility**: `random.seed(42)` is used for option shuffling.
@@ -68,7 +68,7 @@ Final dataset: `output/dataset.jsonl` — one JSON record per line with fields: 
 
 - **São Paulo**: Overpass API may timeout due to large bbox; pipeline retries 3x with backoff. Missing context file = no OSM metadata for affected samples.
 - **London Canary Wharf**: No outdoor Street View coverage; all 4 SV images will be missing.
-- **Sentinel-2 cloud cover**: Files under 5 KB are flagged as warnings (blank/cloud-covered tiles).
+- **Satellite tile quality**: Files under 5 KB are auto-rejected and the next source in the fallback chain is tried (e.g. ESRI -> S2).
 - **`building:levels` coverage**: Sparse in São Paulo and Singapore; samples without it cannot generate `building_height` questions.
 
 # USER RULES

@@ -474,7 +474,7 @@ def run_city(city_key, city_cfg, num_samples=10):
             "road_bearing": road_info["road_bearing"],
             "road_name": road_info["road_name"],
             "highway_type": road_info["highway_type"],
-            "satellite_source": city_cfg["satellite_source"],
+            "satellite_source": city_cfg.get("satellite_source"),
         }
         # Flatten context
         for k, v in context.items():

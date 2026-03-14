@@ -8,8 +8,6 @@ CITIES = {
         "name": "New York City",
         "country": "USA",
         "bbox": (40.490, -74.260, 40.920, -73.680),  # S, W, N, E
-        "satellite_source": "NAIP",  # 0.6m resolution
-        "satellite_fallback": "S2",
         "seeds": [
             ("Times Square",        40.7580, -73.9855, "commercial"),
             ("Wall Street",         40.7074, -74.0113, "commercial"),
@@ -27,7 +25,6 @@ CITIES = {
         "name": "Paris",
         "country": "France",
         "bbox": (48.815, 2.225, 48.902, 2.420),
-        "satellite_source": "S2",
         "seeds": [
             ("Champs-Elysees",      48.8738,  2.2950, "commercial"),
             ("Le Marais",           48.8566,  2.3622, "residential"),
@@ -45,7 +42,6 @@ CITIES = {
         "name": "London",
         "country": "UK",
         "bbox": (51.285, -0.510, 51.690, 0.335),
-        "satellite_source": "S2",
         "seeds": [
             ("City of London",      51.5133, -0.0886, "commercial"),
             ("Canary Wharf",        51.5054, -0.0235, "commercial"),
@@ -63,7 +59,6 @@ CITIES = {
         "name": "Singapore",
         "country": "Singapore",
         "bbox": (1.205, 103.605, 1.475, 104.030),
-        "satellite_source": "S2",
         "seeds": [
             ("Marina Bay",          1.2815, 103.8585, "commercial"),
             ("Chinatown",           1.2830, 103.8440, "mixed"),
@@ -81,7 +76,6 @@ CITIES = {
         "name": "São Paulo",
         "country": "Brazil",
         "bbox": (-23.750, -46.850, -23.350, -46.350),
-        "satellite_source": "S2",
         "seeds": [
             ("Avenida Paulista",   -23.5613, -46.6556, "commercial"),
             ("Faria Lima",         -23.5870, -46.6780, "commercial"),
@@ -99,7 +93,6 @@ CITIES = {
         "name": "Amsterdam",
         "country": "Netherlands",
         "bbox": (52.290, 4.730, 52.430, 5.020),
-        "satellite_source": "S2",
         "seeds": [
             ("Dam Square",          52.3730,  4.8932, "commercial"),
             ("Jordaan",             52.3748,  4.8828, "residential"),
@@ -234,8 +227,8 @@ TRANSIT_DENSITY_BINS = [
     ("High (6+ stops)", 6, 9999),
 ]
 
-# Satellite image buffer (meters) and output size (pixels)
-SAT_BUFFER_M = {"NAIP": 250, "S2": 500}
+# Satellite image output size (pixels); per-source buffers live in 02_fetch_satellite.py
+SAT_BUFFER_M = {"NAIP": 250}
 SAT_IMAGE_PX = 512
 
 # GEE config
