@@ -39,6 +39,9 @@ def build_jsonl_record(sample):
         "streetview_date": sample.get("sv_date") if isinstance(sample.get("sv_date"), str) else None,
     }
 
+    if sample.get("composite_4sat_path"):
+        images["composite_4sat"] = sample["composite_4sat_path"]
+
     options = sample.get("options", {})
     if isinstance(options, str):
         try:
@@ -80,6 +83,10 @@ def build_jsonl_record(sample):
         "osm_building_types": building_types,
         "road_name": sample.get("road_name"),
         "road_type": sample.get("highway_type"),
+        "osm_road_surface": sample.get("osm_road_surface"),
+        "osm_junction_type": sample.get("osm_junction_type"),
+        "osm_water_distance_m": sample.get("osm_water_distance_m"),
+        "osm_transit_stop_count": _safe_int(sample.get("osm_transit_stop_count")),
     }
 
     # Add US Census data if available
@@ -216,12 +223,14 @@ def main():
 
     os.makedirs(os.path.join(ROOT, "output", "images", "sat"), exist_ok=True)
     os.makedirs(os.path.join(ROOT, "output", "images", "sv"), exist_ok=True)
+    os.makedirs(os.path.join(ROOT, "output", "images", "composite"), exist_ok=True)
 
     from importlib import import_module
     step1 = import_module("01_sample_locations")
     step2 = import_module("02_fetch_satellite")
     step3 = import_module("03_fetch_streetview")
     step4 = import_module("04_enrich_metadata")
+    step_composite = import_module("07_generate_composites")
     step5 = import_module("05_generate_questions")
     step6 = import_module("06_validate")
 
@@ -229,6 +238,7 @@ def main():
     samples = step2.run(samples)
     samples = step3.run(samples)
     samples = step4.run(samples)
+    samples = step_composite.run(samples)
     samples = step5.run(samples)
     samples = step6.run(samples)
 
