@@ -215,14 +215,18 @@ def _haversine_m(lat1, lon1, lat2, lon2):
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def get_local_context(lat, lon, context_idx, radius_deg=0.002):
+def get_local_context(lat, lon, context_idx, buffer_m=200):
     """Extract OSM context around a point from pre-loaded index."""
     from collections import Counter
+
+    # Convert metre buffer to degree offsets at this latitude
+    radius_deg_lat = buffer_m / 111_320
+    radius_deg_lon = buffer_m / (111_320 * math.cos(math.radians(lat)))
 
     # Buildings within radius
     nearby_buildings = []
     for blat, blon, levels, btype in context_idx["buildings"]:
-        if abs(blat - lat) < radius_deg and abs(blon - lon) < radius_deg:
+        if abs(blat - lat) < radius_deg_lat and abs(blon - lon) < radius_deg_lon:
             nearby_buildings.append((levels, btype))
 
     building_count = len(nearby_buildings)
@@ -239,7 +243,7 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
     # Amenities
     nearby_amenities = []
     for alat, alon, atype in context_idx["amenities"]:
-        if abs(alat - lat) < radius_deg and abs(alon - lon) < radius_deg:
+        if abs(alat - lat) < radius_deg_lat and abs(alon - lon) < radius_deg_lon:
             nearby_amenities.append(atype)
     amenity_count = len(nearby_amenities)
     amenity_types = list(set(nearby_amenities))[:10]
@@ -247,14 +251,14 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
     # Land use
     nearby_landuse = []
     for llat, llon, ltype in context_idx["landuse"]:
-        if abs(llat - lat) < radius_deg and abs(llon - lon) < radius_deg:
+        if abs(llat - lat) < radius_deg_lat and abs(llon - lon) < radius_deg_lon:
             nearby_landuse.append(ltype)
     landuse_counter = Counter(nearby_landuse)
     dominant_landuse = landuse_counter.most_common(1)[0][0] if landuse_counter else None
 
     # Parks
     has_park = any(
-        abs(plat - lat) < radius_deg and abs(plon - lon) < radius_deg
+        abs(plat - lat) < radius_deg_lat and abs(plon - lon) < radius_deg_lon
         for plat, plon in context_idx["parks"]
     )
 
@@ -267,7 +271,7 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
     # --- Road surface: most common surface tag on nearby roads ---
     surface_counter = Counter()
     for rlat, rlon, rtags in context_idx.get("roads_with_tags", []):
-        if abs(rlat - lat) < radius_deg and abs(rlon - lon) < radius_deg:
+        if abs(rlat - lat) < radius_deg_lat and abs(rlon - lon) < radius_deg_lon:
             surface = rtags.get("surface")
             if surface:
                 surface_counter[surface] += 1
@@ -278,7 +282,7 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
     has_roundabout = False
     has_bridge_or_tunnel = False
     for rlat, rlon, rtags in context_idx.get("roads_with_tags", []):
-        if abs(rlat - lat) < radius_deg and abs(rlon - lon) < radius_deg:
+        if abs(rlat - lat) < radius_deg_lat and abs(rlon - lon) < radius_deg_lon:
             nearby_roads.append(rtags)
             if rtags.get("junction") == "roundabout":
                 has_roundabout = True
@@ -286,7 +290,7 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
                 has_bridge_or_tunnel = True
 
     has_traffic_signal = any(
-        abs(slat - lat) < radius_deg and abs(slon - lon) < radius_deg
+        abs(slat - lat) < radius_deg_lat and abs(slon - lon) < radius_deg_lon
         for slat, slon in context_idx.get("traffic_signals", [])
     )
 
@@ -301,9 +305,11 @@ def get_local_context(lat, lon, context_idx, radius_deg=0.002):
         else:
             osm_junction_type = "unsignalized"
 
-    # --- Water proximity: distance to nearest water feature ---
+    # --- Water proximity: distance to nearest water feature within sat tile ---
     osm_water_distance_m = None
     for wlat, wlon, _ in context_idx.get("water_features", []):
+        if abs(wlat - lat) > radius_deg_lat or abs(wlon - lon) > radius_deg_lon:
+            continue  # outside visible satellite tile
         dist = _haversine_m(lat, lon, wlat, wlon)
         if osm_water_distance_m is None or dist < osm_water_distance_m:
             osm_water_distance_m = dist
@@ -458,8 +464,11 @@ def run_city(city_key, city_cfg, num_samples=10):
 
         slat, slon = road_info["lat"], road_info["lon"]
 
-        # Get OSM context
-        context = get_local_context(slat, slon, context_idx)
+        # Get OSM context (search radius matched to satellite tile)
+        from config import detect_sat_source, SAT_BUFFER_M
+        source = detect_sat_source(slat, slon)
+        buffer_m = SAT_BUFFER_M.get(source, 200)
+        context = get_local_context(slat, slon, context_idx, buffer_m=buffer_m)
 
         sample = {
             "sample_id": sample_id,
@@ -474,7 +483,8 @@ def run_city(city_key, city_cfg, num_samples=10):
             "road_bearing": road_info["road_bearing"],
             "road_name": road_info["road_name"],
             "highway_type": road_info["highway_type"],
-            "satellite_source": city_cfg.get("satellite_source"),
+            "satellite_source": source,
+            "metadata_radius_m": buffer_m,
         }
         # Flatten context
         for k, v in context.items():

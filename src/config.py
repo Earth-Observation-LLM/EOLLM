@@ -109,7 +109,7 @@ CITIES = {
 }
 
 # How many samples per city
-SAMPLES_PER_CITY = 10
+SAMPLES_PER_CITY = 5
 
 # OSM Overpass query for full city data (buildings + roads + amenities + landuse)
 OSM_QUERY_TEMPLATE = """
@@ -215,8 +215,8 @@ JUNCTION_TYPES = {
 # Water proximity bins (label, min_m, max_m)
 WATER_PROXIMITY_BINS = [
     ("Yes — directly adjacent to a water body", 0, 50),
-    ("Yes — nearby but not adjacent", 50, 200),
-    ("No water body in view", 200, 99999),
+    ("Yes — nearby but not adjacent", 50, 150),
+    ("No water body in view", 150, 99999),
 ]
 
 # Transit stop density bins (label, min_count, max_count)
@@ -237,6 +237,30 @@ SAT_BUFFER_M = {
     "S2":   2560,  # 2560m → ~5120m tile (10 m/px native — can't zoom further)
 }
 SAT_IMAGE_PX = 512
+
+# ---------------------------------------------------------------------------
+# Satellite source auto-detection (by coordinates)
+# ---------------------------------------------------------------------------
+_USA_BOXES = [
+    (-125.0, 24.0, -66.0, 50.0),    # Continental US
+    (-180.0, 51.0, -130.0, 72.0),   # Alaska
+    (-161.0, 18.5, -154.5, 22.5),   # Hawaii
+]
+_FRANCE_BOX = (-5.5, 41.0, 10.0, 51.5)   # Metropolitan France + Corsica
+
+
+def _in_box(lat, lon, box):
+    lon_min, lat_min, lon_max, lat_max = box
+    return lon_min <= lon <= lon_max and lat_min <= lat <= lat_max
+
+
+def detect_sat_source(lat: float, lon: float) -> str:
+    """Return the best satellite source tag for a given coordinate."""
+    if any(_in_box(lat, lon, b) for b in _USA_BOXES):
+        return "NAIP"
+    if _in_box(lat, lon, _FRANCE_BOX):
+        return "IGN"
+    return "ESRI"
 
 # GEE config
 GEE_PROJECT = "supple-flux-481209-j1"

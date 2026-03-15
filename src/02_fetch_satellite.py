@@ -28,29 +28,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # ---------------------------------------------------------------------------
 # Region bounding boxes for auto source detection
 # ---------------------------------------------------------------------------
-
-# Each entry: (lon_min, lat_min, lon_max, lat_max)
-_USA_BOXES = [
-    (-125.0, 24.0, -66.0, 50.0),    # Continental US
-    (-180.0, 51.0, -130.0, 72.0),   # Alaska
-    (-161.0, 18.5, -154.5, 22.5),   # Hawaii
-]
-
-_FRANCE_BOX = (-5.5, 41.0, 10.0, 51.5)   # Metropolitan France + Corsica
-
-
-def _in_box(lat, lon, box):
-    lon_min, lat_min, lon_max, lat_max = box
-    return lon_min <= lon <= lon_max and lat_min <= lat <= lat_max
-
-
-def detect_source(lat: float, lon: float) -> str:
-    """Return the best satellite source tag for a given coordinate."""
-    if any(_in_box(lat, lon, b) for b in _USA_BOXES):
-        return "NAIP"
-    if _in_box(lat, lon, _FRANCE_BOX):
-        return "IGN"
-    return "ESRI"   # Covers EU, Turkey, and most of the world at good quality
+from config import detect_sat_source as detect_source
 
 
 # ---------------------------------------------------------------------------
