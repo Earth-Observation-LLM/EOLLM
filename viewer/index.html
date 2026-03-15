@@ -103,6 +103,31 @@
       font-weight: 600;
     }
 
+    /* ── MODE TOGGLE ── */
+    .mode-toggle {
+      display: flex;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 5px 16px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .mode-btn:hover { color: var(--text); }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
     .search-box {
       margin-left: auto;
     }
@@ -195,6 +220,7 @@
     }
     .badge-city  { background: rgba(79,142,247,0.18); color: #7ab4fb; }
     .badge-topic { background: rgba(124,92,191,0.22); color: #b094e8; }
+    .badge-qcount { background: rgba(79,142,247,0.18); color: #7ab4fb; }
     .badge-diff-easy   { background: rgba(46,204,113,0.18); color: #5de49a; }
     .badge-diff-medium { background: rgba(241,196,15,0.18); color: #f5d752; }
     .badge-diff-hard   { background: rgba(231,76,60,0.18);  color: #f1846f; }
@@ -236,6 +262,13 @@
       border-radius: 6px;
       padding: 5px 10px;
       font-weight: 500;
+    }
+
+    .card-topics {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 6px;
     }
 
     /* ── EMPTY STATE ── */
@@ -527,6 +560,48 @@
       border: none;
       border-top: 1px solid var(--border);
     }
+
+    /* ── QUESTION ACCORDION (per-image modal) ── */
+    .question-accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .qa-item {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .qa-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .qa-header:hover { background: var(--surface2); }
+    .qa-header-text {
+      font-size: 0.82rem;
+      color: var(--text);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .qa-body {
+      padding: 0 12px 12px;
+      display: none;
+    }
+    .qa-item.expanded .qa-body { display: block; }
+    .qa-chevron {
+      margin-left: auto;
+      transition: transform 0.2s;
+      color: var(--muted);
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+    .qa-item.expanded .qa-chevron { transform: rotate(90deg); }
   </style>
 </head>
 <body>
@@ -544,7 +619,7 @@
     <button class="filter-btn" data-filter="city" data-value="Paris">Paris</button>
     <button class="filter-btn" data-filter="city" data-value="London">London</button>
     <button class="filter-btn" data-filter="city" data-value="Singapore">Singapore</button>
-    <button class="filter-btn" data-filter="city" data-value="São Paulo">S&atilde;o Paulo</button>
+    <button class="filter-btn" data-filter="city" data-value="S&atilde;o Paulo">S&atilde;o Paulo</button>
     <button class="filter-btn" data-filter="city" data-value="Amsterdam">Amsterdam</button>
   </div>
 
@@ -552,11 +627,23 @@
     <span class="filter-label">Topic</span>
     <button class="filter-btn active" data-filter="topic" data-value="all">All</button>
     <button class="filter-btn" data-filter="topic" data-value="land_use">Land Use</button>
-    <button class="filter-btn" data-filter="topic" data-value="building_height">Building Height</button>
+    <button class="filter-btn" data-filter="topic" data-value="building_height">Bldg Height</button>
     <button class="filter-btn" data-filter="topic" data-value="urban_density">Urban Density</button>
     <button class="filter-btn" data-filter="topic" data-value="road_type">Road Type</button>
+    <button class="filter-btn" data-filter="topic" data-value="road_surface">Road Surface</button>
+    <button class="filter-btn" data-filter="topic" data-value="junction_type">Junction</button>
+    <button class="filter-btn" data-filter="topic" data-value="water_proximity">Water Prox</button>
     <button class="filter-btn" data-filter="topic" data-value="green_space">Green Space</button>
-    <button class="filter-btn" data-filter="topic" data-value="amenity_richness">Amenity Richness</button>
+    <button class="filter-btn" data-filter="topic" data-value="amenity_richness">Amenities</button>
+    <button class="filter-btn" data-filter="topic" data-value="transit_density">Transit</button>
+    <button class="filter-btn" data-filter="topic" data-value="camera_direction">Camera Dir</button>
+    <button class="filter-btn" data-filter="topic" data-value="mismatch_binary">Mismatch Y/N</button>
+    <button class="filter-btn" data-filter="topic" data-value="mismatch_mcq">Mismatch MCQ</button>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="per-question">Per Question</button>
+    <button class="mode-btn" data-mode="per-image">Per Image</button>
   </div>
 
   <div class="search-box">
@@ -567,7 +654,7 @@
 <div class="error-banner" id="errorBanner"></div>
 
 <div class="stats-bar">
-  Showing <span class="count" id="visibleCount">0</span> of <span class="count" id="totalCount">0</span> samples
+  Showing <span class="count" id="visibleCount">0</span> of <span class="count" id="totalCount">0</span> <span id="countLabel">questions</span>
 </div>
 
 <div class="grid" id="grid">
@@ -620,10 +707,10 @@
         </div>
       </div>
 
-      <div class="info-panel">
+      <div class="info-panel" id="infoPanel">
         <!-- Question & Options -->
-        <div>
-          <div class="section-label">Question</div>
+        <div id="questionSection">
+          <div class="section-label" id="questionSectionLabel">Question</div>
           <div class="question-text" id="modalQuestion"></div>
           <div class="options-list" id="modalOptions"></div>
         </div>
@@ -661,10 +748,39 @@
 <script>
   const BASE = '../output/';
   let allSamples = [];
-  let filteredSamples = [];
+  let flatQuestions = [];
+  let filteredItems = [];
   let activeFilters = { city: 'all', topic: 'all' };
   let searchQuery = '';
+  let viewMode = 'per-question';
   let currentModalIdx = 0;
+
+  // ── Topic label map ──────────────────────────────────────────────────────────
+  const TOPIC_LABELS = {
+    land_use: 'Land Use',
+    building_height: 'Bldg Height',
+    urban_density: 'Urban Density',
+    road_type: 'Road Type',
+    road_surface: 'Road Surface',
+    junction_type: 'Junction',
+    water_proximity: 'Water Prox',
+    green_space: 'Green Space',
+    amenity_richness: 'Amenities',
+    transit_density: 'Transit',
+    camera_direction: 'Camera Dir',
+    mismatch_binary: 'Mismatch Y/N',
+    mismatch_mcq: 'Mismatch MCQ',
+  };
+
+  // ── City short name map ──────────────────────────────────────────────────────
+  const CITY_SHORT = {
+    'New York City': 'NYC',
+    'Paris': 'Paris',
+    'London': 'London',
+    'Singapore': 'SGP',
+    'São Paulo': 'SP',
+    'Amsterdam': 'AMS',
+  };
 
   // ── Fetch & parse JSONL ──────────────────────────────────────────────────────
   async function loadDataset() {
@@ -673,7 +789,8 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const text = await res.text();
       allSamples = text.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-      document.getElementById('totalCount').textContent = allSamples.length;
+      buildFlatQuestions();
+      updateTotalCount();
       applyFilters();
     } catch (err) {
       showError(`Failed to load dataset: ${err.message}. Make sure you are running a local server (use serve.sh).`);
@@ -687,64 +804,114 @@
     el.classList.add('visible');
   }
 
+  // ── Build flat question list ─────────────────────────────────────────────────
+  function buildFlatQuestions() {
+    flatQuestions = [];
+    allSamples.forEach(sample => {
+      const qs = sample.questions || [];
+      if (qs.length === 0) {
+        // Backward compat: use flat fields if no questions array
+        if (sample.question) {
+          flatQuestions.push({
+            _sample: sample,
+            _question: sample.question,
+            _options: sample.options,
+            _answer: sample.answer,
+            _topic: sample.topic,
+            _difficulty: sample.difficulty,
+          });
+        }
+      } else {
+        qs.forEach((q, qi) => {
+          flatQuestions.push({
+            _sample: sample,
+            _question: q.question,
+            _options: q.options,
+            _answer: q.answer,
+            _topic: q.topic,
+            _difficulty: q.difficulty,
+            _qIndex: qi,
+          });
+        });
+      }
+    });
+  }
+
+  function updateTotalCount() {
+    const total = viewMode === 'per-question' ? flatQuestions.length : allSamples.length;
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('countLabel').textContent =
+      viewMode === 'per-question' ? 'questions' : 'image pairs';
+  }
+
   // ── Filtering ────────────────────────────────────────────────────────────────
   function applyFilters() {
     const q = searchQuery.toLowerCase();
-    filteredSamples = allSamples.filter(s => {
-      if (activeFilters.city !== 'all' && s.location.city !== activeFilters.city) return false;
-      if (activeFilters.topic !== 'all' && s.topic !== activeFilters.topic) return false;
-      if (q) {
-        const haystack = [
-          s.location.neighborhood, s.location.road_name,
-          s.location.city, s.topic, s.question
-        ].join(' ').toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-    document.getElementById('visibleCount').textContent = filteredSamples.length;
+
+    if (viewMode === 'per-question') {
+      filteredItems = flatQuestions.filter(fq => {
+        const s = fq._sample;
+        if (activeFilters.city !== 'all' && s.location.city !== activeFilters.city) return false;
+        if (activeFilters.topic !== 'all' && fq._topic !== activeFilters.topic) return false;
+        if (q) {
+          const haystack = [
+            s.location.neighborhood, s.location.road_name,
+            s.location.city, fq._topic, fq._question
+          ].join(' ').toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      });
+    } else {
+      // per-image mode
+      filteredItems = allSamples.filter(s => {
+        if (activeFilters.city !== 'all' && s.location.city !== activeFilters.city) return false;
+        if (activeFilters.topic !== 'all') {
+          const qs = s.questions || [];
+          const topics = qs.map(qq => qq.topic);
+          // Also check flat topic for backward compat
+          if (!topics.includes(activeFilters.topic) && s.topic !== activeFilters.topic) return false;
+        }
+        if (q) {
+          const haystack = [
+            s.location.neighborhood, s.location.road_name,
+            s.location.city, s.topic,
+            ...(s.questions || []).map(qq => qq.question)
+          ].join(' ').toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    document.getElementById('visibleCount').textContent = filteredItems.length;
+    updateTotalCount();
     renderGrid();
   }
-
-  // ── Topic label map ──────────────────────────────────────────────────────────
-  const TOPIC_LABELS = {
-    land_use: 'Land Use',
-    building_height: 'Bldg Height',
-    urban_density: 'Urban Density',
-    road_type: 'Road Type',
-    green_space: 'Green Space',
-    amenity_richness: 'Amenities',
-  };
-
-  // ── City short name map ──────────────────────────────────────────────────────
-  const CITY_SHORT = {
-    'New York City': 'NYC',
-    'Paris': 'Paris',
-    'London': 'London',
-    'Singapore': 'SGP',
-    'São Paulo': 'SP',
-    'Amsterdam': 'AMS',
-  };
 
   // ── Render grid ──────────────────────────────────────────────────────────────
   function renderGrid() {
     const grid = document.getElementById('grid');
-    if (filteredSamples.length === 0) {
-      grid.innerHTML = `<div class="empty"><div class="icon">&#128269;</div><div>No samples match your filters.</div></div>`;
+    if (filteredItems.length === 0) {
+      grid.innerHTML = `<div class="empty"><div class="icon">&#128269;</div><div>No items match your filters.</div></div>`;
       return;
     }
-    grid.innerHTML = filteredSamples.map((s, i) => cardHTML(s, i)).join('');
+    const renderFn = viewMode === 'per-question' ? cardHTMLPerQuestion : cardHTMLPerImage;
+    grid.innerHTML = filteredItems.map((item, i) => renderFn(item, i)).join('');
     grid.querySelectorAll('.card').forEach(card => {
       card.addEventListener('click', () => openModal(parseInt(card.dataset.idx)));
     });
   }
 
-  function cardHTML(s, idx) {
+  function cardHTMLPerQuestion(fq, idx) {
+    const s = fq._sample;
     const cityShort = CITY_SHORT[s.location.city] || s.location.city;
-    const topicLabel = TOPIC_LABELS[s.topic] || s.topic;
-    const diffClass = `badge-diff-${s.difficulty || 'easy'}`;
+    const topicLabel = TOPIC_LABELS[fq._topic] || fq._topic;
+    const diffClass = `badge-diff-${fq._difficulty || 'easy'}`;
     const satSrc = BASE + s.images.satellite;
-    const correctText = `${s.answer}) ${s.options[s.answer]}`;
+    const correctText = fq._options && fq._answer
+      ? `${fq._answer}) ${fq._options[fq._answer]}`
+      : '';
 
     return `
       <div class="card" data-idx="${idx}">
@@ -755,12 +922,37 @@
           <div class="card-badges">
             <span class="badge badge-city">${cityShort}</span>
             <span class="badge badge-topic">${topicLabel}</span>
-            <span class="badge ${diffClass}">${s.difficulty || 'easy'}</span>
+            <span class="badge ${diffClass}">${fq._difficulty || 'easy'}</span>
           </div>
           <div class="card-neighborhood">${escHtml(s.location.neighborhood)}</div>
           <div class="card-road">${escHtml(s.location.road_name)}</div>
-          <div class="card-question">${escHtml(s.question)}</div>
+          <div class="card-question">${escHtml(fq._question)}</div>
           <div class="card-answer">&#10003; ${escHtml(correctText)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function cardHTMLPerImage(s, idx) {
+    const cityShort = CITY_SHORT[s.location.city] || s.location.city;
+    const qs = s.questions || [];
+    const qCount = qs.length || (s.question ? 1 : 0);
+    const topics = [...new Set(qs.length ? qs.map(q => q.topic) : (s.topic ? [s.topic] : []))];
+    const satSrc = BASE + s.images.satellite;
+
+    return `
+      <div class="card" data-idx="${idx}">
+        <img class="card-thumb" src="${satSrc}" alt="Satellite" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+        <div class="card-thumb-placeholder" style="display:none">No image</div>
+        <div class="card-body">
+          <div class="card-badges">
+            <span class="badge badge-city">${cityShort}</span>
+            <span class="badge badge-qcount">${qCount} Q${qCount !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="card-neighborhood">${escHtml(s.location.neighborhood)}</div>
+          <div class="card-road">${escHtml(s.location.road_name)}</div>
+          <div class="card-topics">Topics: ${topics.map(t => TOPIC_LABELS[t] || t).join(', ')}</div>
         </div>
       </div>
     `;
@@ -769,7 +961,11 @@
   // ── Modal ────────────────────────────────────────────────────────────────────
   function openModal(idx) {
     currentModalIdx = idx;
-    renderModal(filteredSamples[idx], idx);
+    if (viewMode === 'per-question') {
+      renderModalPerQuestion(filteredItems[idx], idx);
+    } else {
+      renderModalPerImage(filteredItems[idx], idx);
+    }
     document.getElementById('modalOverlay').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
@@ -779,54 +975,46 @@
     document.body.style.overflow = '';
   }
 
-  function renderModal(s, idx) {
-    // Header
-    document.getElementById('modalTitle').textContent =
-      `${s.location.neighborhood} — ${s.location.city}`;
-    document.getElementById('modalSubtitle').textContent =
-      `${s.sample_id}  ·  ${s.location.road_name}  ·  ${TOPIC_LABELS[s.topic] || s.topic}`;
+  function navigateModal(direction) {
+    const newIdx = currentModalIdx + direction;
+    if (newIdx < 0 || newIdx >= filteredItems.length) return;
+    currentModalIdx = newIdx;
+    if (viewMode === 'per-question') {
+      renderModalPerQuestion(filteredItems[newIdx], newIdx);
+    } else {
+      renderModalPerImage(filteredItems[newIdx], newIdx);
+    }
+  }
 
-    // Nav
-    document.getElementById('modalPos').textContent = `${idx + 1} / ${filteredSamples.length}`;
-    document.getElementById('modalPrev').disabled = idx === 0;
-    document.getElementById('modalNext').disabled = idx === filteredSamples.length - 1;
-
-    // Images
+  function renderModalImages(s) {
     const imgBase = BASE;
     document.getElementById('modalSatImg').src = imgBase + s.images.satellite;
     document.getElementById('svFwd').src   = imgBase + s.images.streetview_along_fwd;
     document.getElementById('svBwd').src   = imgBase + s.images.streetview_along_bwd;
     document.getElementById('svLeft').src  = imgBase + s.images.streetview_cross_left;
     document.getElementById('svRight').src = imgBase + s.images.streetview_cross_right;
+  }
 
-    // Question
-    document.getElementById('modalQuestion').textContent = s.question;
-
-    // Options
-    const optEl = document.getElementById('modalOptions');
-    optEl.innerHTML = Object.entries(s.options).map(([key, val]) => {
-      const cls = key === s.answer ? 'option correct' : 'option incorrect';
-      return `<div class="${cls}"><span class="option-key">${key}</span><span>${escHtml(val)}</span></div>`;
-    }).join('');
-
-    // Metadata
+  function renderModalMeta(s) {
     const m = s.metadata || {};
     const loc = s.location;
     const rows = [
       ['City', loc.city],
       ['Neighborhood', loc.neighborhood],
       ['Road', loc.road_name],
-      ['Road Type', m.road_type || loc.road_type || '—'],
+      ['Road Type', m.road_type || '—'],
       ['Land Use', m.land_use_label || m.land_use_category || '—'],
-      ['Buildings (200m)', m.osm_building_count_200m ?? '—'],
+      ['Buildings (200m)', m.osm_building_count ?? '—'],
       ['Median Floors', m.osm_median_building_levels ?? '—'],
-      ['Amenity Count', m.osm_amenity_count_200m ?? '—'],
-      ['Has Park Nearby', m.osm_has_park_200m != null ? (m.osm_has_park_200m ? 'Yes' : 'No') : '—'],
+      ['Amenity Count', m.osm_amenity_count ?? '—'],
+      ['Has Park Nearby', m.osm_has_park != null ? (m.osm_has_park ? 'Yes' : 'No') : '—'],
+      ['Road Surface', m.osm_road_surface || '—'],
+      ['Junction Type', m.osm_junction_type || '—'],
+      ['Water Distance', m.osm_water_distance_m != null ? `${Math.round(m.osm_water_distance_m)}m` : '—'],
+      ['Transit Stops', m.osm_transit_stop_count ?? '—'],
       ['Satellite Source', s.images.satellite_source || '—'],
       ['Satellite Date', s.images.satellite_date || '—'],
       ['Street View Date', s.images.streetview_date || '—'],
-      ['Difficulty', s.difficulty || '—'],
-      ['Generation', s.generation_method || '—'],
     ];
     document.getElementById('modalMeta').innerHTML = rows.map(([k, v]) =>
       `<tr><td>${escHtml(k)}</td><td>${escHtml(String(v))}</td></tr>`
@@ -846,10 +1034,97 @@
     }
 
     // Map link
-    const lat = loc.latitude;
-    const lon = loc.longitude;
     document.getElementById('modalMapLink').href =
-      `https://www.google.com/maps/@${lat},${lon},17z`;
+      `https://www.google.com/maps/@${loc.latitude},${loc.longitude},17z`;
+  }
+
+  function renderModalNav(idx) {
+    document.getElementById('modalPos').textContent = `${idx + 1} / ${filteredItems.length}`;
+    document.getElementById('modalPrev').disabled = idx === 0;
+    document.getElementById('modalNext').disabled = idx === filteredItems.length - 1;
+  }
+
+  function renderModalPerQuestion(fq, idx) {
+    const s = fq._sample;
+
+    // Header
+    document.getElementById('modalTitle').textContent =
+      `${s.location.neighborhood} — ${s.location.city}`;
+    document.getElementById('modalSubtitle').textContent =
+      `${s.sample_id}  ·  ${s.location.road_name}  ·  ${TOPIC_LABELS[fq._topic] || fq._topic}`;
+
+    renderModalNav(idx);
+    renderModalImages(s);
+
+    // Question
+    document.getElementById('questionSectionLabel').textContent = 'Question';
+    document.getElementById('modalQuestion').textContent = fq._question;
+
+    // Options
+    const optEl = document.getElementById('modalOptions');
+    const opts = fq._options || {};
+    optEl.innerHTML = Object.entries(opts).map(([key, val]) => {
+      const cls = key === fq._answer ? 'option correct' : 'option incorrect';
+      return `<div class="${cls}"><span class="option-key">${key}</span><span>${escHtml(val)}</span></div>`;
+    }).join('');
+
+    renderModalMeta(s);
+  }
+
+  function renderModalPerImage(s, idx) {
+    // Header
+    document.getElementById('modalTitle').textContent =
+      `${s.location.neighborhood} — ${s.location.city}`;
+    const qCount = (s.questions || []).length || (s.question ? 1 : 0);
+    document.getElementById('modalSubtitle').textContent =
+      `${s.sample_id}  ·  ${s.location.road_name}  ·  ${qCount} question${qCount !== 1 ? 's' : ''}`;
+
+    renderModalNav(idx);
+    renderModalImages(s);
+
+    // Build question accordion
+    const qs = s.questions && s.questions.length > 0
+      ? s.questions
+      : (s.question ? [{ question: s.question, options: s.options, answer: s.answer, topic: s.topic, difficulty: s.difficulty }] : []);
+
+    document.getElementById('questionSectionLabel').textContent = `Questions (${qs.length})`;
+    document.getElementById('modalQuestion').textContent = '';
+
+    const accordionHTML = qs.map((q, qi) => {
+      const topicLabel = TOPIC_LABELS[q.topic] || q.topic;
+      const diffClass = `badge-diff-${q.difficulty || 'easy'}`;
+      const optionsHTML = Object.entries(q.options || {}).map(([key, val]) => {
+        const cls = key === q.answer ? 'option correct' : 'option incorrect';
+        return `<div class="${cls}"><span class="option-key">${key}</span><span>${escHtml(val)}</span></div>`;
+      }).join('');
+
+      return `
+        <div class="qa-item${qi === 0 ? ' expanded' : ''}">
+          <div class="qa-header" data-qi="${qi}">
+            <span class="badge badge-topic">${topicLabel}</span>
+            <span class="badge ${diffClass}">${q.difficulty || 'easy'}</span>
+            <span class="qa-header-text">${escHtml(q.question)}</span>
+            <span class="qa-chevron">&#9654;</span>
+          </div>
+          <div class="qa-body">
+            <div class="question-text" style="margin-bottom:10px;font-size:0.9rem">${escHtml(q.question)}</div>
+            <div class="options-list">${optionsHTML}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('modalOptions').innerHTML =
+      `<div class="question-accordion">${accordionHTML}</div>`;
+
+    // Add accordion click handlers
+    document.querySelectorAll('.qa-header').forEach(header => {
+      header.addEventListener('click', () => {
+        header.parentElement.classList.toggle('expanded');
+      });
+    });
+
+    renderModalMeta(s);
   }
 
   // ── Event listeners ──────────────────────────────────────────────────────────
@@ -858,31 +1133,14 @@
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
 
-  document.getElementById('modalPrev').addEventListener('click', () => {
-    if (currentModalIdx > 0) {
-      currentModalIdx--;
-      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
-    }
-  });
-
-  document.getElementById('modalNext').addEventListener('click', () => {
-    if (currentModalIdx < filteredSamples.length - 1) {
-      currentModalIdx++;
-      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
-    }
-  });
+  document.getElementById('modalPrev').addEventListener('click', () => navigateModal(-1));
+  document.getElementById('modalNext').addEventListener('click', () => navigateModal(1));
 
   document.addEventListener('keydown', e => {
     if (document.getElementById('modalOverlay').classList.contains('hidden')) return;
     if (e.key === 'Escape') closeModal();
-    if (e.key === 'ArrowLeft'  && currentModalIdx > 0) {
-      currentModalIdx--;
-      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
-    }
-    if (e.key === 'ArrowRight' && currentModalIdx < filteredSamples.length - 1) {
-      currentModalIdx++;
-      renderModal(filteredSamples[currentModalIdx], currentModalIdx);
-    }
+    if (e.key === 'ArrowLeft') navigateModal(-1);
+    if (e.key === 'ArrowRight') navigateModal(1);
   });
 
   document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -891,6 +1149,15 @@
       document.querySelectorAll(`.filter-btn[data-filter="${filterType}"]`).forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilters[filterType] = btn.dataset.value;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      viewMode = btn.dataset.mode;
       applyFilters();
     });
   });

@@ -90,11 +90,36 @@ def build_jsonl_record(sample):
         "osm_transit_stop_count": _safe_int(sample.get("osm_transit_stop_count")),
     }
 
+    # Offline question-regeneration fields
+    metadata["road_bearing"] = sample.get("road_bearing")
+    metadata["mismatch_negative_sid"] = sample.get("mismatch_negative_sid")
+    metadata["composite_4sat_correct_pos"] = sample.get("composite_4sat_correct_pos")
+    metadata["mismatch_show_correct"] = sample.get("mismatch_show_correct")
+
     # Add US Census data if available
     if sample.get("census_tract"):
         metadata["census_tract"] = sample["census_tract"]
         metadata["census_population"] = _safe_int(sample.get("census_population"))
         metadata["census_median_income"] = _safe_int(sample.get("census_median_income"))
+
+    # Build questions array from all feasible questions
+    all_questions = sample.get("all_questions", [])
+    questions_array = []
+    for q in all_questions:
+        q_opts = q.get("options", {})
+        if isinstance(q_opts, str):
+            try:
+                q_opts = json.loads(q_opts)
+            except Exception:
+                q_opts = {}
+        questions_array.append({
+            "question": q["question"],
+            "options": q_opts,
+            "answer": q["answer"],
+            "topic": q["topic"],
+            "difficulty": q["difficulty"],
+            "generation_method": "template",
+        })
 
     # Validation
     validation_issues = sample.get("validation_issues", [])
@@ -131,6 +156,8 @@ def build_jsonl_record(sample):
         "difficulty": sample.get("difficulty", ""),
         "topic": sample.get("topic", ""),
         "generation_method": "template",
+        "question_count": len(questions_array),
+        "questions": questions_array,
         "metadata": metadata,
         "validation": {
             "all_images_present": sat_present and sv_count == 4,
@@ -187,6 +214,20 @@ def print_summary(records):
     print(f"\n  Land use ({len(lus)} types):")
     for lu, count in lus.most_common():
         print(f"    {lu}: {count}")
+
+    # All-question stats
+    q_counts = [r.get("question_count", 1) for r in records]
+    total_qs = sum(q_counts)
+    print(f"\n  Questions: {total_qs} total, {total_qs/len(records):.1f} avg per sample")
+    print(f"  Min/Max per sample: {min(q_counts)}/{max(q_counts)}")
+
+    all_topic_counts = Counter()
+    for r in records:
+        for q in r.get("questions", []):
+            all_topic_counts[q["topic"]] += 1
+    print(f"\n  All-question topics ({len(all_topic_counts)}):")
+    for topic, count in all_topic_counts.most_common():
+        print(f"    {topic}: {count}")
 
     # Images
     sat_ok = sum(1 for r in records if r["validation"]["satellite_present"])

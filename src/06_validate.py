@@ -59,6 +59,25 @@ def validate_sample(sample):
     if sv_count == 0:
         issues.append("CRITICAL: No street view images at all")
 
+    # Validate all_questions array
+    all_qs = sample.get("all_questions", [])
+    if not all_qs and sample.get("question"):
+        pass  # old-style sample with only best question, skip array validation
+    elif not all_qs:
+        issues.append("WARNING: No questions in all_questions array")
+    else:
+        for qi, q in enumerate(all_qs):
+            q_opts = q.get("options", {})
+            q_ans = q.get("answer")
+            if q_ans and q_ans not in q_opts:
+                issues.append(f"CRITICAL: all_questions[{qi}] ({q.get('topic','?')}) answer key not in options")
+            if q_opts:
+                vals = list(q_opts.values())
+                if len(set(vals)) != len(vals):
+                    issues.append(f"WARNING: all_questions[{qi}] ({q.get('topic','?')}) has duplicate options")
+                if len(vals) != 4:
+                    issues.append(f"WARNING: all_questions[{qi}] ({q.get('topic','?')}) expected 4 options, got {len(vals)}")
+
     # OSM metadata sanity
     levels = sample.get("osm_median_levels")
     if levels is not None:
@@ -98,6 +117,19 @@ def validate_dataset(samples):
     lus = [s.get("land_use_category") for s in samples if s.get("land_use_category")]
     if len(set(lus)) < 3:
         issues.append(f"WARNING: Low land use diversity: {set(lus)}")
+
+    # Multi-question stats
+    q_counts = [len(s.get("all_questions", [])) for s in samples]
+    if q_counts and sum(q_counts) > 0:
+        avg_q = sum(q_counts) / len(q_counts)
+        if avg_q < 2:
+            issues.append(f"WARNING: Low average questions per sample: {avg_q:.1f}")
+        all_topics = []
+        for s in samples:
+            for q in s.get("all_questions", []):
+                all_topics.append(q.get("topic"))
+        if all_topics and len(set(all_topics)) < 5:
+            issues.append(f"WARNING: Low overall topic diversity across all questions: {Counter(all_topics)}")
 
     return issues
 

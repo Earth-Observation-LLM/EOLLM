@@ -377,14 +377,20 @@ def run(samples=None):
         samples = pd.read_csv(csv_path).to_dict('records')
 
     used_topics = Counter()
+    total_qs = 0
 
     for i, sample in enumerate(samples):
         sid = sample["sample_id"]
         print(f"  [{i+1}/{len(samples)}] {sid}...")
 
         all_qs = generate_questions(sample)
-        print(f"    {len(all_qs)} candidate questions")
+        total_qs += len(all_qs)
+        print(f"    {len(all_qs)} feasible questions")
 
+        # Store ALL feasible questions on the sample
+        sample["all_questions"] = all_qs
+
+        # Still pick a "best" for backward compat (flat fields)
         best = select_best_question(sample, all_qs, used_topics)
         if best:
             sample["question"] = best["question"]
@@ -394,14 +400,17 @@ def run(samples=None):
             sample["difficulty"] = best["difficulty"]
             sample["generation_method"] = "template"
             used_topics[best["topic"]] += 1
-            print(f"    -> [{best['topic']}] {best['answer']}) "
+            print(f"    -> best: [{best['topic']}] {best['answer']}) "
                   f"{best['options'][best['answer']]}")
         else:
             print(f"    WARNING: no questions generated")
 
-    print(f"\n  Topic distribution: {dict(used_topics)}")
+    print(f"\n  Total questions generated: {total_qs} across {len(samples)} samples")
+    if samples:
+        print(f"  Average per sample: {total_qs / len(samples):.1f}")
+    print(f"  Best-question topic distribution: {dict(used_topics)}")
     ans_dist = Counter(s.get("answer") for s in samples if s.get("answer"))
-    print(f"  Answer distribution: {dict(ans_dist)}")
+    print(f"  Best-question answer distribution: {dict(ans_dist)}")
     return samples
 
 
