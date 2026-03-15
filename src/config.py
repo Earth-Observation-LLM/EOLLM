@@ -253,10 +253,10 @@ MISMATCH_BINARY_STRATEGY = "both"
 # SAT_BUFFER_M: radius in metres around the sample point. Smaller = more zoomed in.
 # Adjust these to control detail level per source.
 SAT_BUFFER_M = {
-    "NAIP": 250,   # 250m → ~500m tile (0.6 m/px native — very detailed)
-    "IGN":  200,   # 200m → ~400m tile (0.2 m/px native — extremely detailed)
-    "ESRI": 200,   # 200m → ~400m tile (0.3–0.5 m/px in cities)
-    "S2":   2560,  # 2560m → ~5120m tile (10 m/px native — can't zoom further)
+    "NAIP": 100,   # 250m → ~500m tile (0.6 m/px native — very detailed)
+    "IGN":  100,   # 200m → ~400m tile (0.2 m/px native — extremely detailed)
+    "ESRI": 100,   # 200m → ~400m tile (0.3–0.5 m/px in cities)
+    "S2":   1280,  # 2560m → ~5120m tile (10 m/px native — can't zoom further)
 }
 SAT_IMAGE_PX = 512
 

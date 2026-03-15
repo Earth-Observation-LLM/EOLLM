@@ -95,3 +95,5 @@ output/
 
 # Downloaded OSM data (run setup_data.sh to regenerate)
 data/
+
+old_outputs/
