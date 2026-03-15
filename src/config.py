@@ -227,6 +227,23 @@ TRANSIT_DENSITY_BINS = [
     ("High (6+ stops)", 6, 9999),
 ]
 
+# Which question types to generate (comment out to disable, code is preserved)
+ENABLED_QUESTION_TYPES = {
+    "land_use",
+    "building_height",
+    "urban_density",
+    "road_type",
+    "road_surface",
+    "junction_type",
+    "water_proximity",
+    # "green_space",
+    # "amenity_richness",
+    # "transit_density",
+    "camera_direction",
+    "mismatch_binary",
+    "mismatch_mcq",
+}
+
 # Satellite tile settings
 # SAT_BUFFER_M: radius in metres around the sample point. Smaller = more zoomed in.
 # Adjust these to control detail level per source.

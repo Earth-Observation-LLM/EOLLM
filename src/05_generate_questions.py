@@ -302,6 +302,8 @@ def generate_questions(sample):
             "topic": "mismatch_mcq", "difficulty": "hard",
         })
 
+    from config import ENABLED_QUESTION_TYPES
+    questions = [q for q in questions if q["topic"] in ENABLED_QUESTION_TYPES]
     return questions
 
 
