@@ -256,50 +256,84 @@ def generate_questions(sample):
                 "question": rng.choice(QUESTION_TEMPLATES["camera_direction"]),
                 "options": opts, "answer": ans,
                 "topic": "camera_direction", "difficulty": "medium",
+                "sat_marked_path": sample.get("sat_marked_path"),
             })
         except (ValueError, TypeError):
             pass
 
-    # --- MISMATCH BINARY (cross-view) ---
-    neg_sid = sample.get("mismatch_negative_sid")
-    if neg_sid:
-        mismatch_rng = random.Random(f"{sid}_mismatch")
-        show_correct = mismatch_rng.random() < 0.5
-        sample["mismatch_show_correct"] = show_correct
-        if show_correct:
-            correct = "Yes, this street view corresponds to this satellite image"
-            distractors = [
-                "No, these images show different locations",
-                "The images are from nearby but not the same spot",
-                "Cannot determine from the available imagery",
-            ]
-        else:
-            correct = "No, these images show different locations"
-            distractors = [
-                "Yes, this street view corresponds to this satellite image",
-                "The images are from the same general area",
-                "Cannot determine from the available imagery",
-            ]
-        opts, ans = _shuffle_options(correct, distractors, sid, "mismatch_binary")
+    # --- MISMATCH BINARY (cross-view, Yes/No) ---
+    binary_variants = sample.get("mismatch_binary_variants", [])
+    for variant in binary_variants:
+        neg_sid = variant.get("negative_sid")
+        strategy = variant.get("strategy", "same_city")
+        if not neg_sid:
+            continue
+
+        difficulty = variant.get("difficulty", "medium")
+        sat_marked = sample.get("sat_marked_path")
+        own_stv_composite = sample.get("stv_composite_path")
+        own_stv_paths = [f"images/sv/{sid}_{a}.jpg"
+                         for a in ["along_fwd", "cross_right",
+                                   "along_bwd", "cross_left"]]
+
+        # YES variant — matched pair
+        yes_opts, yes_ans = _shuffle_options(
+            "Yes, the images belong to same location.",
+            ["No, images locate to different places."],
+            sid, f"mismatch_binary_yes_{strategy}")
         questions.append({
             "question": rng.choice(QUESTION_TEMPLATES["mismatch_binary"]),
-            "options": opts, "answer": ans,
-            "topic": "mismatch_binary", "difficulty": "medium",
+            "options": yes_opts, "answer": yes_ans,
+            "topic": "mismatch_binary", "difficulty": difficulty,
+            "mismatch_strategy": strategy,
+            "mismatch_is_match": True,
+            "sat_marked_path": sat_marked,
+            "stv_shown_paths": own_stv_paths,
+            "stv_shown_composite": own_stv_composite,
         })
 
-    # --- MISMATCH MCQ (cross-view, 4-SAT composite) ---
-    composite = sample.get("composite_4sat_path")
-    correct_pos = sample.get("composite_4sat_correct_pos")
-    if composite and correct_pos:
+        # NO variant — mismatched pair
+        no_opts, no_ans = _shuffle_options(
+            "No, images locate to different places.",
+            ["Yes, the images belong to same location."],
+            sid, f"mismatch_binary_no_{strategy}")
+        questions.append({
+            "question": rng.choice(QUESTION_TEMPLATES["mismatch_binary"]),
+            "options": no_opts, "answer": no_ans,
+            "topic": "mismatch_binary", "difficulty": difficulty,
+            "mismatch_strategy": strategy,
+            "mismatch_is_match": False,
+            "sat_marked_path": sat_marked,
+            "mismatch_negative_stv_paths": variant.get("negative_stv_paths"),
+            "mismatch_negative_stv_composite": variant.get("negative_stv_composite"),
+        })
+
+    # --- MISMATCH MCQ (cross-view, STV grid) ---
+    mcq_variants = sample.get("mismatch_mcq_variants", [])
+    for variant in mcq_variants:
+        composite_path = variant.get("composite_path")
+        correct_pos = variant.get("correct_pos")
+        strategy = variant.get("strategy", "same_city")
+        if not composite_path or not correct_pos:
+            continue
+
         pos_labels = {"A": "Top-Left", "B": "Top-Right",
                       "C": "Bottom-Left", "D": "Bottom-Right"}
         correct = pos_labels[correct_pos]
         distractors = [v for k, v in pos_labels.items() if k != correct_pos]
-        opts, ans = _shuffle_options(correct, distractors, sid, "mismatch_mcq")
+        opts, ans = _shuffle_options(correct, distractors, sid,
+                                     f"mismatch_mcq_{strategy}")
+        difficulty = variant.get("difficulty", "hard")
         questions.append({
             "question": rng.choice(QUESTION_TEMPLATES["mismatch_mcq"]),
             "options": opts, "answer": ans,
-            "topic": "mismatch_mcq", "difficulty": "hard",
+            "topic": "mismatch_mcq", "difficulty": difficulty,
+            "mismatch_strategy": strategy,
+            "sat_marked_path": sample.get("sat_marked_path"),
+            "composite_stv_path": composite_path,
+            "composite_stv_labeled_path": variant.get("composite_labeled_path"),
+            "option_stv_paths": variant.get("option_stv_paths"),
+            "option_composite_paths": variant.get("option_composite_paths"),
         })
 
     from config import ENABLED_QUESTION_TYPES

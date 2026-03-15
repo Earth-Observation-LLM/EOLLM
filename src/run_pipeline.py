@@ -39,8 +39,11 @@ def build_jsonl_record(sample):
         "streetview_date": sample.get("sv_date") if isinstance(sample.get("sv_date"), str) else None,
     }
 
-    if sample.get("composite_4sat_path"):
-        images["composite_4sat"] = sample["composite_4sat_path"]
+    if sample.get("sat_marked_path"):
+        images["satellite_marked"] = sample["sat_marked_path"]
+    if sample.get("stv_composite_path"):
+        images["stv_composite"] = sample["stv_composite_path"]
+        images["stv_composite_labeled"] = sample.get("stv_composite_labeled_path")
 
     options = sample.get("options", {})
     if isinstance(options, str):
@@ -92,9 +95,10 @@ def build_jsonl_record(sample):
 
     # Offline question-regeneration fields
     metadata["road_bearing"] = sample.get("road_bearing")
-    metadata["mismatch_negative_sid"] = sample.get("mismatch_negative_sid")
-    metadata["composite_4sat_correct_pos"] = sample.get("composite_4sat_correct_pos")
-    metadata["mismatch_show_correct"] = sample.get("mismatch_show_correct")
+    if sample.get("mismatch_mcq_variants"):
+        metadata["mismatch_mcq_variants"] = sample["mismatch_mcq_variants"]
+    if sample.get("mismatch_binary_variants"):
+        metadata["mismatch_binary_variants"] = sample["mismatch_binary_variants"]
 
     # Add US Census data if available
     if sample.get("census_tract"):
@@ -112,14 +116,26 @@ def build_jsonl_record(sample):
                 q_opts = json.loads(q_opts)
             except Exception:
                 q_opts = {}
-        questions_array.append({
+        q_record = {
             "question": q["question"],
             "options": q_opts,
             "answer": q["answer"],
             "topic": q["topic"],
             "difficulty": q["difficulty"],
             "generation_method": "template",
-        })
+        }
+        # Preserve geolocation-specific fields
+        geo_fields = [
+            "sat_marked_path", "mismatch_strategy", "mismatch_is_match",
+            "composite_stv_path", "composite_stv_labeled_path",
+            "option_stv_paths", "option_composite_paths",
+            "stv_shown_paths", "stv_shown_composite",
+            "mismatch_negative_stv_paths", "mismatch_negative_stv_composite",
+        ]
+        for gf in geo_fields:
+            if gf in q:
+                q_record[gf] = q[gf]
+        questions_array.append(q_record)
 
     # Validation
     validation_issues = sample.get("validation_issues", [])
@@ -266,6 +282,7 @@ def main():
     os.makedirs(os.path.join(ROOT, "output", "images", "sat"), exist_ok=True)
     os.makedirs(os.path.join(ROOT, "output", "images", "sv"), exist_ok=True)
     os.makedirs(os.path.join(ROOT, "output", "images", "composite"), exist_ok=True)
+    os.makedirs(os.path.join(ROOT, "output", "images", "sat_marked"), exist_ok=True)
 
     from importlib import import_module
     step1 = import_module("01_sample_locations")

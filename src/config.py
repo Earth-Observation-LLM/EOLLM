@@ -244,6 +244,11 @@ ENABLED_QUESTION_TYPES = {
     "mismatch_mcq",
 }
 
+# Geolocation mismatch strategies: "cross_city", "same_city", or "both"
+# "both" generates one variant of each per sample
+MISMATCH_MCQ_STRATEGY = "both"
+MISMATCH_BINARY_STRATEGY = "both"
+
 # Satellite tile settings
 # SAT_BUFFER_M: radius in metres around the sample point. Smaller = more zoomed in.
 # Adjust these to control detail level per source.

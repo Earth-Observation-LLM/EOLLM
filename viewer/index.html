@@ -602,13 +602,38 @@
       flex-shrink: 0;
     }
     .qa-item.expanded .qa-chevron { transform: rotate(90deg); }
+
+    /* ── GEOLOCATION QUESTION EXTRAS ── */
+    .badge-strategy {
+      background: rgba(241,196,15,0.18);
+      color: #f5d752;
+    }
+    .composite-section {
+      margin-top: 16px;
+    }
+    .composite-img {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+      background: var(--surface2);
+      margin-bottom: 8px;
+    }
+    .geo-stv-single {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      background: var(--surface2);
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
 
 <header>
   <div class="logo">Urban <span>VQA</span></div>
-  <div class="dataset-info">Visual Question Answering &mdash; Urban Environments</div>
+  <div class="dataset-info">Visual Question Answering &mdash; Urban Environments &mdash; v2 (multi-Q)</div>
 </header>
 
 <div class="filters">
@@ -831,6 +856,7 @@
             _topic: q.topic,
             _difficulty: q.difficulty,
             _qIndex: qi,
+            _qData: q,
           });
         });
       }
@@ -905,12 +931,23 @@
 
   function cardHTMLPerQuestion(fq, idx) {
     const s = fq._sample;
+    const qData = fq._qData || {};
     const cityShort = CITY_SHORT[s.location.city] || s.location.city;
     const topicLabel = TOPIC_LABELS[fq._topic] || fq._topic;
     const diffClass = `badge-diff-${fq._difficulty || 'easy'}`;
-    const satSrc = BASE + s.images.satellite;
+    const isGeo = GEO_TOPICS.includes(fq._topic);
+
+    // Use red-dot SAT for geolocation cards
+    const satPath = (isGeo && qData.sat_marked_path)
+      ? qData.sat_marked_path
+      : s.images.satellite;
+    const satSrc = BASE + satPath;
+
     const correctText = fq._options && fq._answer
       ? `${fq._answer}) ${fq._options[fq._answer]}`
+      : '';
+    const strategyBadge = qData.mismatch_strategy
+      ? `<span class="badge badge-strategy">${qData.mismatch_strategy.replace('_', ' ')}</span>`
       : '';
 
     return `
@@ -923,6 +960,7 @@
             <span class="badge badge-city">${cityShort}</span>
             <span class="badge badge-topic">${topicLabel}</span>
             <span class="badge ${diffClass}">${fq._difficulty || 'easy'}</span>
+            ${strategyBadge}
           </div>
           <div class="card-neighborhood">${escHtml(s.location.neighborhood)}</div>
           <div class="card-road">${escHtml(s.location.road_name)}</div>
@@ -986,13 +1024,69 @@
     }
   }
 
-  function renderModalImages(s) {
+  const GEO_TOPICS = ['mismatch_mcq', 'mismatch_binary', 'camera_direction'];
+
+  function renderModalImages(s, qData) {
     const imgBase = BASE;
-    document.getElementById('modalSatImg').src = imgBase + s.images.satellite;
-    document.getElementById('svFwd').src   = imgBase + s.images.streetview_along_fwd;
-    document.getElementById('svBwd').src   = imgBase + s.images.streetview_along_bwd;
-    document.getElementById('svLeft').src  = imgBase + s.images.streetview_cross_left;
-    document.getElementById('svRight').src = imgBase + s.images.streetview_cross_right;
+    const topic = qData?.topic;
+    const isGeo = GEO_TOPICS.includes(topic);
+
+    // Use red-dot SAT for geolocation questions
+    const satPath = (isGeo && qData?.sat_marked_path)
+      ? qData.sat_marked_path
+      : (s.images.satellite_marked || s.images.satellite);
+    document.getElementById('modalSatImg').src = imgBase + satPath;
+
+    // Remove any previous composite section
+    const existingComposite = document.getElementById('geoCompositeSection');
+    if (existingComposite) existingComposite.remove();
+
+    const svGrid = document.querySelector('.sv-grid');
+    const svLabel = svGrid.previousElementSibling; // "Street View" label
+
+    if (topic === 'mismatch_mcq' && qData?.composite_stv_labeled_path) {
+      // Hide normal STV grid, show labeled STV composite instead
+      svGrid.style.display = 'none';
+      svLabel.textContent = 'Street View Options (A-D)';
+      const section = document.createElement('div');
+      section.id = 'geoCompositeSection';
+      section.className = 'composite-section';
+      section.innerHTML = `<img class="composite-img" src="${imgBase + qData.composite_stv_labeled_path}" alt="STV Options Grid" />`;
+      svGrid.parentNode.insertBefore(section, svGrid.nextSibling);
+    } else if (topic === 'mismatch_binary') {
+      // Show the relevant STV (own for Yes, negative for No)
+      svLabel.textContent = qData?.mismatch_is_match === false
+        ? 'Street View (Mismatched Location)'
+        : 'Street View (Same Location)';
+
+      const stvComposite = qData?.mismatch_is_match === false
+        ? qData?.mismatch_negative_stv_composite
+        : (qData?.stv_shown_composite || s.images.stv_composite_labeled || s.images.stv_composite);
+
+      if (stvComposite) {
+        svGrid.style.display = 'none';
+        const section = document.createElement('div');
+        section.id = 'geoCompositeSection';
+        section.className = 'composite-section';
+        section.innerHTML = `<img class="composite-img" src="${imgBase + stvComposite}" alt="Street View Composite" />`;
+        svGrid.parentNode.insertBefore(section, svGrid.nextSibling);
+      } else {
+        // Fallback: show individual STV images
+        svGrid.style.display = '';
+        document.getElementById('svFwd').src   = imgBase + s.images.streetview_along_fwd;
+        document.getElementById('svBwd').src   = imgBase + s.images.streetview_along_bwd;
+        document.getElementById('svLeft').src  = imgBase + s.images.streetview_cross_left;
+        document.getElementById('svRight').src = imgBase + s.images.streetview_cross_right;
+      }
+    } else {
+      // Normal: show standard STV grid
+      svGrid.style.display = '';
+      svLabel.textContent = 'Street View';
+      document.getElementById('svFwd').src   = imgBase + s.images.streetview_along_fwd;
+      document.getElementById('svBwd').src   = imgBase + s.images.streetview_along_bwd;
+      document.getElementById('svLeft').src  = imgBase + s.images.streetview_cross_left;
+      document.getElementById('svRight').src = imgBase + s.images.streetview_cross_right;
+    }
   }
 
   function renderModalMeta(s) {
@@ -1046,15 +1140,19 @@
 
   function renderModalPerQuestion(fq, idx) {
     const s = fq._sample;
+    const qData = fq._qData || {};
 
     // Header
     document.getElementById('modalTitle').textContent =
       `${s.location.neighborhood} — ${s.location.city}`;
+    const strategyInfo = qData.mismatch_strategy
+      ? `  ·  ${qData.mismatch_strategy.replace('_', ' ')}`
+      : '';
     document.getElementById('modalSubtitle').textContent =
-      `${s.sample_id}  ·  ${s.location.road_name}  ·  ${TOPIC_LABELS[fq._topic] || fq._topic}`;
+      `${s.sample_id}  ·  ${s.location.road_name}  ·  ${TOPIC_LABELS[fq._topic] || fq._topic}${strategyInfo}`;
 
     renderModalNav(idx);
-    renderModalImages(s);
+    renderModalImages(s, qData);
 
     // Question
     document.getElementById('questionSectionLabel').textContent = 'Question';
@@ -1080,7 +1178,7 @@
       `${s.sample_id}  ·  ${s.location.road_name}  ·  ${qCount} question${qCount !== 1 ? 's' : ''}`;
 
     renderModalNav(idx);
-    renderModalImages(s);
+    renderModalImages(s, null);
 
     // Build question accordion
     const qs = s.questions && s.questions.length > 0
