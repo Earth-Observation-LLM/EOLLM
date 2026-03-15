@@ -95,6 +95,8 @@ def build_jsonl_record(sample):
 
     # Offline question-regeneration fields
     metadata["road_bearing"] = sample.get("road_bearing")
+    if sample.get("camera_arrow_paths"):
+        metadata["camera_arrow_paths"] = sample["camera_arrow_paths"]
     if sample.get("mismatch_mcq_variants"):
         metadata["mismatch_mcq_variants"] = sample["mismatch_mcq_variants"]
     if sample.get("mismatch_binary_variants"):
@@ -131,6 +133,7 @@ def build_jsonl_record(sample):
             "option_stv_paths", "option_composite_paths",
             "stv_shown_paths", "stv_shown_composite",
             "mismatch_negative_stv_paths", "mismatch_negative_stv_composite",
+            "query_stv_path", "query_stv_angle", "option_sat_paths",
         ]
         for gf in geo_fields:
             if gf in q:
@@ -283,6 +286,7 @@ def main():
     os.makedirs(os.path.join(ROOT, "output", "images", "sv"), exist_ok=True)
     os.makedirs(os.path.join(ROOT, "output", "images", "composite"), exist_ok=True)
     os.makedirs(os.path.join(ROOT, "output", "images", "sat_marked"), exist_ok=True)
+    os.makedirs(os.path.join(ROOT, "output", "images", "sat_arrow"), exist_ok=True)
 
     from importlib import import_module
     step1 = import_module("01_sample_locations")

@@ -638,6 +638,9 @@ function renderCard(q, idx) {
       ? '<span class="badge badge-easy">Easy</span>'
       : '<span class="badge badge-hard">Hard</span>';
   }
+  if (q.query_stv_angle) {
+    html += `<span class="badge" style="background:#2d3a4e;color:#a0b8d8;">${q.query_stv_angle}</span>`;
+  }
   html += `<span class="sample-id">${q._sid}</span>`;
   html += '</div>';
 
@@ -761,35 +764,39 @@ function renderBinaryImages(q) {
 
 // ── CAMERA DIRECTION ──
 function renderCameraImages(q) {
-  let html = '<div class="card-images">';
-  // SAT with red dot
-  html += `<div class="img-col">
-    <div class="img-label">Satellite (red dot)</div>
-    ${imgTag(q.sat_marked_path, 'sat-img', 'Marked satellite')}
-  </div>`;
-  // Own STV composite if available
-  const stvComp = q._images?.stv_composite;
-  if (stvComp) {
+  const ANGLE_NAMES = {along_fwd: 'Forward', cross_right: 'Right', along_bwd: 'Backward', cross_left: 'Left'};
+
+  let html = '';
+
+  // Query STV image
+  if (q.query_stv_path) {
+    const angleName = ANGLE_NAMES[q.query_stv_angle] || q.query_stv_angle;
+    html += `<div class="stv-source-label">Query street view: ${angleName} (${q.query_stv_angle})</div>`;
+    html += '<div class="card-images">';
     html += `<div class="img-col">
-      <div class="img-label">STV Composite (4 angles)</div>
-      ${imgTag(stvComp, 'composite-img', 'STV composite')}
+      <div class="img-label">Query Street View</div>
+      ${imgTag(q.query_stv_path, 'sat-img', 'Query STV')}
     </div>`;
+    html += '</div>';
   }
-  html += '</div>';
 
-  // Individual STV angles from parent images
-  const sid = q._sid;
-  const angles = ['along_fwd', 'cross_right', 'along_bwd', 'cross_left'];
-  const svPaths = angles.map(a => `images/sv/${sid}_${a}.jpg`);
-
-  html += '<div class="stv-row">';
-  svPaths.forEach((p, i) => {
-    html += `<div class="angle-wrap">
-      ${imgTag(p, '', ANGLE_LABELS[i])}
-      <div class="angle-label">${ANGLE_LABELS[i]}</div>
-    </div>`;
-  });
-  html += '</div>';
+  // Option satellite images (2x2 grid of arrow-annotated SATs)
+  const optPaths = q.option_sat_paths;
+  if (optPaths) {
+    html += '<div class="stv-source-label">Select the satellite image with the correct arrow direction:</div>';
+    html += '<div class="stv-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:650px;padding:0 16px 16px;">';
+    ['A', 'B', 'C', 'D'].forEach(key => {
+      const isCorrect = showAnswers && key === q.answer;
+      const border = isCorrect ? 'border:3px solid var(--green);' : 'border:2px solid var(--border);';
+      html += `<div class="angle-wrap" style="position:relative;">
+        <div style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.7);color:#fff;padding:2px 8px;border-radius:4px;font-weight:700;font-size:0.85rem;z-index:1;">${key}</div>
+        <img src="${BASE}${optPaths[key]}" alt="Option ${key}" data-src="1" loading="lazy"
+             style="width:300px;height:300px;border-radius:6px;${border}cursor:pointer;object-fit:cover;" />
+        ${isCorrect ? '<div style="color:var(--green);font-weight:700;text-align:center;font-size:0.8rem;margin-top:2px;">Correct</div>' : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
 
   return html;
 }

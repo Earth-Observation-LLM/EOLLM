@@ -12,6 +12,7 @@ generation (step 5).
 """
 
 import os
+import math
 import random
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -112,6 +113,57 @@ def create_red_dot_image(sat_path, output_path, dot_radius=8):
     return output_path
 
 
+def create_arrow_image(sat_path, output_path, bearing_deg,
+                       dot_radius=8, arrow_length=80):
+    """Overlay a red dot and directional arrow on a satellite image.
+
+    bearing_deg: compass bearing (0=N, 90=E, 180=S, 270=W).
+    Arrow starts at image center and points in the bearing direction.
+    """
+    from PIL import Image, ImageDraw
+    img = Image.open(sat_path).copy()
+    draw = ImageDraw.Draw(img)
+    cx, cy = img.width // 2, img.height // 2
+
+    # Red dot (same as create_red_dot_image)
+    draw.ellipse([cx - dot_radius - 2, cy - dot_radius - 2,
+                  cx + dot_radius + 2, cy + dot_radius + 2],
+                 fill=(255, 255, 255))
+    draw.ellipse([cx - dot_radius, cy - dot_radius,
+                  cx + dot_radius, cy + dot_radius],
+                 fill=(255, 0, 0))
+
+    # Arrow endpoint (image coords: y increases downward)
+    rad = math.radians(bearing_deg)
+    ex = cx + math.sin(rad) * arrow_length
+    ey = cy - math.cos(rad) * arrow_length
+
+    # Arrow shaft
+    draw.line([(cx, cy), (ex, ey)], fill=(255, 0, 0), width=4)
+
+    # Arrowhead triangle
+    head_len = 16
+    head_half = 8
+    # Unit vector along arrow
+    dx = ex - cx
+    dy = ey - cy
+    length = math.hypot(dx, dy)
+    if length > 0:
+        ux, uy = dx / length, dy / length
+        # Perpendicular
+        px, py = -uy, ux
+        # Three points of arrowhead
+        tip = (ex, ey)
+        left = (ex - ux * head_len + px * head_half,
+                ey - uy * head_len + py * head_half)
+        right = (ex - ux * head_len - px * head_half,
+                 ey - uy * head_len - py * head_half)
+        draw.polygon([tip, left, right], fill=(255, 0, 0))
+
+    img.save(output_path)
+    return output_path
+
+
 def _build_stv_composite(sample, composite_dir, suffix=""):
     """Build a 2x2 composite of all 4 STV angles for one sample.
 
@@ -142,8 +194,10 @@ def run(samples):
 
     composite_dir = os.path.join(ROOT, "output", "images", "composite")
     marked_dir = os.path.join(ROOT, "output", "images", "sat_marked")
+    arrow_dir = os.path.join(ROOT, "output", "images", "sat_arrow")
     os.makedirs(composite_dir, exist_ok=True)
     os.makedirs(marked_dir, exist_ok=True)
+    os.makedirs(arrow_dir, exist_ok=True)
 
     # Pre-filter samples with valid images
     samples_with_sat = [s for s in samples if os.path.exists(_get_sat_path(s))]
@@ -163,6 +217,28 @@ def run(samples):
             sample["sat_marked_path"] = f"images/sat_marked/{sid}.png"
         except Exception as e:
             print(f"  [{i+1}/{len(samples)}] {sid}: red dot FAILED: {e}")
+
+        # ── Arrow images for camera_direction ────────────────────────
+        bearing = sample.get("road_bearing")
+        if bearing is not None:
+            try:
+                bearing = float(bearing)
+                angle_map = {
+                    "fwd": bearing % 360,
+                    "right": (bearing - 90) % 360,
+                    "bwd": (bearing + 180) % 360,
+                    "left": (bearing + 90) % 360,
+                }
+                arrow_paths = {}
+                for label, hdg in angle_map.items():
+                    arrow_out = os.path.join(arrow_dir, f"{sid}_arrow_{label}.png")
+                    create_arrow_image(sat_path, arrow_out, hdg)
+                    arrow_paths[f"along_{label}" if label in ("fwd", "bwd")
+                                else f"cross_{label}"] = \
+                        f"images/sat_arrow/{sid}_arrow_{label}.png"
+                sample["camera_arrow_paths"] = arrow_paths
+            except Exception as e:
+                print(f"  [{i+1}/{len(samples)}] {sid}: arrows FAILED: {e}")
 
         if not _all_stv_exist(sample):
             continue
@@ -297,8 +373,9 @@ def run(samples):
     mcq_count = sum(1 for s in samples if s.get("mismatch_mcq_variants"))
     bin_count = sum(1 for s in samples if s.get("mismatch_binary_variants"))
     dot_count = sum(1 for s in samples if s.get("sat_marked_path"))
-    print(f"  Red dots: {dot_count}, MCQ variants: {mcq_count}, "
-          f"Binary variants: {bin_count}")
+    arrow_count = sum(1 for s in samples if s.get("camera_arrow_paths"))
+    print(f"  Red dots: {dot_count}, Arrows: {arrow_count}, "
+          f"MCQ variants: {mcq_count}, Binary variants: {bin_count}")
     return samples
 
 

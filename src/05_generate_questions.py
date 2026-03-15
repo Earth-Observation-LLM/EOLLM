@@ -8,7 +8,6 @@ import json
 import random
 from collections import Counter
 from question_templates import QUESTION_TEMPLATES
-from utils import bearing_to_quadrant
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -243,23 +242,39 @@ def generate_questions(sample):
                 "topic": "transit_density", "difficulty": "medium",
             })
 
-    # --- CAMERA DIRECTION (cross-view) ---
-    bearing = sample.get("road_bearing")
-    if bearing is not None:
-        try:
-            bearing = float(bearing)
-            correct = bearing_to_quadrant(bearing)
-            all_quadrants = ["Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"]
-            distractors = [q for q in all_quadrants if q != correct]
-            opts, ans = _shuffle_options(correct, distractors, sid, "camera_direction")
+    # --- CAMERA DIRECTION (cross-view, arrow-on-SAT) ---
+    arrow_paths = sample.get("camera_arrow_paths", {})
+    query_angles = ["along_fwd", "cross_right", "along_bwd", "cross_left"]
+    if arrow_paths and len(arrow_paths) == 4:
+        for query_angle in query_angles:
+            query_stv = f"images/sv/{sid}_{query_angle}.jpg"
+            if not os.path.exists(os.path.join(ROOT, "output", query_stv)):
+                continue
+
+            correct_arrow = arrow_paths[query_angle]
+            distractor_arrows = [arrow_paths[a] for a in query_angles
+                                 if a != query_angle]
+
+            # Shuffle arrow images into option slots
+            all_arrows = [correct_arrow] + distractor_arrows
+            q_rng = random.Random(f"{sid}_camera_direction_{query_angle}")
+            q_rng.shuffle(all_arrows)
+            answer_key = chr(65 + all_arrows.index(correct_arrow))
+
+            opts = {chr(65 + i): f"Image {chr(65 + i)}"
+                    for i in range(4)}
+            option_sat_paths = {chr(65 + i): p
+                                for i, p in enumerate(all_arrows)}
+
             questions.append({
                 "question": rng.choice(QUESTION_TEMPLATES["camera_direction"]),
-                "options": opts, "answer": ans,
+                "options": opts, "answer": answer_key,
                 "topic": "camera_direction", "difficulty": "medium",
+                "query_stv_path": query_stv,
+                "query_stv_angle": query_angle,
+                "option_sat_paths": option_sat_paths,
                 "sat_marked_path": sample.get("sat_marked_path"),
             })
-        except (ValueError, TypeError):
-            pass
 
     # --- MISMATCH BINARY (cross-view, Yes/No) ---
     binary_variants = sample.get("mismatch_binary_variants", [])
