@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geolocation Questions Viewer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3349;
+      --accent: #4f8ef7;
+      --accent2: #7c5cbf;
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --yellow: #f1c40f;
+      --text: #e0e4f0;
+      --muted: #7a80a0;
+      --radius: 10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+    }
+
+    .logo span { color: var(--accent); }
+
+    #fileInput {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .stats {
+      margin-left: auto;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* ── FILTER BAR ── */
+    .filters {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-group input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    .filter-group span {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 4px 12px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+
+    .toggle-btn:hover { border-color: var(--accent); }
+    .toggle-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px 24px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state h2 { font-size: 1.4rem; margin-bottom: 8px; color: var(--text); }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-mcq { background: #2d3a6e; color: #7da5f7; }
+    .badge-binary { background: #3a2d5e; color: #b48ef7; }
+    .badge-camera { background: #2d5e4a; color: #7df7b4; }
+    .badge-same { background: #5e3a2d; color: #f7b47d; }
+    .badge-cross { background: #2d5e5e; color: #7df7f7; }
+    .badge-easy { background: #2d5e2d; color: var(--green); }
+    .badge-hard { background: #5e2d2d; color: var(--red); }
+    .badge-yes { background: #1a4a2a; color: var(--green); }
+    .badge-no { background: #4a1a1a; color: var(--red); }
+
+    .sample-id {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-family: monospace;
+    }
+
+    /* ── IMAGE LAYOUT ── */
+    .card-images {
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .img-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .img-col .img-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .img-col img {
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      object-fit: cover;
+    }
+
+    .img-col img:hover {
+      transform: scale(1.02);
+      border-color: var(--accent);
+    }
+
+    .sat-img { width: 350px; height: 350px; }
+    .mega-img { width: 600px; height: 600px; }
+    .composite-img { width: 300px; height: 300px; }
+    .stv-small { width: 200px; height: 200px; }
+
+    /* ── OPTION BREAKDOWN ── */
+    .option-breakdown {
+      padding: 0 16px 16px;
+    }
+
+    .breakdown-toggle {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s;
+    }
+
+    .breakdown-toggle:hover { color: var(--text); border-color: var(--accent); }
+
+    .breakdown-content {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .breakdown-content.open { display: block; }
+
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--surface2);
+      border: 2px solid transparent;
+      flex-wrap: wrap;
+    }
+
+    .option-row.correct {
+      border-color: var(--green);
+      background: rgba(46, 204, 113, 0.08);
+    }
+
+    .option-letter {
+      font-size: 1.1rem;
+      font-weight: 700;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .option-row.correct .option-letter {
+      background: var(--green);
+      color: #000;
+    }
+
+    .option-images {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .option-images img {
+      width: 120px;
+      height: 120px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      object-fit: cover;
+    }
+
+    .option-images img:hover { border-color: var(--accent); }
+
+    .angle-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 2px;
+    }
+
+    .angle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── STV ROW ── */
+    .stv-row {
+      padding: 0 16px 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stv-row .angle-wrap img {
+      width: 160px;
+      height: 160px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      object-fit: cover;
+    }
+
+    .stv-row .angle-wrap img:hover { border-color: var(--accent); }
+
+    .stv-source-label {
+      padding: 0 16px 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Q&A SECTION ── */
+    .card-qa {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .question-text {
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .options-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .option-pill {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+    }
+
+    .option-pill.correct-answer {
+      border-color: var(--green);
+      background: rgba(46, 204, 113, 0.12);
+    }
+
+    .option-pill .opt-key {
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .answer-line {
+      font-size: 0.85rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .answer-line.hidden { visibility: hidden; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal-overlay img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 8px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .sat-img { width: 250px; height: 250px; }
+      .mega-img { width: 350px; height: 350px; }
+      .composite-img { width: 200px; height: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Geo<span>VQA</span> Viewer</div>
+  <input type="file" id="fileInput" accept=".jsonl,.json" />
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="filters" id="filtersBar" style="display:none;">
+  <div class="filter-group">
+    <label>Type:</label>
+    <span><input type="checkbox" id="f_mcq" checked /> MCQ</span>
+    <span><input type="checkbox" id="f_binary" checked /> Binary</span>
+    <span><input type="checkbox" id="f_camera" checked /> Camera Dir</span>
+  </div>
+  <div class="filter-group">
+    <label>Binary:</label>
+    <span><input type="checkbox" id="f_match_yes" checked /> Match</span>
+    <span><input type="checkbox" id="f_match_no" checked /> Mismatch</span>
+  </div>
+  <div class="filter-group">
+    <label>Strategy:</label>
+    <button class="toggle-btn active" data-filter="strategy" data-val="all">All</button>
+    <button class="toggle-btn" data-filter="strategy" data-val="same_city">Same City</button>
+    <button class="toggle-btn" data-filter="strategy" data-val="cross_city">Cross City</button>
+  </div>
+  <div class="filter-group">
+    <label>Difficulty:</label>
+    <button class="toggle-btn active" data-filter="difficulty" data-val="all">All</button>
+    <button class="toggle-btn" data-filter="difficulty" data-val="easy">Easy</button>
+    <button class="toggle-btn" data-filter="difficulty" data-val="hard">Hard</button>
+  </div>
+  <div class="filter-group">
+    <button class="toggle-btn" id="toggleAnswers">Hide Answers</button>
+  </div>
+</div>
+
+<main id="main">
+  <div class="empty-state">
+    <h2>Geolocation Questions Viewer</h2>
+    <p>Load a dataset.jsonl file to view mismatch_mcq, mismatch_binary, and camera_direction questions.</p>
+  </div>
+</main>
+
+<!-- Image modal -->
+<div class="modal-overlay" id="modal">
+  <img id="modalImg" src="" alt="Enlarged" />
+</div>
+
+<script>
+const GEO_TOPICS = ['mismatch_mcq', 'mismatch_binary', 'camera_direction'];
+const BASE = '../output/';
+const POS_MAP = { A: 'Top-Left', B: 'Top-Right', C: 'Bottom-Left', D: 'Bottom-Right' };
+const POS_REVERSE = {};
+Object.entries(POS_MAP).forEach(([k, v]) => POS_REVERSE[v] = k);
+const ANGLE_LABELS = ['Fwd', 'Right', 'Bwd', 'Left'];
+
+let allQuestions = [];
+let showAnswers = true;
+let filters = {
+  strategy: 'all',
+  difficulty: 'all'
+};
+
+// ── File loading ──
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.trim().split('\n');
+    allQuestions = [];
+    lines.forEach(line => {
+      try {
+        const record = JSON.parse(line);
+        const sid = record.sample_id;
+        const loc = record.location || {};
+        const images = record.images || {};
+        (record.questions || []).forEach(q => {
+          if (GEO_TOPICS.includes(q.topic)) {
+            allQuestions.push({
+              ...q,
+              _sid: sid,
+              _loc: loc,
+              _images: images
+            });
+          }
+        });
+      } catch(err) { /* skip bad lines */ }
+    });
+    document.getElementById('filtersBar').style.display = 'flex';
+    render();
+  };
+  reader.readAsText(file);
+});
+
+// ── Filters ──
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const group = btn.dataset.filter;
+    document.querySelectorAll(`[data-filter="${group}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filters[group] = btn.dataset.val;
+    render();
+  });
+});
+
+['f_mcq','f_binary','f_camera','f_match_yes','f_match_no'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+});
+
+document.getElementById('toggleAnswers').addEventListener('click', () => {
+  showAnswers = !showAnswers;
+  document.getElementById('toggleAnswers').textContent = showAnswers ? 'Hide Answers' : 'Show Answers';
+  document.querySelectorAll('.answer-line').forEach(el => {
+    el.classList.toggle('hidden', !showAnswers);
+  });
+  document.querySelectorAll('.option-pill.correct-answer').forEach(el => {
+    if (!showAnswers) el.classList.remove('correct-answer');
+  });
+  // Re-render to properly toggle
+  render();
+});
+
+// ── Modal ──
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modalImg');
+
+function openModal(src) {
+  modalImg.src = src;
+  modal.classList.add('open');
+}
+
+modal.addEventListener('click', () => modal.classList.remove('open'));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') modal.classList.remove('open');
+});
+
+// ── Filtering ──
+function getFiltered() {
+  return allQuestions.filter(q => {
+    // Type filter
+    if (q.topic === 'mismatch_mcq' && !document.getElementById('f_mcq').checked) return false;
+    if (q.topic === 'mismatch_binary' && !document.getElementById('f_binary').checked) return false;
+    if (q.topic === 'camera_direction' && !document.getElementById('f_camera').checked) return false;
+
+    // Binary match sub-filter
+    if (q.topic === 'mismatch_binary') {
+      if (q.mismatch_is_match && !document.getElementById('f_match_yes').checked) return false;
+      if (!q.mismatch_is_match && !document.getElementById('f_match_no').checked) return false;
+    }
+
+    // Strategy
+    if (filters.strategy !== 'all' && q.mismatch_strategy && q.mismatch_strategy !== filters.strategy) return false;
+
+    // Difficulty
+    if (filters.difficulty !== 'all' && q.difficulty && q.difficulty !== filters.difficulty) return false;
+
+    return true;
+  });
+}
+
+// ── Render ──
+function render() {
+  const filtered = getFiltered();
+  const main = document.getElementById('main');
+
+  // Stats
+  const mcqCount = filtered.filter(q => q.topic === 'mismatch_mcq').length;
+  const binYes = filtered.filter(q => q.topic === 'mismatch_binary' && q.mismatch_is_match).length;
+  const binNo = filtered.filter(q => q.topic === 'mismatch_binary' && !q.mismatch_is_match).length;
+  const camCount = filtered.filter(q => q.topic === 'camera_direction').length;
+  document.getElementById('stats').textContent =
+    `${filtered.length} questions | MCQ: ${mcqCount} | Binary Yes: ${binYes} No: ${binNo} | Camera: ${camCount}`;
+
+  if (filtered.length === 0) {
+    main.innerHTML = '<div class="empty-state"><h2>No matching questions</h2><p>Adjust filters or load a dataset.</p></div>';
+    return;
+  }
+
+  main.innerHTML = filtered.map((q, i) => renderCard(q, i)).join('');
+
+  // Attach click handlers for images
+  main.querySelectorAll('img[data-src]').forEach(img => {
+    img.addEventListener('click', () => openModal(img.src));
+  });
+
+  // Breakdown toggles
+  main.querySelectorAll('.breakdown-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const content = btn.nextElementSibling;
+      content.classList.toggle('open');
+      btn.textContent = content.classList.contains('open')
+        ? 'Hide per-option breakdown'
+        : 'Show per-option breakdown';
+    });
+  });
+}
+
+function imgTag(path, cls, alt) {
+  if (!path) return `<div class="${cls}" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;border-radius:6px;border:2px solid var(--border);color:var(--muted);font-size:0.75rem;">No image</div>`;
+  const src = BASE + path;
+  return `<img src="${src}" class="${cls}" alt="${alt || ''}" data-src="1" loading="lazy" />`;
+}
+
+function renderCard(q, idx) {
+  let html = '<div class="card">';
+
+  // Header with badges
+  html += '<div class="card-header">';
+  html += topicBadge(q.topic);
+  if (q.topic === 'mismatch_binary') {
+    html += q.mismatch_is_match
+      ? '<span class="badge badge-yes">Match</span>'
+      : '<span class="badge badge-no">Mismatch</span>';
+  }
+  if (q.mismatch_strategy) {
+    html += q.mismatch_strategy === 'same_city'
+      ? '<span class="badge badge-same">Same City</span>'
+      : '<span class="badge badge-cross">Cross City</span>';
+  }
+  if (q.difficulty) {
+    html += q.difficulty === 'easy'
+      ? '<span class="badge badge-easy">Easy</span>'
+      : '<span class="badge badge-hard">Hard</span>';
+  }
+  html += `<span class="sample-id">${q._sid}</span>`;
+  html += '</div>';
+
+  // Images section — type-specific
+  if (q.topic === 'mismatch_mcq') {
+    html += renderMCQImages(q);
+  } else if (q.topic === 'mismatch_binary') {
+    html += renderBinaryImages(q);
+  } else if (q.topic === 'camera_direction') {
+    html += renderCameraImages(q);
+  }
+
+  // Q&A
+  html += renderQA(q);
+  html += '</div>';
+  return html;
+}
+
+function topicBadge(topic) {
+  if (topic === 'mismatch_mcq') return '<span class="badge badge-mcq">Mismatch MCQ</span>';
+  if (topic === 'mismatch_binary') return '<span class="badge badge-binary">Mismatch Binary</span>';
+  return '<span class="badge badge-camera">Camera Direction</span>';
+}
+
+// ── MCQ ──
+function renderMCQImages(q) {
+  let html = '<div class="card-images">';
+  // SAT with red dot
+  html += `<div class="img-col">
+    <div class="img-label">Satellite (red dot)</div>
+    ${imgTag(q.sat_marked_path, 'sat-img', 'Marked satellite')}
+  </div>`;
+  // Mega composite (labeled)
+  html += `<div class="img-col">
+    <div class="img-label">STV Options Grid (A/B/C/D)</div>
+    ${imgTag(q.composite_stv_labeled_path, 'mega-img', 'STV mega composite')}
+  </div>`;
+  html += '</div>';
+
+  // Per-option breakdown
+  if (q.option_stv_paths || q.option_composite_paths) {
+    // Find which composite position is correct
+    // answer text is spatial ("Top-Left" etc.), map to composite key
+    const answerText = q.options?.[q.answer];
+    const correctCompositeKey = POS_REVERSE[answerText];
+
+    html += '<div class="option-breakdown">';
+    html += '<button class="breakdown-toggle">Show per-option breakdown</button>';
+    html += '<div class="breakdown-content">';
+
+    ['A', 'B', 'C', 'D'].forEach(key => {
+      const isCorrect = key === correctCompositeKey;
+      html += `<div class="option-row${isCorrect ? ' correct' : ''}">`;
+      html += `<div class="option-letter">${key}</div>`;
+      html += `<div style="font-size:0.8rem;color:var(--muted);width:80px;">${POS_MAP[key]}${isCorrect ? ' &#10003;' : ''}</div>`;
+      html += '<div class="option-images">';
+
+      // Per-option composite
+      const compPath = q.option_composite_paths?.[key];
+      if (compPath) {
+        const compSrc = BASE + compPath;
+        html += `<div class="angle-wrap">
+          <img src="${compSrc}" alt="Option ${key} composite" data-src="1" loading="lazy"
+               style="width:160px;height:160px;border-radius:4px;border:1px solid var(--border);cursor:pointer;object-fit:cover;" />
+          <div class="angle-label">Composite</div>
+        </div>`;
+      }
+
+      // Individual STV angles
+      const stvPaths = q.option_stv_paths?.[key] || [];
+      stvPaths.forEach((p, i) => {
+        html += `<div class="angle-wrap">
+          ${imgTag(p, '', ANGLE_LABELS[i])}
+          <div class="angle-label">${ANGLE_LABELS[i]}</div>
+        </div>`;
+      });
+
+      html += '</div></div>';
+    });
+
+    html += '</div></div>';
+  }
+
+  return html;
+}
+
+// ── BINARY ──
+function renderBinaryImages(q) {
+  const isMatch = q.mismatch_is_match;
+  const stvComposite = isMatch ? q.stv_shown_composite : q.mismatch_negative_stv_composite;
+  const stvPaths = isMatch ? q.stv_shown_paths : q.mismatch_negative_stv_paths;
+  const stvLabel = isMatch ? 'STV Composite (own location)' : 'STV Composite (different location)';
+
+  let html = '<div class="card-images">';
+  html += `<div class="img-col">
+    <div class="img-label">Satellite (red dot)</div>
+    ${imgTag(q.sat_marked_path, 'sat-img', 'Marked satellite')}
+  </div>`;
+  html += `<div class="img-col">
+    <div class="img-label">${stvLabel}</div>
+    ${imgTag(stvComposite, 'composite-img', 'STV composite')}
+  </div>`;
+  html += '</div>';
+
+  // Individual STV angles
+  if (stvPaths && stvPaths.length) {
+    const sourceInfo = isMatch ? `STV from: ${q._sid}` : `STV from: different sample`;
+    html += `<div class="stv-source-label">${sourceInfo}</div>`;
+    html += '<div class="stv-row">';
+    stvPaths.forEach((p, i) => {
+      html += `<div class="angle-wrap">
+        ${imgTag(p, '', ANGLE_LABELS[i])}
+        <div class="angle-label">${ANGLE_LABELS[i]}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+// ── CAMERA DIRECTION ──
+function renderCameraImages(q) {
+  let html = '<div class="card-images">';
+  // SAT with red dot
+  html += `<div class="img-col">
+    <div class="img-label">Satellite (red dot)</div>
+    ${imgTag(q.sat_marked_path, 'sat-img', 'Marked satellite')}
+  </div>`;
+  // Own STV composite if available
+  const stvComp = q._images?.stv_composite;
+  if (stvComp) {
+    html += `<div class="img-col">
+      <div class="img-label">STV Composite (4 angles)</div>
+      ${imgTag(stvComp, 'composite-img', 'STV composite')}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Individual STV angles from parent images
+  const sid = q._sid;
+  const angles = ['along_fwd', 'cross_right', 'along_bwd', 'cross_left'];
+  const svPaths = angles.map(a => `images/sv/${sid}_${a}.jpg`);
+
+  html += '<div class="stv-row">';
+  svPaths.forEach((p, i) => {
+    html += `<div class="angle-wrap">
+      ${imgTag(p, '', ANGLE_LABELS[i])}
+      <div class="angle-label">${ANGLE_LABELS[i]}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  return html;
+}
+
+// ── Q&A ──
+function renderQA(q) {
+  let html = '<div class="card-qa">';
+  html += `<div class="question-text">${q.question}</div>`;
+  html += '<div class="options-list">';
+  if (q.options) {
+    Object.entries(q.options).forEach(([key, val]) => {
+      const isAnswer = key === q.answer && showAnswers;
+      html += `<div class="option-pill${isAnswer ? ' correct-answer' : ''}">
+        <span class="opt-key">${key}.</span>${val}
+      </div>`;
+    });
+  }
+  html += '</div>';
+  html += `<div class="answer-line${showAnswers ? '' : ' hidden'}">Answer: ${q.answer} (${q.options?.[q.answer] || ''})</div>`;
+  html += '</div>';
+  return html;
+}
+</script>
+</body>
+</html>
