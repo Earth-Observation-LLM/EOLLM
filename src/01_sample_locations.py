@@ -32,9 +32,9 @@ def download_osm_roads(city_key, city_cfg):
             params={"data": query},
             timeout=200,
         )
-        if resp.status_code == 429:
+        if resp.status_code in (429, 504):
             wait = 30 * (attempt + 1)
-            print(f"    Rate limited, waiting {wait}s...")
+            print(f"    {'Rate limited' if resp.status_code == 429 else 'Gateway timeout'}, waiting {wait}s...")
             time.sleep(wait)
             continue
         resp.raise_for_status()
@@ -67,9 +67,9 @@ def download_osm_context(city_key, city_cfg):
             params={"data": query},
             timeout=300,
         )
-        if resp.status_code == 429:
+        if resp.status_code in (429, 504):
             wait = 60 * (attempt + 1)
-            print(f"    Rate limited, waiting {wait}s...")
+            print(f"    {'Rate limited' if resp.status_code == 429 else 'Gateway timeout'}, waiting {wait}s...")
             time.sleep(wait)
             continue
         resp.raise_for_status()
