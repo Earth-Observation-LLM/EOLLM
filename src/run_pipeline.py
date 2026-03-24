@@ -300,6 +300,16 @@ def main():
     samples = step1.run(cities=cities, num_samples=args.samples)
     samples = step2.run(samples)
     samples = step3.run(samples)
+
+    # Drop samples with no Street View coverage — questions reference SV imagery
+    # that doesn't exist, making them unanswerable for the model.
+    before = len(samples)
+    samples = [s for s in samples if s.get("sv_status") == "OK"]
+    dropped = before - len(samples)
+    if dropped:
+        print(f"\n  Dropped {dropped}/{before} samples with no Street View coverage")
+    print(f"  Continuing with {len(samples)} samples\n")
+
     samples = step4.run(samples)
     samples = step_composite.run(samples)
     samples = step5.run(samples)
