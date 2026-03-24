@@ -129,76 +129,7 @@ CITIES = {
         ],
     },
 
-    "adana": {
-        "name": "Adana",
-        "country": "Turkey",
-        "bbox": (36.900, 35.150, 37.150, 35.830),  # E expanded for Ceyhan Port
-        "seeds": [
-            # Permanent / iconic anchors
-            ("Taskopru Roman Bridge",   37.0010,  35.3213, "commercial"),
-            ("Adana Grand Mosque",      37.0010,  35.3200, "commercial"),
-            # Residential
-            ("Seyhan",                  37.0050,  35.3250, "residential"),
-            ("Yuregir",                 36.9833,  35.4333, "residential"),
-            # Commercial
-            ("Adana City Center",       37.0010,  35.3213, "commercial"),
-            ("M1 Adana Mall Area",      36.9833,  35.3167, "commercial"),
-            # Industrial
-            ("Adana OSB",               37.0333,  35.4500, "industrial"),
-            ("Ceyhan Port Industrial",  37.0333,  35.8167, "industrial"),
-            # Natural / water
-            ("Seyhan River Bend",       37.0050,  35.3150, "mixed"),
-            ("Seyhan Dam Lake",         37.1500,  35.3000, "natural"),
-        ],
-    },
-
-    "malatya": {
-        "name": "Malatya",
-        "country": "Turkey",
-        "bbox": (38.250, 37.950, 38.500, 38.450),  # S, W, N, E
-        "seeds": [
-            # Permanent / iconic anchors
-            ("Malatya Castle",              38.3552,  38.3095, "mixed"),
-            ("Battalgazi Old City",         38.4000,  38.2833, "mixed"),
-            # Residential
-            ("Yesilyurt",                   38.3333,  38.3000, "residential"),
-            ("Battalgazi",                  38.4000,  38.2833, "residential"),
-            ("Cevre Yolu District",         38.3500,  38.3200, "residential"),
-            # Commercial
-            ("Malatya City Center",         38.3552,  38.3095, "commercial"),
-            ("PTT Malatya Bazaar",          38.3560,  38.3080, "commercial"),
-            # Industrial
-            ("Malatya OSB",                 38.3833,  38.2333, "industrial"),
-            ("Apricot Processing Zone",     38.3667,  38.2667, "industrial"),
-            # Natural
-            ("Levent Valley",               38.2500,  38.2000, "natural"),
-            ("Sultansuyu Dam",              38.4667,  38.0833, "natural"),
-        ],
-    },
-
-    "sivas": {
-        "name": "Sivas",
-        "country": "Turkey",
-        "bbox": (39.650, 36.900, 39.850, 37.200),  # S, W, N, E
-        "seeds": [
-            # Permanent / iconic anchors (Sivas has exceptional Seljuk architecture)
-            ("Cifte Minaret Medrese",       39.7489,  37.0169, "commercial"),
-            ("Sivas Kongre Binasi",         39.7478,  37.0167, "commercial"),
-            # Residential
-            ("Merkez Sivas",                39.7489,  37.0169, "residential"),
-            ("Mimar Sinan District",        39.7600,  37.0000, "residential"),
-            ("Etlik District",              39.7333,  37.0333, "residential"),
-            # Commercial
-            ("Sivas City Center",           39.7489,  37.0169, "commercial"),
-            ("Ataturk Street Bazaar",       39.7490,  37.0150, "commercial"),
-            # Industrial
-            ("Sivas OSB",                   39.7833,  37.0833, "industrial"),
-            ("Sivas Iron Steel Works",      39.8000,  37.0167, "industrial"),
-            # Natural
-            ("Kizilirmak River",            39.7500,  37.0000, "natural"),
-            # NOTE: Golova Reservoir removed — outside bbox (lon 37.50 > E 37.20)
-        ],
-    },
+    
 
     # ─────────────────────────────────────────────
     # GLOBAL CITIES
@@ -421,80 +352,6 @@ CITIES = {
         ],
     },
 
-    "amsterdam": {
-        "name": "Amsterdam",
-        "country": "Netherlands",
-        "bbox": (52.290, 4.730, 52.430, 5.020),
-        "seeds": [
-            # Permanent iconic anchors (UNESCO canal ring)
-            ("Dam Square",              52.3730,  4.8932, "commercial"),
-            ("Anne Frank House Canal",  52.3752,  4.8839, "mixed"),
-            # Residential
-            ("Jordaan",                 52.3748,  4.8828, "residential"),
-            ("Oost",                    52.3610,  4.9280, "residential"),
-            ("Bijlmer",                 52.3160,  4.9530, "residential"),
-            ("Amstelveen Centrum",      52.3030,  4.8630, "residential"),
-            # Commercial
-            ("Zuidas",                  52.3380,  4.8730, "commercial"),
-            ("Watergraafsmeer",         52.3530,  4.9370, "residential"),
-            # Industrial
-            ("Westpoort",               52.3930,  4.8200, "industrial"),
-            ("Noord",                   52.3910,  4.9230, "mixed"),
-            # Natural / water (canals are UNESCO heritage — permanent)
-            ("De Pijp Canal",           52.3535,  4.8940, "mixed"),
-            ("Vondelpark",              52.3579,  4.8686, "natural"),
-        ],
-    },
-
-    "singapore": {
-        "name": "Singapore",
-        "country": "Singapore",
-        "bbox": (1.205, 103.605, 1.475, 104.030),
-        "seeds": [
-            # Permanent iconic anchors (note: coastline may change due to reclamation)
-            ("Marina Bay Sands",        1.2816, 103.8636, "commercial"),
-            ("Gardens by the Bay",      1.2816, 103.8636, "commercial"),
-            # Residential
-            ("Toa Payoh",               1.3343, 103.8490, "residential"),
-            ("Bukit Timah",             1.3400, 103.7765, "residential"),
-            ("Punggol",                 1.4050, 103.9060, "residential"),
-            ("Tampines",                1.3530, 103.9450, "residential"),
-            # Commercial
-            ("Orchard Road",            1.3040, 103.8318, "commercial"),
-            ("Jurong East",             1.3330, 103.7422, "commercial"),
-            # Industrial
-            ("Jurong Island",           1.2667, 103.7000, "industrial"),
-            ("Tuas Industrial",         1.3167, 103.6500, "industrial"),
-            # Natural (Central Catchment is protected reserve — very stable)
-            ("Central Catchment Reserve", 1.3600, 103.8200, "natural"),
-            ("Geylang",                 1.3170, 103.8900, "mixed"),
-        ],
-    },
-
-    "sao_paulo": {
-        "name": "São Paulo",
-        "country": "Brazil",
-        "bbox": (-23.750, -46.850, -23.350, -46.350),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Paulista Avenue",        -23.5613, -46.6556, "commercial"),
-            ("Ibirapuera Park",        -23.5873, -46.6573, "natural"),
-            # Residential
-            ("Vila Madalena",          -23.5530, -46.6910, "residential"),
-            ("Jardins",                -23.5680, -46.6680, "residential"),
-            ("Bela Vista",             -23.5590, -46.6470, "residential"),
-            ("Vila Mariana",           -23.5890, -46.6350, "residential"),
-            # Commercial
-            ("Faria Lima",             -23.5870, -46.6780, "commercial"),
-            ("Centro Historico",       -23.5505, -46.6340, "commercial"),
-            # Industrial
-            ("Mooca",                  -23.5620, -46.5990, "industrial"),
-            ("Santo Andre",            -23.6639, -46.5383, "industrial"),
-            # Mixed
-            ("Liberdade",              -23.5580, -46.6330, "mixed"),
-            ("Pinheiros",              -23.5670, -46.6930, "mixed"),
-        ],
-    },
 
     "nairobi": {
         "name": "Nairobi",
@@ -546,7 +403,7 @@ CITIES = {
 }
 
 # How many samples per city
-SAMPLES_PER_CITY = 13
+SAMPLES_PER_CITY = 120
 
 # OSM Overpass query for full city data (buildings + roads + amenities + landuse)
 OSM_QUERY_TEMPLATE = """
@@ -690,7 +547,7 @@ MISMATCH_BINARY_STRATEGY = "both"
 # SAT_BUFFER_M: radius in metres around the sample point. Smaller = more zoomed in.
 # Adjust these to control detail level per source.
 SAT_BUFFER_M = {
-    "NAIP": 100,   # 250m → ~500m tile (0.6 m/px native — very detailed)
+    "NAIP": 250,   # 250m → ~500m tile (0.6 m/px native — very detailed)
     "IGN":  100,   # 200m → ~400m tile (0.2 m/px native — extremely detailed)
     "ESRI": 100,   # 200m → ~400m tile (0.3–0.5 m/px in cities)
     "S2":   1280,  # 2560m → ~5120m tile (10 m/px native — can't zoom further)
