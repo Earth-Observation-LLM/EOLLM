@@ -6,398 +6,242 @@ Defines cities, seed locations, and all shared constants.
 CITIES = {
 
     # ─────────────────────────────────────────────
-    # TURKEY
+    # EUROPE (Ultra-dense OSM + Strong STV)
     # ─────────────────────────────────────────────
 
-    "istanbul": {
-        "name": "Istanbul",
-        "country": "Turkey",
-        "bbox": (40.840, 28.550, 41.200, 29.450),  # S, W, N, E (S expanded for Tuzla Shipyard)
+    "berlin": {
+        "name": "Berlin",
+        "country": "Germany",
+        "bbox": (52.400, 13.200, 52.600, 13.600),
         "seeds": [
-            # Permanent / iconic anchors
-            ("Hagia Sophia",            41.0086,  28.9802, "commercial"),
-            ("Grand Bazaar",            41.0108,  28.9680, "commercial"),
-            ("Galata Tower",            41.0256,  28.9742, "mixed"),
+            # Permanent iconic anchors
+            ("Brandenburg Gate",        52.5163,  13.3777, "commercial"),
+            ("Alexanderplatz",          52.5219,  13.4132, "commercial"),
             # Residential
-            ("Kadikoy",                 40.9909,  29.0283, "residential"),
-            ("Uskudar",                 41.0231,  29.0151, "residential"),
-            ("Bagcilar",                41.0375,  28.8566, "residential"),
-            ("Umraniye",                41.0167,  29.1167, "residential"),
-            # Commercial / business
-            ("Levent",                  41.0797,  29.0124, "commercial"),
-            ("Sisli",                   41.0602,  28.9877, "commercial"),
+            ("Kreuzberg",               52.4984,  13.3913, "residential"),
+            ("Charlottenburg",          52.5167,  13.3000, "residential"),
+            ("Prenzlauer Berg",         52.5398,  13.4246, "residential"),
+            # Commercial / Mixed
+            ("Potsdamer Platz",         52.5096,  13.3759, "mixed"),
+            ("Kurfurstendamm",          52.5037,  13.3115, "commercial"),
             # Industrial
-            ("Ikitelli OSB",            41.0630,  28.7960, "industrial"),
-            ("Tuzla Shipyard",          40.8467,  29.3000, "industrial"),
-            # Natural / water-adjacent (Bosphorus is permanent)
-            ("Bosphorus Strait North",  41.1767,  29.0684, "mixed"),
-            ("Belgrade Forest",         41.1800,  28.9600, "natural"),
-        ],
-    },
-
-    "ankara": {
-        "name": "Ankara",
-        "country": "Turkey",
-        "bbox": (39.750, 32.550, 40.100, 33.000),
-        "seeds": [
-            # Permanent / iconic anchors
-            ("Ataturk Mausoleum Anitkabir", 39.9255, 32.8369, "commercial"),
-            ("Ankara Castle",               39.9408, 32.8641, "mixed"),
-            # Residential
-            ("Cankaya",                     39.8900, 32.8597, "residential"),
-            ("Kecioren",                    40.0000, 32.8833, "residential"),
-            ("Batikent",                    39.9500, 32.7333, "residential"),
-            ("Etimesgut",                   39.9500, 32.6833, "residential"),
-            # Commercial
-            ("Kizilay",                     39.9208, 32.8541, "commercial"),
-            ("Sogutozu",                    39.9000, 32.8167, "commercial"),
-            # Industrial
-            ("Ostim OSB",                   39.9667, 32.7833, "industrial"),
-            ("Sincan OSB",                  39.9667, 32.6167, "industrial"),
+            ("Siemensstadt",            52.5388,  13.2644, "industrial"),
+            ("Adlershof Tech Park",     52.4334,  13.5350, "industrial"),
             # Natural
-            ("Eymir Lake",                  39.8100, 32.7750, "natural"),
-            ("Ulus Old Quarter",            39.9408, 32.8553, "mixed"),
+            ("Tempelhofer Feld",        52.4731,  13.4016, "natural"),
+            ("Tiergarten",              52.5144,  13.3501, "natural"),
         ],
     },
 
-    "izmir": {
-        "name": "Izmir",
-        "country": "Turkey",
-        "bbox": (38.280, 26.900, 38.600, 27.430),  # E expanded for Kemalpasa OSB
+    "amsterdam": {
+        "name": "Amsterdam",
+        "country": "Netherlands",
+        "bbox": (52.270, 4.730, 52.430, 5.010),
         "seeds": [
-            # Permanent / iconic anchors
-            ("Izmir Clock Tower",       38.4127,  27.1384, "commercial"),
-            ("Kadifekale Castle",       38.4069,  27.1456, "mixed"),
+            # Permanent iconic anchors
+            ("Dam Square",              52.3729,  4.8930,  "commercial"),
+            ("Rijksmuseum",             52.3600,  4.8852,  "mixed"),
             # Residential
-            ("Karsiyaka",              38.4566,  27.1114, "residential"),
-            ("Bornova",                38.4669,  27.2197, "residential"),
-            ("Buca",                   38.3833,  27.1833, "residential"),
-            # Commercial
-            ("Konak",                  38.4127,  27.1384, "commercial"),
-            ("Bayrakli",               38.4667,  27.1667, "commercial"),
+            ("Jordaan",                 52.3740,  4.8799,  "residential"),
+            ("De Pijp",                 52.3533,  4.8970,  "residential"),
+            ("Oud-West",                52.3631,  4.8660,  "residential"),
+            # Commercial / Business
+            ("Zuidas Business District",52.3389,  4.8741,  "commercial"),
+            ("Centrum",                 52.3702,  4.8951,  "commercial"),
             # Industrial
-            ("Cigli Industrial Zone",  38.5167,  27.0167, "industrial"),
-            ("Kemalpasa OSB",          38.4167,  27.4167, "industrial"),
-            # Natural / water
-            ("Izmir Bay Waterfront",   38.4200,  27.1000, "mixed"),
-            ("Karagol Park",           38.3667,  27.1500, "natural"),
+            ("Westpoort",               52.3995,  4.8016,  "industrial"),
+            ("NDSM Wharf",              52.4005,  4.8941,  "industrial"),
+            # Natural / Water
+            ("Vondelpark",              52.3580,  4.8686,  "natural"),
+            ("Amstel River",            52.3546,  4.9038,  "natural"),
         ],
     },
 
-    "bursa": {
-        "name": "Bursa",
-        "country": "Turkey",
-        "bbox": (40.070, 28.900, 40.450, 29.300),  # N expanded for Gemlik Port, S expanded for Uludag
+    # ─────────────────────────────────────────────
+    # NORTH AMERICA (Grid systems + Perfect STV)
+    # ─────────────────────────────────────────────
+
+    "toronto": {
+        "name": "Toronto",
+        "country": "Canada",
+        "bbox": (43.580, -79.640, 43.850, -79.120),
         "seeds": [
-            # Permanent / iconic anchors
-            ("Grand Mosque Ulu Camii",  40.1833,  29.0601, "commercial"),
-            ("Bursa Castle",            40.1867,  29.0584, "mixed"),
+            # Permanent iconic anchors
+            ("CN Tower",                43.6426, -79.3871, "commercial"),
+            ("Yonge-Dundas Square",     43.6561, -79.3802, "commercial"),
             # Residential
-            ("Nilufer",                 40.2167,  28.9667, "residential"),
-            ("Osmangazi",               40.1833,  29.0500, "residential"),
-            ("Yildirim",                40.1833,  29.1000, "residential"),
+            ("The Annex",               43.6703, -79.4071, "residential"),
+            ("Leslieville",             43.6631, -79.3297, "residential"),
+            ("Scarborough",             43.7731, -79.2577, "residential"),
             # Commercial
-            ("Uludag Ski Resort",       40.0833,  29.1333, "commercial"),
-            ("Organize Sanayi Bursa",   40.2500,  29.0833, "commercial"),
+            ("Financial District",      43.6486, -79.3815, "commercial"),
+            ("Liberty Village",         43.6373, -79.4181, "mixed"),
             # Industrial
-            ("DOSAB Industrial Zone",   40.2333,  28.9833, "industrial"),
-            ("Gemlik Port",             40.4333,  29.1500, "industrial"),
+            ("Port Lands",              43.6436, -79.3330, "industrial"),
+            ("Etobicoke Industrial",    43.6186, -79.5249, "industrial"),
             # Natural
-            ("Uludag National Park",    40.0833,  29.1667, "natural"),
-            # NOTE: Iznik Lake removed — outside bbox and no urban roads
+            ("High Park",               43.6465, -79.4637, "natural"),
+            ("Toronto Islands",         43.6210, -79.3780, "natural"),
         ],
     },
 
-    "kayseri": {
-        "name": "Kayseri",
-        "country": "Turkey",
-        "bbox": (38.600, 35.350, 38.850, 35.700),
-        "seeds": [
-            # Permanent / iconic anchors
-            ("Kayseri Castle",          38.7200,  35.4878, "commercial"),
-            # NOTE: Erciyes Mountain removed — outside bbox (lat 38.53 < S 38.60)
-            # NOTE: Sultansazligi Wetland removed — outside bbox, no urban roads
-            # Residential
-            ("Melikgazi",               38.7167,  35.4833, "residential"),
-            ("Kocasinan",               38.7333,  35.5333, "residential"),
-            # Commercial
-            ("Kayseri City Center",     38.7167,  35.4833, "commercial"),
-            ("Forum Kayseri Mall Area", 38.7000,  35.5167, "commercial"),
-            # Industrial
-            ("Kayseri OSB 1",           38.7667,  35.5500, "industrial"),
-            ("Kayseri OSB 2",           38.7833,  35.5833, "industrial"),
-        ],
-    },
-
-    
-
-    # ─────────────────────────────────────────────
-    # GLOBAL CITIES
-    # ─────────────────────────────────────────────
-
-    "nyc": {
-        "name": "New York City",
+    "chicago": {
+        "name": "Chicago",
         "country": "USA",
-        "bbox": (40.490, -74.260, 40.920, -73.680),
-        "seeds": [
-            ("Times Square",            40.7580, -73.9855, "commercial"),
-            ("Wall Street",             40.7074, -74.0113, "commercial"),
-            ("Williamsburg",            40.7150, -73.9600, "residential"),
-            ("DUMBO Brooklyn",          40.7033, -73.9903, "mixed"),
-            ("Long Island City",        40.7425, -73.9580, "industrial"),
-            ("Upper East Side",         40.7736, -73.9566, "residential"),
-            ("Harlem",                  40.8116, -73.9465, "residential"),
-            ("Flushing Queens",         40.7614, -73.8300, "commercial"),
-            ("South Bronx",             40.8090, -73.9230, "residential"),
-            ("Central Park Reservoir",  40.7851, -73.9654, "natural"),
-            ("JFK Airport",             40.6413, -73.7781, "industrial"),
-        ],
-    },
-
-    "paris": {
-        "name": "Paris",
-        "country": "France",
-        "bbox": (48.815, 2.225, 48.902, 2.420),
+        "bbox": (41.640, -87.940, 42.020, -87.520),
         "seeds": [
             # Permanent iconic anchors
-            ("Eiffel Tower",            48.8584,  2.2945, "commercial"),
-            ("Notre-Dame",              48.8530,  2.3499, "commercial"),
-            ("Louvre Museum",           48.8606,  2.3376, "commercial"),
+            ("Willis Tower",            41.8789, -87.6359, "commercial"),
+            ("Navy Pier",               41.8919, -87.6051, "mixed"),
             # Residential
-            ("Le Marais",               48.8566,  2.3622, "residential"),
-            ("Saint-Germain",           48.8540,  2.3338, "residential"),
-            ("Montmartre",              48.8867,  2.3431, "residential"),
-            ("Batignolles",             48.8860,  2.3190, "residential"),
-            # Commercial / mixed
-            ("Champs-Elysees",          48.8738,  2.2950, "commercial"),
-            ("La Defense",              48.8920,  2.2360, "commercial"),
-            ("Republique",              48.8676,  2.3640, "mixed"),
-            # Industrial / mixed
-            ("Bercy",                   48.8367,  2.3750, "mixed"),
-            ("Belleville",              48.8714,  2.3847, "mixed"),
-            # Natural / water (Seine is permanent)
-            ("Bois de Boulogne",        48.8622,  2.2479, "natural"),
-        ],
-    },
-
-    "london": {
-        "name": "London",
-        "country": "UK",
-        "bbox": (51.285, -0.510, 51.690, 0.335),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Tower of London",         51.5081, -0.0759, "commercial"),
-            ("Big Ben Westminster",     51.4994, -0.1245, "commercial"),
-            # Residential
-            ("Brixton",                 51.4613, -0.1146, "residential"),
-            ("Kensington",              51.4990, -0.1940, "residential"),
-            ("Greenwich",               51.4769, -0.0005, "residential"),
+            ("Lincoln Park",            41.9214, -87.6513, "residential"),
+            ("Hyde Park",               41.7943, -87.5907, "residential"),
+            ("Logan Square",            41.9284, -87.7073, "residential"),
             # Commercial
-            ("City of London",          51.5133, -0.0886, "commercial"),
-            ("Canary Wharf",            51.5054, -0.0235, "commercial"),
-            ("Croydon",                 51.3762, -0.0986, "commercial"),
-            # Mixed
-            ("Camden Town",             51.5392, -0.1426, "mixed"),
-            ("Shoreditch",              51.5274, -0.0777, "mixed"),
-            ("Stratford",               51.5430, -0.0098, "mixed"),
-            # Natural / water (Hyde Park lake is permanent)
-            ("Hyde Park Serpentine",    51.5054, -0.1686, "natural"),
-        ],
-    },
-
-    "tokyo": {
-        "name": "Tokyo",
-        "country": "Japan",
-        "bbox": (35.530, 139.560, 35.820, 139.920),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Tokyo Imperial Palace",   35.6852, 139.7528, "mixed"),
-            ("Senso-ji Asakusa",        35.7148, 139.7967, "commercial"),
-            ("Tokyo Tower",             35.6586, 139.7454, "commercial"),
-            # Residential
-            ("Setagaya",                35.6467, 139.6531, "residential"),
-            ("Adachi",                  35.7750, 139.8050, "residential"),
-            ("Nerima",                  35.7356, 139.6517, "residential"),
-            # Commercial
-            ("Shinjuku",                35.6938, 139.7034, "commercial"),
-            ("Shibuya",                 35.6598, 139.7004, "commercial"),
-            ("Akihabara",               35.7022, 139.7741, "commercial"),
+            ("Magnificent Mile",        41.8948, -87.6242, "commercial"),
+            ("The Loop",                41.8837, -87.6289, "commercial"),
             # Industrial
-            ("Keihin Industrial Zone",  35.5500, 139.7500, "industrial"),
-            ("Ota Ward",                35.5619, 139.7161, "industrial"),
-            # Natural / water (Tokyo Bay is permanent)
-            ("Odaiba Tokyo Bay",        35.6245, 139.7798, "mixed"),
-            ("Shinjuku Gyoen Park",     35.6852, 139.7100, "natural"),
-        ],
-    },
-
-    "sydney": {
-        "name": "Sydney",
-        "country": "Australia",
-        "bbox": (-34.170, 150.650, -33.580, 151.350),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Sydney Opera House",      -33.8568, 151.2153, "commercial"),
-            ("Harbour Bridge",          -33.8523, 151.2108, "commercial"),
-            # Residential
-            ("Parramatta",              -33.8150, 151.0011, "residential"),
-            ("Penrith",                 -33.7511, 150.6942, "residential"),
-            ("Bondi",                   -33.8915, 151.2767, "residential"),
-            # Commercial
-            ("Sydney CBD",              -33.8688, 151.2093, "commercial"),
-            ("Chatswood",               -33.7969, 151.1825, "commercial"),
-            # Industrial
-            ("Port Botany",             -33.9711, 151.2036, "industrial"),
-            ("Wetherill Park",          -33.8500, 150.9000, "industrial"),
-            # Natural / water (Sydney Harbour is permanent drowned valley)
-            ("Royal National Park",     -34.0700, 151.0500, "natural"),
-            ("Manly Beach",             -33.7969, 151.2869, "natural"),
-        ],
-    },
-
-    "rio": {
-        "name": "Rio de Janeiro",
-        "country": "Brazil",
-        "bbox": (-23.090, -43.800, -22.730, -43.100),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Christ the Redeemer",     -22.9519, -43.2105, "commercial"),
-            ("Maracana Stadium",        -22.9122, -43.2302, "commercial"),
-            # Residential
-            ("Copacabana",              -22.9714, -43.1823, "residential"),
-            ("Barra da Tijuca",         -23.0000, -43.3653, "residential"),
-            ("Rocinha Favela",          -22.9875, -43.2481, "residential"),
-            # Commercial
-            ("Centro Rio",              -22.9068, -43.1729, "commercial"),
-            ("Ipanema",                 -22.9839, -43.2025, "commercial"),
-            # Industrial
-            ("Port Zone Rio",           -22.8900, -43.1900, "industrial"),
-            ("Santa Cruz Industrial",   -22.9500, -43.7000, "industrial"),
-            # Natural / water (Guanabara Bay is permanent)
-            ("Tijuca Forest",           -22.9333, -43.2833, "natural"),
-            ("Guanabara Bay",           -22.8333, -43.1667, "natural"),
-        ],
-    },
-
-    "cairo": {
-        "name": "Cairo",
-        "country": "Egypt",
-        "bbox": (29.850, 31.050, 30.310, 31.760),  # E expanded for 10th Ramadan City, N expanded for 10th Ramadan lat
-        "seeds": [
-            # Permanent iconic anchors (pyramids = most stable landmark on Earth)
-            ("Giza Pyramids",           29.9792,  31.1342, "commercial"),
-            ("Cairo Citadel",           30.0288,  31.2599, "mixed"),
-            ("Egyptian Museum",         30.0478,  31.2336, "commercial"),
-            # Residential
-            ("Heliopolis",              30.0875,  31.3219, "residential"),
-            ("Nasr City",               30.0667,  31.3500, "residential"),
-            ("Zamalek Island",          30.0619,  31.2214, "residential"),
-            # Commercial
-            ("Downtown Cairo",          30.0444,  31.2357, "commercial"),
-            ("New Cairo",               30.0167,  31.4667, "commercial"),
-            # Industrial
-            ("Shubra El-Kheima",        30.1167,  31.2500, "industrial"),
-            ("10th Ramadan City",       30.3000,  31.7500, "industrial"),
-            # Natural / water (Nile River is permanent)
-            ("Nile at Gezira",          30.0500,  31.2250, "natural"),
-        ],
-    },
-
-    "rome": {
-        "name": "Rome",
-        "country": "Italy",
-        "bbox": (41.790, 12.350, 42.000, 12.620),
-        "seeds": [
-            # Permanent iconic anchors (2000+ year old structures)
-            ("Colosseum",               41.8902,  12.4922, "commercial"),
-            ("Vatican City",            41.9022,  12.4539, "commercial"),
-            ("Pantheon",                41.8986,  12.4769, "commercial"),
-            # Residential
-            ("Parioli",                 41.9233,  12.4908, "residential"),
-            ("EUR District",            41.8281,  12.4680, "residential"),
-            ("Trastevere",              41.8861,  12.4684, "residential"),
-            # Commercial
-            ("Termini Station Area",    41.9009,  12.5005, "commercial"),
-            ("Prati",                   41.9086,  12.4586, "commercial"),
-            # Industrial
-            ("Ostiense",                41.8667,  12.4833, "industrial"),
-            ("Tiburtina Industrial",    41.9167,  12.5500, "industrial"),
-            # Natural / water (Tiber is permanent)
-            ("Tiber River at Castel",   41.9022,  12.4659, "natural"),
-            ("Villa Borghese Park",     41.9142,  12.4922, "natural"),
-        ],
-    },
-
-    "mumbai": {
-        "name": "Mumbai",
-        "country": "India",
-        "bbox": (18.870, 72.770, 19.270, 72.990),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Gateway of India",        18.9220,  72.8347, "commercial"),
-            ("Chhatrapati Shivaji Terminal", 18.9400, 72.8356, "commercial"),
-            # Residential
-            ("Bandra West",             19.0596,  72.8295, "residential"),
-            ("Borivali",                19.2288,  72.8561, "residential"),
-            ("Dharavi",                 19.0432,  72.8520, "residential"),
-            # Commercial
-            ("Nariman Point",           18.9256,  72.8242, "commercial"),
-            ("Bandra Kurla Complex",    19.0646,  72.8652, "commercial"),
-            # Industrial
-            ("Chembur Industrial",      19.0522,  72.9005, "industrial"),
-            ("Thane Industrial",        19.2183,  72.9781, "industrial"),
-            # Natural / water (Arabian Sea coastline is permanent)
-            ("Marine Drive",            18.9433,  72.8236, "natural"),
-            ("Sanjay Gandhi National Park", 19.2147, 72.9140, "natural"),
-        ],
-    },
-
-
-    "nairobi": {
-        "name": "Nairobi",
-        "country": "Kenya",
-        "bbox": (-1.450, 36.650, -1.130, 37.100),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Nairobi National Park",   -1.3500,  36.8167, "natural"),
-            ("University of Nairobi",   -1.2800,  36.8219, "commercial"),
-            # Residential
-            ("Westlands",               -1.2667,  36.8083, "residential"),
-            ("Eastleigh",               -1.2667,  36.8500, "residential"),
-            ("Karen",                   -1.3333,  36.7167, "residential"),
-            # Commercial
-            ("CBD Nairobi",             -1.2833,  36.8167, "commercial"),
-            ("Upper Hill",              -1.2950,  36.8150, "commercial"),
-            # Industrial
-            ("Industrial Area Nairobi", -1.3000,  36.8500, "industrial"),
-            ("Athi River",              -1.4500,  36.9833, "industrial"),
+            ("Calumet Industrial",      41.7160, -87.5670, "industrial"),
+            ("Fulton Market",           41.8867, -87.6508, "mixed"),
             # Natural
-            ("Karura Forest",           -1.2333,  36.8333, "natural"),
-            ("Ngong Hills",             -1.3833,  36.6667, "natural"),
+            ("Millennium Park",         41.8826, -87.6226, "natural"),
+            ("Lakefront Trail",         41.9056, -87.6163, "natural"),
         ],
     },
 
-    "cape_town": {
-        "name": "Cape Town",
-        "country": "South Africa",
-        "bbox": (-34.200, 18.300, -33.750, 18.950),
+    # ─────────────────────────────────────────────
+    # ASIA (Dense Urbanism + Flawless STV)
+    # ─────────────────────────────────────────────
+
+    "singapore": {
+        "name": "Singapore",
+        "country": "Singapore",
+        "bbox": (1.200, 103.590, 1.480, 104.050),
         "seeds": [
-            # Permanent iconic anchors (Table Mountain is permanent geology)
-            ("Table Mountain",          -33.9626,  18.4098, "natural"),
-            # NOTE: Cape Point removed — outside bbox (lat -34.36 < S -34.20)
+            # Permanent iconic anchors
+            ("Marina Bay Sands",        1.2834,  103.8607, "commercial"),
+            ("Merlion Park",            1.2868,  103.8545, "commercial"),
             # Residential
-            ("Camps Bay",               -33.9500,  18.3767, "residential"),
-            ("Mitchells Plain",         -34.0333,  18.6167, "residential"),
-            ("Khayelitsha",             -34.0333,  18.6833, "residential"),
+            ("Tampines HDB",            1.3526,  103.9447, "residential"),
+            ("Woodlands",               1.4369,  103.7865, "residential"),
+            ("Bedok",                   1.3236,  103.9273, "residential"),
             # Commercial
-            ("Cape Town CBD",           -33.9258,  18.4232, "commercial"),
-            ("Century City",            -33.8900,  18.5150, "commercial"),
+            ("Orchard Road",            1.3048,  103.8318, "commercial"),
+            ("Tiong Bahru",             1.2862,  103.8318, "mixed"),
             # Industrial
-            ("Epping Industrial",       -33.9333,  18.5500, "industrial"),
-            ("Port of Cape Town",       -33.9050,  18.4350, "industrial"),
-            # Natural / water (Atlantic Ocean is permanent)
-            ("Boulders Beach",          -34.1968,  18.4497, "natural"),
-            ("Bloubergstrand",          -33.8000,  18.4667, "natural"),
+            ("Jurong Industrial",       1.2818,  103.7027, "industrial"),
+            ("Tuas",                    1.3283,  103.6394, "industrial"),
+            # Natural
+            ("Botanic Gardens",         1.3138,  103.8159, "natural"),
+            ("East Coast Park",         1.3008,  103.9122, "natural"),
+        ],
+    },
+
+    "taipei": {
+        "name": "Taipei",
+        "country": "Taiwan",
+        "bbox": (24.960, 121.450, 25.210, 121.660),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Taipei 101",              25.0339, 121.5645, "commercial"),
+            ("Chiang Kai-shek Memorial",25.0347, 121.5218, "mixed"),
+            # Residential
+            ("Da'an District",          25.0263, 121.5434, "residential"),
+            ("Shilin District",         25.0886, 121.5244, "residential"),
+            ("Zhonghe",                 24.9984, 121.5032, "residential"),
+            # Commercial
+            ("Ximending",               25.0432, 121.5065, "commercial"),
+            ("Xinyi District",          25.0326, 121.5684, "commercial"),
+            # Industrial
+            ("Neihu Tech Park",         25.0796, 121.5755, "industrial"),
+            ("Nangang Software Park",   25.0597, 121.6141, "industrial"),
+            # Natural
+            ("Yangmingshan",            25.1558, 121.5484, "natural"),
+            ("Dajia Riverside Park",    25.0747, 121.5358, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # EAST ASIA (Korean apartment-block morphology)
+    # ─────────────────────────────────────────────
+
+    "seoul": {
+        "name": "Seoul",
+        "country": "South Korea",
+        "bbox": (37.480, 126.880, 37.600, 127.110),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Myeongdong",              37.5636, 126.9869, "commercial"),
+            ("Gangnam Station",         37.4979, 127.0276, "commercial"),
+            # Residential
+            ("Mapo-gu",                 37.5537, 126.9084, "residential"),
+            ("Songpa-gu Jamsil",        37.5133, 127.1001, "residential"),
+            ("Seongbuk-dong",           37.5930, 127.0060, "residential"),
+            # Mixed
+            ("Hongdae",                 37.5563, 126.9236, "mixed"),
+            ("Itaewon",                 37.5340, 126.9948, "mixed"),
+            # Industrial
+            ("Guro Digital Complex",    37.4846, 126.8985, "industrial"),
+            ("Seongsu-dong",            37.5445, 127.0560, "industrial"),
+            # Natural
+            ("Bukhansan Entrance",      37.5870, 126.9650, "natural"),
+            ("Yeouido Hangang Park",    37.5284, 126.9326, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # LATIN AMERICA (Colonial + informal + modern)
+    # ─────────────────────────────────────────────
+
+    "mexico_city": {
+        "name": "Mexico City",
+        "country": "Mexico",
+        "bbox": (19.340, -99.240, 19.500, -99.070),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Zocalo",                  19.4326, -99.1332, "commercial"),
+            ("Polanco",                 19.4328, -99.1916, "commercial"),
+            # Residential
+            ("Coyoacan",                19.3500, -99.1620, "residential"),
+            ("Roma Norte",              19.4194, -99.1637, "residential"),
+            ("Condesa",                 19.4114, -99.1733, "residential"),
+            # Mixed
+            ("Reforma Corridor",        19.4270, -99.1677, "mixed"),
+            ("Juarez",                  19.4280, -99.1560, "mixed"),
+            # Industrial
+            ("Azcapotzalco Industrial", 19.4869, -99.1847, "industrial"),
+            ("Vallejo",                 19.4891, -99.1467, "industrial"),
+            # Natural
+            ("Chapultepec Park",        19.4204, -99.1894, "natural"),
+            ("Viveros de Coyoacan",     19.3553, -99.1817, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # SOUTHERN EUROPE (Iconic Eixample grid)
+    # ─────────────────────────────────────────────
+
+    "barcelona": {
+        "name": "Barcelona",
+        "country": "Spain",
+        "bbox": (41.350, 2.080, 41.450, 2.230),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Passeig de Gracia",       41.3954,  2.1637, "commercial"),
+            ("Placa Catalunya",         41.3870,  2.1700, "commercial"),
+            # Residential
+            ("Gracia",                  41.4025,  2.1566, "residential"),
+            ("Eixample",                41.3898,  2.1614, "residential"),
+            ("Sants",                   41.3747,  2.1330, "residential"),
+            # Mixed
+            ("El Born",                 41.3852,  2.1831, "mixed"),
+            ("Poblenou",                41.3956,  2.2005, "mixed"),
+            # Industrial
+            ("Zona Franca",             41.3500,  2.1300, "industrial"),
+            ("22@ District",            41.4035,  2.1940, "industrial"),
+            # Natural
+            ("Parc de la Ciutadella",   41.3882,  2.1875, "natural"),
+            ("Montjuic",                41.3636,  2.1586, "natural"),
         ],
     },
 }
