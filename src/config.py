@@ -5,162 +5,7 @@ Defines cities, seed locations, and all shared constants.
 
 CITIES = {
 
-    # ─────────────────────────────────────────────
-    # EUROPE (Ultra-dense OSM + Strong STV)
-    # ─────────────────────────────────────────────
-
-    "berlin": {
-        "name": "Berlin",
-        "country": "Germany",
-        "bbox": (52.400, 13.200, 52.600, 13.600),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Brandenburg Gate",        52.5163,  13.3777, "commercial"),
-            ("Alexanderplatz",          52.5219,  13.4132, "commercial"),
-            # Residential
-            ("Kreuzberg",               52.4984,  13.3913, "residential"),
-            ("Charlottenburg",          52.5167,  13.3000, "residential"),
-            ("Prenzlauer Berg",         52.5398,  13.4246, "residential"),
-            # Commercial / Mixed
-            ("Potsdamer Platz",         52.5096,  13.3759, "mixed"),
-            ("Kurfurstendamm",          52.5037,  13.3115, "commercial"),
-            # Industrial
-            ("Siemensstadt",            52.5388,  13.2644, "industrial"),
-            ("Adlershof Tech Park",     52.4334,  13.5350, "industrial"),
-            # Natural
-            ("Tempelhofer Feld",        52.4731,  13.4016, "natural"),
-            ("Tiergarten",              52.5144,  13.3501, "natural"),
-        ],
-    },
-
-    "amsterdam": {
-        "name": "Amsterdam",
-        "country": "Netherlands",
-        "bbox": (52.270, 4.730, 52.430, 5.010),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Dam Square",              52.3729,  4.8930,  "commercial"),
-            ("Rijksmuseum",             52.3600,  4.8852,  "mixed"),
-            # Residential
-            ("Jordaan",                 52.3740,  4.8799,  "residential"),
-            ("De Pijp",                 52.3533,  4.8970,  "residential"),
-            ("Oud-West",                52.3631,  4.8660,  "residential"),
-            # Commercial / Business
-            ("Zuidas Business District",52.3389,  4.8741,  "commercial"),
-            ("Centrum",                 52.3702,  4.8951,  "commercial"),
-            # Industrial
-            ("Westpoort",               52.3995,  4.8016,  "industrial"),
-            ("NDSM Wharf",              52.4005,  4.8941,  "industrial"),
-            # Natural / Water
-            ("Vondelpark",              52.3580,  4.8686,  "natural"),
-            ("Amstel River",            52.3546,  4.9038,  "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # NORTH AMERICA (Grid systems + Perfect STV)
-    # ─────────────────────────────────────────────
-
-    "toronto": {
-        "name": "Toronto",
-        "country": "Canada",
-        "bbox": (43.580, -79.640, 43.850, -79.120),
-        "seeds": [
-            # Permanent iconic anchors
-            ("CN Tower",                43.6426, -79.3871, "commercial"),
-            ("Yonge-Dundas Square",     43.6561, -79.3802, "commercial"),
-            # Residential
-            ("The Annex",               43.6703, -79.4071, "residential"),
-            ("Leslieville",             43.6631, -79.3297, "residential"),
-            ("Scarborough",             43.7731, -79.2577, "residential"),
-            # Commercial
-            ("Financial District",      43.6486, -79.3815, "commercial"),
-            ("Liberty Village",         43.6373, -79.4181, "mixed"),
-            # Industrial
-            ("Port Lands",              43.6436, -79.3330, "industrial"),
-            ("Etobicoke Industrial",    43.6186, -79.5249, "industrial"),
-            # Natural
-            ("High Park",               43.6465, -79.4637, "natural"),
-            ("Toronto Islands",         43.6210, -79.3780, "natural"),
-        ],
-    },
-
-    "chicago": {
-        "name": "Chicago",
-        "country": "USA",
-        "bbox": (41.640, -87.940, 42.020, -87.520),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Willis Tower",            41.8789, -87.6359, "commercial"),
-            ("Navy Pier",               41.8919, -87.6051, "mixed"),
-            # Residential
-            ("Lincoln Park",            41.9214, -87.6513, "residential"),
-            ("Hyde Park",               41.7943, -87.5907, "residential"),
-            ("Logan Square",            41.9284, -87.7073, "residential"),
-            # Commercial
-            ("Magnificent Mile",        41.8948, -87.6242, "commercial"),
-            ("The Loop",                41.8837, -87.6289, "commercial"),
-            # Industrial
-            ("Calumet Industrial",      41.7160, -87.5670, "industrial"),
-            ("Fulton Market",           41.8867, -87.6508, "mixed"),
-            # Natural
-            ("Millennium Park",         41.8826, -87.6226, "natural"),
-            ("Lakefront Trail",         41.9056, -87.6163, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # ASIA (Dense Urbanism + Flawless STV)
-    # ─────────────────────────────────────────────
-
-    "singapore": {
-        "name": "Singapore",
-        "country": "Singapore",
-        "bbox": (1.200, 103.590, 1.480, 104.050),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Marina Bay Sands",        1.2834,  103.8607, "commercial"),
-            ("Merlion Park",            1.2868,  103.8545, "commercial"),
-            # Residential
-            ("Tampines HDB",            1.3526,  103.9447, "residential"),
-            ("Woodlands",               1.4369,  103.7865, "residential"),
-            ("Bedok",                   1.3236,  103.9273, "residential"),
-            # Commercial
-            ("Orchard Road",            1.3048,  103.8318, "commercial"),
-            ("Tiong Bahru",             1.2862,  103.8318, "mixed"),
-            # Industrial
-            ("Jurong Industrial",       1.2818,  103.7027, "industrial"),
-            ("Tuas",                    1.3283,  103.6394, "industrial"),
-            # Natural
-            ("Botanic Gardens",         1.3138,  103.8159, "natural"),
-            ("East Coast Park",         1.3008,  103.9122, "natural"),
-        ],
-    },
-
-    "taipei": {
-        "name": "Taipei",
-        "country": "Taiwan",
-        "bbox": (24.960, 121.450, 25.210, 121.660),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Taipei 101",              25.0339, 121.5645, "commercial"),
-            ("Chiang Kai-shek Memorial",25.0347, 121.5218, "mixed"),
-            # Residential
-            ("Da'an District",          25.0263, 121.5434, "residential"),
-            ("Shilin District",         25.0886, 121.5244, "residential"),
-            ("Zhonghe",                 24.9984, 121.5032, "residential"),
-            # Commercial
-            ("Ximending",               25.0432, 121.5065, "commercial"),
-            ("Xinyi District",          25.0326, 121.5684, "commercial"),
-            # Industrial
-            ("Neihu Tech Park",         25.0796, 121.5755, "industrial"),
-            ("Nangang Software Park",   25.0597, 121.6141, "industrial"),
-            # Natural
-            ("Yangmingshan",            25.1558, 121.5484, "natural"),
-            ("Dajia Riverside Park",    25.0747, 121.5358, "natural"),
-        ],
-    },
-
+    
     # ─────────────────────────────────────────────
     # EAST ASIA (Korean apartment-block morphology)
     # ─────────────────────────────────────────────
@@ -244,6 +89,91 @@ CITIES = {
             ("Montjuic",                41.3636,  2.1586, "natural"),
         ],
     },
+
+    # ─────────────────────────────────────────────
+    # SCANDINAVIA (Nordic island-archipelago city)
+    # ─────────────────────────────────────────────
+
+    "stockholm": {
+        "name": "Stockholm",
+        "country": "Sweden",
+        "bbox": (59.290, 17.940, 59.370, 18.130),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Drottninggatan",          59.3326, 18.0649, "commercial"),
+            ("Stureplan",               59.3370, 18.0740, "commercial"),
+            # Residential
+            ("Sodermalm",               59.3150, 18.0700, "residential"),
+            ("Ostermalm",               59.3400, 18.0850, "residential"),
+            ("Vasastan",                59.3440, 18.0500, "residential"),
+            # Mixed
+            ("Gamla Stan",              59.3258, 18.0716, "mixed"),
+            ("Kungsholmen",             59.3340, 18.0300, "mixed"),
+            # Industrial
+            ("Hammarby Sjostad",        59.3040, 18.1050, "industrial"),
+            ("Liljeholmen",             59.3100, 18.0230, "industrial"),
+            # Natural
+            ("Djurgarden",              59.3270, 18.1100, "natural"),
+            ("Hagaparken",              59.3600, 18.0300, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # NORDIC / BALTIC (Compact grid peninsula)
+    # ─────────────────────────────────────────────
+
+    "helsinki": {
+        "name": "Helsinki",
+        "country": "Finland",
+        "bbox": (60.140, 24.870, 60.210, 25.020),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Keskusta Aleksanterinkatu", 60.1695, 24.9458, "commercial"),
+            ("Kamppi",                    60.1685, 24.9320, "commercial"),
+            # Residential
+            ("Kallio",                    60.1840, 24.9520, "residential"),
+            ("Toolo",                     60.1780, 24.9220, "residential"),
+            ("Kruununhaka",               60.1720, 24.9560, "residential"),
+            # Mixed
+            ("Punavuori",                 60.1620, 24.9380, "mixed"),
+            ("Jatkasaari",                60.1560, 24.9120, "mixed"),
+            # Industrial
+            ("Hernesaari",                60.1510, 24.9210, "industrial"),
+            ("Suvilahti",                 60.1870, 24.9700, "industrial"),
+            # Natural
+            ("Kaivopuisto",               60.1580, 24.9540, "natural"),
+            ("Seurasaari",                60.1820, 24.8850, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # EASTERN MEDITERRANEAN (Ancient-modern collision)
+    # ─────────────────────────────────────────────
+
+    "athens": {
+        "name": "Athens",
+        "country": "Greece",
+        "bbox": (37.940, 23.680, 38.010, 23.790),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Ermou Street",            37.9770, 23.7270, "commercial"),
+            ("Syntagma",                37.9755, 23.7348, "commercial"),
+            # Residential
+            ("Pangrati",                37.9680, 23.7460, "residential"),
+            ("Koukaki",                 37.9650, 23.7260, "residential"),
+            ("Kypseli",                 37.9930, 23.7370, "residential"),
+            # Mixed
+            ("Plaka",                   37.9730, 23.7320, "mixed"),
+            ("Exarchia",                37.9860, 23.7340, "mixed"),
+            # Industrial
+            ("Gazi",                    37.9780, 23.7130, "industrial"),
+            ("Piraeus Port",            37.9470, 23.6380, "industrial"),
+            # Natural
+            ("National Garden",         37.9720, 23.7370, "natural"),
+            ("Filopappou Hill",         37.9680, 23.7210, "natural"),
+        ],
+    },
+
 }
 
 # How many samples per city
@@ -423,7 +353,8 @@ def detect_sat_source(lat: float, lon: float) -> str:
     return "ESRI"
 
 # GEE config
-GEE_PROJECT = "supple-flux-481209-j1"
+#GEE_PROJECT = "supple-flux-481209-j1" #alperen
+GEE_PROJECT = "bitirme-489511"
 NAIP_DATE_RANGE = ("2019-01-01", "2025-12-31")
 S2_DATE_RANGE = ("2023-01-01", "2025-12-31")
 S2_CLOUD_THRESHOLD = 20  # max cloud %
