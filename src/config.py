@@ -4,176 +4,7 @@ Defines cities, seed locations, and all shared constants.
 """
 
 CITIES = {
-
-    
-    # ─────────────────────────────────────────────
-    # EAST ASIA (Korean apartment-block morphology)
-    # ─────────────────────────────────────────────
-
-    "seoul": {
-        "name": "Seoul",
-        "country": "South Korea",
-        "bbox": (37.480, 126.880, 37.600, 127.110),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Myeongdong",              37.5636, 126.9869, "commercial"),
-            ("Gangnam Station",         37.4979, 127.0276, "commercial"),
-            # Residential
-            ("Mapo-gu",                 37.5537, 126.9084, "residential"),
-            ("Songpa-gu Jamsil",        37.5133, 127.1001, "residential"),
-            ("Seongbuk-dong",           37.5930, 127.0060, "residential"),
-            # Mixed
-            ("Hongdae",                 37.5563, 126.9236, "mixed"),
-            ("Itaewon",                 37.5340, 126.9948, "mixed"),
-            # Industrial
-            ("Guro Digital Complex",    37.4846, 126.8985, "industrial"),
-            ("Seongsu-dong",            37.5445, 127.0560, "industrial"),
-            # Natural
-            ("Bukhansan Entrance",      37.5870, 126.9650, "natural"),
-            ("Yeouido Hangang Park",    37.5284, 126.9326, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # LATIN AMERICA (Colonial + informal + modern)
-    # ─────────────────────────────────────────────
-
-    "mexico_city": {
-        "name": "Mexico City",
-        "country": "Mexico",
-        "bbox": (19.340, -99.240, 19.500, -99.070),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Zocalo",                  19.4326, -99.1332, "commercial"),
-            ("Polanco",                 19.4328, -99.1916, "commercial"),
-            # Residential
-            ("Coyoacan",                19.3500, -99.1620, "residential"),
-            ("Roma Norte",              19.4194, -99.1637, "residential"),
-            ("Condesa",                 19.4114, -99.1733, "residential"),
-            # Mixed
-            ("Reforma Corridor",        19.4270, -99.1677, "mixed"),
-            ("Juarez",                  19.4280, -99.1560, "mixed"),
-            # Industrial
-            ("Azcapotzalco Industrial", 19.4869, -99.1847, "industrial"),
-            ("Vallejo",                 19.4891, -99.1467, "industrial"),
-            # Natural
-            ("Chapultepec Park",        19.4204, -99.1894, "natural"),
-            ("Viveros de Coyoacan",     19.3553, -99.1817, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # SOUTHERN EUROPE (Iconic Eixample grid)
-    # ─────────────────────────────────────────────
-
-    "barcelona": {
-        "name": "Barcelona",
-        "country": "Spain",
-        "bbox": (41.350, 2.080, 41.450, 2.230),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Passeig de Gracia",       41.3954,  2.1637, "commercial"),
-            ("Placa Catalunya",         41.3870,  2.1700, "commercial"),
-            # Residential
-            ("Gracia",                  41.4025,  2.1566, "residential"),
-            ("Eixample",                41.3898,  2.1614, "residential"),
-            ("Sants",                   41.3747,  2.1330, "residential"),
-            # Mixed
-            ("El Born",                 41.3852,  2.1831, "mixed"),
-            ("Poblenou",                41.3956,  2.2005, "mixed"),
-            # Industrial
-            ("Zona Franca",             41.3500,  2.1300, "industrial"),
-            ("22@ District",            41.4035,  2.1940, "industrial"),
-            # Natural
-            ("Parc de la Ciutadella",   41.3882,  2.1875, "natural"),
-            ("Montjuic",                41.3636,  2.1586, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # SCANDINAVIA (Nordic island-archipelago city)
-    # ─────────────────────────────────────────────
-
-    "stockholm": {
-        "name": "Stockholm",
-        "country": "Sweden",
-        "bbox": (59.290, 17.940, 59.370, 18.130),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Drottninggatan",          59.3326, 18.0649, "commercial"),
-            ("Stureplan",               59.3370, 18.0740, "commercial"),
-            # Residential
-            ("Sodermalm",               59.3150, 18.0700, "residential"),
-            ("Ostermalm",               59.3400, 18.0850, "residential"),
-            ("Vasastan",                59.3440, 18.0500, "residential"),
-            # Mixed
-            ("Gamla Stan",              59.3258, 18.0716, "mixed"),
-            ("Kungsholmen",             59.3340, 18.0300, "mixed"),
-            # Industrial
-            ("Hammarby Sjostad",        59.3040, 18.1050, "industrial"),
-            ("Liljeholmen",             59.3100, 18.0230, "industrial"),
-            # Natural
-            ("Djurgarden",              59.3270, 18.1100, "natural"),
-            ("Hagaparken",              59.3600, 18.0300, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # NORDIC / BALTIC (Compact grid peninsula)
-    # ─────────────────────────────────────────────
-
-    "helsinki": {
-        "name": "Helsinki",
-        "country": "Finland",
-        "bbox": (60.140, 24.870, 60.210, 25.020),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Keskusta Aleksanterinkatu", 60.1695, 24.9458, "commercial"),
-            ("Kamppi",                    60.1685, 24.9320, "commercial"),
-            # Residential
-            ("Kallio",                    60.1840, 24.9520, "residential"),
-            ("Toolo",                     60.1780, 24.9220, "residential"),
-            ("Kruununhaka",               60.1720, 24.9560, "residential"),
-            # Mixed
-            ("Punavuori",                 60.1620, 24.9380, "mixed"),
-            ("Jatkasaari",                60.1560, 24.9120, "mixed"),
-            # Industrial
-            ("Hernesaari",                60.1510, 24.9210, "industrial"),
-            ("Suvilahti",                 60.1870, 24.9700, "industrial"),
-            # Natural
-            ("Kaivopuisto",               60.1580, 24.9540, "natural"),
-            ("Seurasaari",                60.1820, 24.8850, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # EASTERN MEDITERRANEAN (Ancient-modern collision)
-    # ─────────────────────────────────────────────
-
-    "athens": {
-        "name": "Athens",
-        "country": "Greece",
-        "bbox": (37.940, 23.680, 38.010, 23.790),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Ermou Street",            37.9770, 23.7270, "commercial"),
-            ("Syntagma",                37.9755, 23.7348, "commercial"),
-            # Residential
-            ("Pangrati",                37.9680, 23.7460, "residential"),
-            ("Koukaki",                 37.9650, 23.7260, "residential"),
-            ("Kypseli",                 37.9930, 23.7370, "residential"),
-            # Mixed
-            ("Plaka",                   37.9730, 23.7320, "mixed"),
-            ("Exarchia",                37.9860, 23.7340, "mixed"),
-            # Industrial
-            ("Gazi",                    37.9780, 23.7130, "industrial"),
-            ("Piraeus Port",            37.9470, 23.6380, "industrial"),
-            # Natural
-            ("National Garden",         37.9720, 23.7370, "natural"),
-            ("Filopappou Hill",         37.9680, 23.7210, "natural"),
-        ],
-    },
-
+ 
     # ─────────────────────────────────────────────
     # CENTRAL ASIA (Soviet grid + modern capital)
     # ─────────────────────────────────────────────
@@ -227,6 +58,278 @@ CITIES = {
             # Natural
             ("Barada River",            33.5200, 36.3000, "natural"),
             ("Tishreen Park",           33.5100, 36.2780, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # TURKIYE (Black Sea coast + Mediterranean)
+    # ─────────────────────────────────────────────
+
+    "samsun": {
+        "name": "Samsun",
+        "country": "Turkiye",
+        "bbox": (41.260, 36.280, 41.330, 36.380),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Cumhuriyet Meydani",      41.2867, 36.3300, "commercial"),
+            ("Atakum Sahil",            41.3280, 36.2800, "commercial"),
+            # Residential
+            ("Ilkadim",                 41.2900, 36.3350, "residential"),
+            ("Canik",                   41.2750, 36.3550, "residential"),
+            ("Atakum Inland",           41.3100, 36.2900, "residential"),
+            # Mixed
+            ("Istiklal Caddesi",        41.2880, 36.3280, "mixed"),
+            ("Liman District",          41.2920, 36.3400, "mixed"),
+            # Industrial
+            ("Organized Industrial",    41.2650, 36.3600, "industrial"),
+            ("Gelemen",                 41.2700, 36.3700, "industrial"),
+            # Natural
+            ("Amisos Hill",             41.2830, 36.3200, "natural"),
+            ("Kizilirmak Delta Edge",   41.3200, 36.3500, "natural"),
+        ],
+    },
+
+    "antalya": {
+        "name": "Antalya",
+        "country": "Turkiye",
+        "bbox": (36.850, 30.630, 36.920, 30.750),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Kaleici Old Town",        36.8840, 30.7060, "commercial"),
+            ("MarkAntalya",             36.8920, 30.6830, "commercial"),
+            # Residential
+            ("Konyaalti",               36.8800, 30.6500, "residential"),
+            ("Lara",                    36.8600, 30.7400, "residential"),
+            ("Muratpasa",               36.8870, 30.7000, "residential"),
+            # Mixed
+            ("Isiklar Caddesi",         36.8890, 30.7030, "mixed"),
+            ("Sirinyali",               36.8750, 30.6700, "mixed"),
+            # Industrial
+            ("Organized Sanayi",        36.9150, 30.6400, "industrial"),
+            ("Aksu",                    36.8800, 30.7600, "industrial"),
+            # Natural
+            ("Duden Waterfalls",        36.8700, 30.7350, "natural"),
+            ("Konyaalti Beach Park",    36.8770, 30.6450, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # WESTERN EUROPE (Swiss precision urbanism)
+    # ─────────────────────────────────────────────
+
+    "zurich": {
+        "name": "Zurich",
+        "country": "Switzerland",
+        "bbox": (47.340, 8.490, 47.410, 8.580),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Bahnhofstrasse",          47.3690, 8.5390, "commercial"),
+            ("Paradeplatz",             47.3698, 8.5392, "commercial"),
+            # Residential
+            ("Wiedikon",                47.3630, 8.5200, "residential"),
+            ("Oerlikon",                47.4100, 8.5450, "residential"),
+            ("Seefeld",                 47.3580, 8.5550, "residential"),
+            # Mixed
+            ("Langstrasse",             47.3770, 8.5280, "mixed"),
+            ("Niederdorf",              47.3730, 8.5440, "mixed"),
+            # Industrial
+            ("Zurich West",             47.3880, 8.5200, "industrial"),
+            ("Altstetten",              47.3900, 8.4880, "industrial"),
+            # Natural
+            ("Zurichsee Promenade",     47.3540, 8.5440, "natural"),
+            ("Lindenhof",               47.3730, 8.5400, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # RUSSIA (Imperial capital, canal city)
+    # ─────────────────────────────────────────────
+
+    "st_petersburg": {
+        "name": "St. Petersburg",
+        "country": "Russia",
+        "bbox": (59.880, 30.230, 59.980, 30.400),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Nevsky Prospekt",         59.9340, 30.3350, "commercial"),
+            ("Sennaya Ploshchad",       59.9270, 30.3200, "commercial"),
+            # Residential
+            ("Vasilievsky Island",      59.9420, 30.2700, "residential"),
+            ("Petrogradskaya",          59.9660, 30.3100, "residential"),
+            ("Kupchino",                59.8300, 30.3800, "residential"),
+            # Mixed
+            ("Admiralteysky",           59.9300, 30.3100, "mixed"),
+            ("Liteiny Prospekt",        59.9400, 30.3500, "mixed"),
+            # Industrial
+            ("Obvodny Canal",           59.9100, 30.3200, "industrial"),
+            ("Kirov Plant Area",        59.8800, 30.2600, "industrial"),
+            # Natural
+            ("Summer Garden",           59.9450, 30.3350, "natural"),
+            ("Krestovsky Island",       59.9700, 30.2500, "natural"),
+        ],
+    },
+
+    "moscow": {
+        "name": "Moscow",
+        "country": "Russia",
+        "bbox": (55.700, 37.500, 55.800, 37.700),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Tverskaya Street",        55.7650, 37.6050, "commercial"),
+            ("Arbat",                   55.7510, 37.5940, "commercial"),
+            # Residential
+            ("Khamovniki",              55.7300, 37.5800, "residential"),
+            ("Zamoskvorechye",          55.7350, 37.6250, "residential"),
+            ("Basmanny",                55.7640, 37.6600, "residential"),
+            # Mixed
+            ("Kitay-Gorod",             55.7560, 37.6300, "mixed"),
+            ("Patriarch Ponds",         55.7640, 37.5930, "mixed"),
+            # Industrial
+            ("Krasnoselsky",            55.7800, 37.6600, "industrial"),
+            ("Nizhegorodsky",           55.7300, 37.6800, "industrial"),
+            # Natural
+            ("Gorky Park",              55.7310, 37.6010, "natural"),
+            ("Sparrow Hills",           55.7100, 37.5550, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # ATLANTIC IBERIA (Hillside + post-earthquake grid)
+    # ─────────────────────────────────────────────
+
+    "lisbon": {
+        "name": "Lisbon",
+        "country": "Portugal",
+        "bbox": (38.700, -9.200, 38.760, -9.100),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Baixa-Chiado",            38.7100, -9.1400, "commercial"),
+            ("Avenida da Liberdade",    38.7200, -9.1470, "commercial"),
+            # Residential
+            ("Alfama",                  38.7110, -9.1300, "residential"),
+            ("Graca",                   38.7170, -9.1320, "residential"),
+            ("Campo de Ourique",        38.7180, -9.1620, "residential"),
+            # Mixed
+            ("Bairro Alto",             38.7140, -9.1450, "mixed"),
+            ("Principe Real",           38.7180, -9.1500, "mixed"),
+            # Industrial
+            ("Marvila",                 38.7400, -9.1050, "industrial"),
+            ("Alcantara",               38.7050, -9.1750, "industrial"),
+            # Natural
+            ("Parque das Nacoes",       38.7630, -9.0950, "natural"),
+            ("Jardim da Estrela",       38.7140, -9.1570, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # EASTERN MEDITERRANEAN (Divided capital)
+    # ─────────────────────────────────────────────
+
+    "nicosia": {
+        "name": "Nicosia",
+        "country": "Cyprus",
+        "bbox": (35.140, 33.330, 35.190, 33.390),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Ledra Street",            35.1700, 33.3620, "commercial"),
+            ("Makariou Avenue",         35.1640, 33.3600, "commercial"),
+            # Residential
+            ("Strovolos",               35.1550, 33.3500, "residential"),
+            ("Engomi",                  35.1650, 33.3400, "residential"),
+            ("Aglantzia",               35.1600, 33.3800, "residential"),
+            # Mixed
+            ("Old Town Laiki Geitonia", 35.1720, 33.3640, "mixed"),
+            ("Pallouriotissa",          35.1750, 33.3700, "mixed"),
+            # Industrial
+            ("Industrial Zone West",    35.1500, 33.3350, "industrial"),
+            ("Latsia",                  35.1450, 33.3650, "industrial"),
+            # Natural
+            ("Pedieos River Park",      35.1580, 33.3750, "natural"),
+            ("Athalassa Park",          35.1470, 33.3800, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # NORTH ATLANTIC (Subarctic volcanic island)
+    # ─────────────────────────────────────────────
+
+    "reykjavik": {
+        "name": "Reykjavik",
+        "country": "Iceland",
+        "bbox": (64.120, -21.980, 64.160, -21.850),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Laugavegur",              64.1437, -21.9250, "commercial"),
+            ("Harpa Area",              64.1505, -21.9330, "commercial"),
+            # Residential
+            ("Vesturbær",               64.1480, -21.9500, "residential"),
+            ("Hlíðar",                  64.1380, -21.9100, "residential"),
+            ("Breiðholt",               64.1200, -21.8600, "residential"),
+            # Mixed
+            ("Grandi Harbour",          64.1530, -21.9500, "mixed"),
+            ("Skolavordustigur",        64.1440, -21.9290, "mixed"),
+            # Industrial
+            ("Sundagarðar",             64.1550, -21.9600, "industrial"),
+            ("Holtagarðar",             64.1300, -21.8900, "industrial"),
+            # Natural
+            ("Tjörnin Lake",            64.1440, -21.9370, "natural"),
+            ("Laugardalur Park",        64.1440, -21.8970, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # BALTIC (Medieval Hanseatic + Soviet layers)
+    # ─────────────────────────────────────────────
+
+    "tallinn": {
+        "name": "Tallinn",
+        "country": "Estonia",
+        "bbox": (59.410, 24.700, 59.460, 24.800),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Viru Street",             59.4370, 24.7530, "commercial"),
+            ("Rotermann Quarter",       59.4390, 24.7580, "commercial"),
+            # Residential
+            ("Kalamaja",                59.4440, 24.7350, "residential"),
+            ("Kristiine",               59.4250, 24.7200, "residential"),
+            ("Kadriorg",                59.4400, 24.7850, "residential"),
+            # Mixed
+            ("Old Town",                59.4370, 24.7450, "mixed"),
+            ("Telliskivi",              59.4400, 24.7300, "mixed"),
+            # Industrial
+            ("Kopli",                   59.4520, 24.7100, "industrial"),
+            ("Ülemiste",                59.4200, 24.7800, "industrial"),
+            # Natural
+            ("Kadriorg Park",           59.4390, 24.7900, "natural"),
+            ("Pirita Beach",            59.4600, 24.8100, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # SOUTH AMERICA (European-grid Southern Cone)
+    # ─────────────────────────────────────────────
+
+    "buenos_aires": {
+        "name": "Buenos Aires",
+        "country": "Argentina",
+        "bbox": (-34.640, -58.450, -34.560, -58.340),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Florida Street",         -34.6037, -58.3816, "commercial"),
+            ("Avenida Corrientes",     -34.6040, -58.3920, "commercial"),
+            # Residential
+            ("Palermo",                -34.5800, -58.4250, "residential"),
+            ("Belgrano",               -34.5620, -58.4530, "residential"),
+            ("Caballito",              -34.6180, -58.4300, "residential"),
+            # Mixed
+            ("San Telmo",              -34.6210, -58.3730, "mixed"),
+            ("Recoleta",               -34.5880, -58.3930, "mixed"),
+            # Industrial
+            ("La Boca",                -34.6350, -58.3630, "industrial"),
+            ("Barracas",               -34.6400, -58.3830, "industrial"),
+            # Natural
+            ("Bosques de Palermo",     -34.5720, -58.4180, "natural"),
+            ("Reserva Ecologica",      -34.6150, -58.3530, "natural"),
         ],
     },
 
