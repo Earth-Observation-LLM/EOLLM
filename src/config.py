@@ -4,62 +4,7 @@ Defines cities, seed locations, and all shared constants.
 """
 
 CITIES = {
- 
-    # ─────────────────────────────────────────────
-    # CENTRAL ASIA (Soviet grid + modern capital)
-    # ─────────────────────────────────────────────
 
-    "astana": {
-        "name": "Astana",
-        "country": "Kazakhstan",
-        "bbox": (51.080, 71.340, 51.190, 71.510),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Baiterek Tower",          51.1282, 71.4306, "commercial"),
-            ("Khan Shatyr",             51.1327, 71.4040, "commercial"),
-            # Residential
-            ("Samal District",          51.1450, 71.4500, "residential"),
-            ("Zhetysu District",        51.1600, 71.4200, "residential"),
-            ("Expo District",           51.0980, 71.4100, "residential"),
-            # Mixed
-            ("Old Town Center",         51.1500, 71.4700, "mixed"),
-            ("Nurzhol Boulevard",       51.1250, 71.4250, "mixed"),
-            # Industrial
-            ("Industrial Zone South",   51.0900, 71.3800, "industrial"),
-            ("Railway District",        51.1550, 71.4850, "industrial"),
-            # Natural
-            ("Ishim River Embankment",  51.1200, 71.4400, "natural"),
-            ("Botanical Garden",        51.1350, 71.3700, "natural"),
-        ],
-    },
-
-    # ─────────────────────────────────────────────
-    # MIDDLE EAST (Ancient layered city)
-    # ─────────────────────────────────────────────
-
-    "damascus": {
-        "name": "Damascus",
-        "country": "Syria",
-        "bbox": (33.490, 36.250, 33.550, 36.340),
-        "seeds": [
-            # Permanent iconic anchors
-            ("Souq al-Hamidiyya",       33.5113, 36.3068, "commercial"),
-            ("Marja Square",            33.5120, 36.2960, "commercial"),
-            # Residential
-            ("Abu Rummaneh",            33.5170, 36.2850, "residential"),
-            ("Mezzeh",                  33.5050, 36.2550, "residential"),
-            ("Bab Touma",               33.5140, 36.3150, "residential"),
-            # Mixed
-            ("Old City",                33.5110, 36.3100, "mixed"),
-            ("Sha'alan",                33.5180, 36.2900, "mixed"),
-            # Industrial
-            ("Qaboun",                  33.5350, 36.3200, "industrial"),
-            ("South Ring Road",         33.4950, 36.2900, "industrial"),
-            # Natural
-            ("Barada River",            33.5200, 36.3000, "natural"),
-            ("Tishreen Park",           33.5100, 36.2780, "natural"),
-        ],
-    },
 
     # ─────────────────────────────────────────────
     # TURKIYE (Black Sea coast + Mediterranean)
@@ -330,6 +275,90 @@ CITIES = {
             # Natural
             ("Bosques de Palermo",     -34.5720, -58.4180, "natural"),
             ("Reserva Ecologica",      -34.6150, -58.3530, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # BENELUX (Art Nouveau + EU quarter)
+    # ─────────────────────────────────────────────
+
+    "brussels": {
+        "name": "Brussels",
+        "country": "Belgium",
+        "bbox": (50.820, 4.320, 50.870, 4.410),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Grand Place",             50.8467, 4.3525, "commercial"),
+            ("Avenue Louise",           50.8310, 4.3560, "commercial"),
+            # Residential
+            ("Ixelles",                 50.8280, 4.3680, "residential"),
+            ("Schaerbeek",              50.8620, 4.3750, "residential"),
+            ("Uccle",                   50.8100, 4.3400, "residential"),
+            # Mixed
+            ("Saint-Gilles",            50.8300, 4.3460, "mixed"),
+            ("Sainte-Catherine",        50.8510, 4.3460, "mixed"),
+            # Industrial
+            ("Canal Zone Molenbeek",    50.8550, 4.3300, "industrial"),
+            ("Anderlecht Abattoir",     50.8430, 4.3300, "industrial"),
+            # Natural
+            ("Bois de la Cambre",       50.8130, 4.3700, "natural"),
+            ("Parc du Cinquantenaire",  50.8400, 4.3930, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # CENTRAL EUROPE (Imperial Habsburg capital)
+    # ─────────────────────────────────────────────
+
+    "vienna": {
+        "name": "Vienna",
+        "country": "Austria",
+        "bbox": (48.170, 16.330, 48.240, 16.420),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Stephansplatz",           48.2085, 16.3735, "commercial"),
+            ("Mariahilfer Strasse",     48.1960, 16.3500, "commercial"),
+            # Residential
+            ("Leopoldstadt",            48.2200, 16.3900, "residential"),
+            ("Ottakring",               48.2150, 16.3200, "residential"),
+            ("Favoriten",               48.1750, 16.3750, "residential"),
+            # Mixed
+            ("Neubau",                  48.2010, 16.3500, "mixed"),
+            ("Josefstadt",              48.2100, 16.3470, "mixed"),
+            # Industrial
+            ("Simmering",               48.1800, 16.4200, "industrial"),
+            ("Erdberg",                 48.1900, 16.4000, "industrial"),
+            # Natural
+            ("Prater",                  48.2100, 16.4050, "natural"),
+            ("Donauinsel",              48.2250, 16.3950, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # PANNONIAN (River-split dual city)
+    # ─────────────────────────────────────────────
+
+    "budapest": {
+        "name": "Budapest",
+        "country": "Hungary",
+        "bbox": (47.460, 19.020, 47.530, 19.120),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Vaci Utca",               47.4930, 19.0540, "commercial"),
+            ("Andrassy Ut",             47.5020, 19.0650, "commercial"),
+            # Residential
+            ("Buda Hills",              47.5100, 19.0200, "residential"),
+            ("Ujlipotvaros",            47.5150, 19.0600, "residential"),
+            ("Ferencvaros",             47.4800, 19.0700, "residential"),
+            # Mixed
+            ("Erzsebetvaros",           47.4990, 19.0680, "mixed"),
+            ("Belvaros",                47.4920, 19.0570, "mixed"),
+            # Industrial
+            ("Csepel",                  47.4300, 19.0800, "industrial"),
+            ("Kobanya",                 47.4850, 19.1100, "industrial"),
+            # Natural
+            ("Margaret Island",         47.5200, 19.0500, "natural"),
+            ("Gellert Hill",            47.4860, 19.0400, "natural"),
         ],
     },
 
