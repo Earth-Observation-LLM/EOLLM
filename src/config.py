@@ -174,6 +174,62 @@ CITIES = {
         ],
     },
 
+    # ─────────────────────────────────────────────
+    # CENTRAL ASIA (Soviet grid + modern capital)
+    # ─────────────────────────────────────────────
+
+    "astana": {
+        "name": "Astana",
+        "country": "Kazakhstan",
+        "bbox": (51.080, 71.340, 51.190, 71.510),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Baiterek Tower",          51.1282, 71.4306, "commercial"),
+            ("Khan Shatyr",             51.1327, 71.4040, "commercial"),
+            # Residential
+            ("Samal District",          51.1450, 71.4500, "residential"),
+            ("Zhetysu District",        51.1600, 71.4200, "residential"),
+            ("Expo District",           51.0980, 71.4100, "residential"),
+            # Mixed
+            ("Old Town Center",         51.1500, 71.4700, "mixed"),
+            ("Nurzhol Boulevard",       51.1250, 71.4250, "mixed"),
+            # Industrial
+            ("Industrial Zone South",   51.0900, 71.3800, "industrial"),
+            ("Railway District",        51.1550, 71.4850, "industrial"),
+            # Natural
+            ("Ishim River Embankment",  51.1200, 71.4400, "natural"),
+            ("Botanical Garden",        51.1350, 71.3700, "natural"),
+        ],
+    },
+
+    # ─────────────────────────────────────────────
+    # MIDDLE EAST (Ancient layered city)
+    # ─────────────────────────────────────────────
+
+    "damascus": {
+        "name": "Damascus",
+        "country": "Syria",
+        "bbox": (33.490, 36.250, 33.550, 36.340),
+        "seeds": [
+            # Permanent iconic anchors
+            ("Souq al-Hamidiyya",       33.5113, 36.3068, "commercial"),
+            ("Marja Square",            33.5120, 36.2960, "commercial"),
+            # Residential
+            ("Abu Rummaneh",            33.5170, 36.2850, "residential"),
+            ("Mezzeh",                  33.5050, 36.2550, "residential"),
+            ("Bab Touma",               33.5140, 36.3150, "residential"),
+            # Mixed
+            ("Old City",                33.5110, 36.3100, "mixed"),
+            ("Sha'alan",                33.5180, 36.2900, "mixed"),
+            # Industrial
+            ("Qaboun",                  33.5350, 36.3200, "industrial"),
+            ("South Ring Road",         33.4950, 36.2900, "industrial"),
+            # Natural
+            ("Barada River",            33.5200, 36.3000, "natural"),
+            ("Tishreen Park",           33.5100, 36.2780, "natural"),
+        ],
+    },
+
 }
 
 # How many samples per city
