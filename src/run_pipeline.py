@@ -273,6 +273,9 @@ def main():
     parser.add_argument("--cities", nargs="+", help="City keys to process")
     parser.add_argument("--samples", type=int, default=10,
                         help="Samples per city (default: 10)")
+    parser.add_argument("--sat-source", choices=["any", "naip", "ign", "esri", "s2", "s2-only", "no-s2"],
+                        default="any",
+                        help="Satellite source filter: 'any', 's2-only', 'no-s2', or explicit source")
     args = parser.parse_args()
 
     from config import CITIES
@@ -309,7 +312,20 @@ def main():
     step6 = import_module("06_validate")
 
     samples = step1.run(cities=cities, num_samples=args.samples)
-    samples = step2.run(samples)
+
+    # Satellite source filtering
+    required_sources = None
+    excluded_sources = None
+    if args.sat_source != "any":
+        if args.sat_source == "s2-only":
+            required_sources = ["Sentinel-2"]
+        elif args.sat_source == "no-s2":
+            excluded_sources = ["Sentinel-2"]
+        else:
+            mapping = {"naip": "NAIP", "ign": "IGN", "esri": "ESRI", "s2": "Sentinel-2"}
+            required_sources = [mapping[args.sat_source]]
+
+    samples = step2.run(samples, required_sources=required_sources, excluded_sources=excluded_sources)
     samples = step3.run(samples)
     samples = step4.run(samples)
     samples = step_composite.run(samples)

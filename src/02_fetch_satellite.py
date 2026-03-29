@@ -308,13 +308,14 @@ def _download(url, save_path, timeout=30):
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def run(samples=None):
+def run(samples=None, required_sources=None, excluded_sources=None):
     print("[Step 2/6] Fetching satellite imagery…")
 
     if samples is None:
         csv_path = os.path.join(ROOT, "output", "sample_locations.csv")
         samples = pd.read_csv(csv_path).to_dict("records")
 
+    filtered = []
     for i, sample in enumerate(samples):
         sid = sample["sample_id"]
         lat, lon = sample["lat"], sample["lon"]
@@ -337,9 +338,18 @@ def run(samples=None):
         else:
             print(f"    ✗ FAILED — no image saved")
 
+        # source filter (optional)
+        if required_sources and actual_src not in required_sources:
+            print(f"    Skipping {sid}: {actual_src} is not one of {required_sources}")
+            continue
+        if excluded_sources and actual_src in excluded_sources:
+            print(f"    Skipping {sid}: excluded source {actual_src}")
+            continue
+
+        filtered.append(sample)
         time.sleep(0.3)
 
-    return samples
+    return filtered
 
 
 if __name__ == "__main__":
