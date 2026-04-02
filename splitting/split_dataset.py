@@ -24,6 +24,7 @@ from splitting.filters import (
     filter_low_streetview,
     remove_question_types,
     split_mismatch_subtypes,
+    deduplicate_per_location,
     filter_mismatch_leaks,
 )
 from splitting.splitter import split_locations, split_locations_by_sample
@@ -145,6 +146,10 @@ def main():
     # ── Step 5: Mismatch subtype assignment ───────────────────────────────
     print("\n[STEP 5] Splitting mismatch subtypes (easy/hard)...")
     flat = split_mismatch_subtypes(flat)
+
+    # ── Step 5b: Deduplicate multi-variant topics ─────────────────────────
+    print("\n[STEP 5b] Deduplicating to 1 question per topic per location...")
+    flat, _ = deduplicate_per_location(flat, args.seed)
 
     # Check targets vs actual counts
     for topic, target in QUESTION_TARGETS.items():

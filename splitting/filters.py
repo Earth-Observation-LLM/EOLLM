@@ -1,5 +1,8 @@
 """Filtering and subtype assignment for the dataset splitting pipeline."""
 
+import random
+from collections import defaultdict
+
 from splitting.flatten import (
     extract_sid_from_stv_path,
     sid_to_city_name,
@@ -30,6 +33,48 @@ def filter_low_streetview(records: list[dict], min_count: int = 4) -> tuple[list
     print(f"  Questions removed with them: {removed_qs}")
     print(f"  Remaining locations: {len(kept)}")
     return kept, removed_locs, removed_qs
+
+
+def deduplicate_per_location(flat_records: list[dict], seed: int = 42) -> tuple[list, int]:
+    """Keep exactly 1 question per (sample_id, topic) pair.
+
+    Topics like camera_direction (4 per location) and mismatch_binary (2 per
+    location per subtype) generate multiple questions per location. This selects
+    one randomly per group to ensure balanced topic counts and maximize location
+    diversity.
+
+    Returns:
+        (deduplicated_records, removed_count)
+    """
+    # Group by (sample_id, topic)
+    groups = defaultdict(list)
+    for rec in flat_records:
+        groups[(rec["sample_id"], rec["topic"])].append(rec)
+
+    kept = []
+    removed = 0
+    dedup_stats = defaultdict(lambda: {"before": 0, "after": 0})
+
+    for (sid, topic), recs in groups.items():
+        dedup_stats[topic]["before"] += len(recs)
+        if len(recs) == 1:
+            kept.append(recs[0])
+            dedup_stats[topic]["after"] += 1
+        else:
+            rng = random.Random(f"{seed}_{sid}_{topic}")
+            kept.append(rng.choice(recs))
+            removed += len(recs) - 1
+            dedup_stats[topic]["after"] += 1
+
+    print(f"  Deduplication (1 per topic per location):")
+    for topic in sorted(dedup_stats):
+        b = dedup_stats[topic]["before"]
+        a = dedup_stats[topic]["after"]
+        if b != a:
+            print(f"    {topic:<30s} {b:>6d} -> {a:>6d}  ({b - a} removed)")
+    print(f"  Total removed: {removed}, remaining: {len(kept)}")
+
+    return kept, removed
 
 
 def remove_question_types(flat_records: list[dict], types: list[str]) -> tuple[list, int]:
