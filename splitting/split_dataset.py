@@ -27,7 +27,7 @@ from splitting.filters import (
     deduplicate_per_location,
     filter_mismatch_leaks,
 )
-from splitting.splitter import split_locations, split_locations_by_sample
+from splitting.splitter import extract_benchmark, split_seen_unseen, split_per_city
 from splitting.downsampler import stratified_downsample
 from splitting.stats_report import generate_report
 
@@ -174,11 +174,17 @@ def main():
     print(f"  Seen city questions: {seen_count}")
     print(f"  Unseen city questions: {unseen_count}")
 
-    # ── Step 7: Split by strategy ────────────────────────────────────────
+    # ── Step 7a: Benchmark split (SAME for all strategies) ─────────────
+    print("\n[STEP 7a] Benchmark split (10% per city, location-level)...")
+    benchmark, remaining = extract_benchmark(
+        flat, UNSEEN_CITIES, BENCHMARK_RATIO, args.seed
+    )
+
+    # ── Step 7b: Train/val split (strategy-dependent) ────────────────────
     if args.strategy == "seen_unseen":
-        print("\n[STEP 7] Benchmark split (10% per city) + seen/unseen strategy...")
-        benchmark, remaining_val, remaining_train = split_locations(
-            flat, UNSEEN_CITIES, SEEN_CITIES, BENCHMARK_RATIO, args.seed
+        print("\n[STEP 7b] Train/val split: seen/unseen city strategy...")
+        remaining_val, remaining_train = split_seen_unseen(
+            remaining, UNSEEN_CITIES, SEEN_CITIES
         )
 
         # ── Step 8: Leak filter on train (only for seen_unseen) ───────────
@@ -197,9 +203,9 @@ def main():
                 QUESTION_TARGETS[topic] = actual
 
     elif args.strategy == "per_city":
-        print(f"\n[STEP 7] Per-city sampling strategy (val_ratio={args.val_ratio})...")
-        benchmark, remaining_val, remaining_train = split_locations_by_sample(
-            flat, val_ratio=args.val_ratio, benchmark_ratio=BENCHMARK_RATIO, seed=args.seed
+        print(f"\n[STEP 7b] Train/val split: per-city sampling (val_ratio={args.val_ratio})...")
+        remaining_val, remaining_train = split_per_city(
+            remaining, val_ratio=args.val_ratio, seed=args.seed
         )
         leak_stats = {"binary_discarded": 0, "mcq_discarded": 0}
         print("\n[STEP 8] Skipping leak filter (not applicable for per_city strategy)")
