@@ -233,6 +233,11 @@ def main():
         # benchmark_city_type already set by splitter
 
     # ── Step 11: Export ───────────────────────────────────────────────────
+    # Sort all splits by question_id for deterministic output order
+    train.sort(key=lambda r: r["question_id"])
+    validation.sort(key=lambda r: r["question_id"])
+    benchmark.sort(key=lambda r: r["question_id"])
+
     print("\n[STEP 11] Exporting files...")
     save_jsonl(train, os.path.join(args.outdir, "train.jsonl"))
     save_jsonl(validation, os.path.join(args.outdir, "validation.jsonl"))
