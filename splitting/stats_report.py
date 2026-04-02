@@ -11,6 +11,7 @@ def generate_report(
     seen_city_names: set[str],
     leak_stats: dict,
     output_path: str,
+    strategy: str = "seen_unseen",
 ) -> str:
     """Generate a comprehensive statistics report with integrity checks.
 
@@ -107,17 +108,23 @@ def generate_report(
 
     w(f"  All dataset cities in benchmark        : {len(bench_cities)}/{len(all_cities)} cities {'(PASS)' if bench_cities == all_cities else '(FAIL: missing ' + str(all_cities - bench_cities) + ')'}")
 
-    # Check unseen cities: only verify those present in the input data
-    unseen_in_data = unseen_city_names & all_cities
-    unseen_in_val_or_bench = (val_cities | bench_cities) & unseen_city_names
-    unseen_not_in_data = unseen_city_names - all_cities
-    if unseen_not_in_data:
-        w(f"  Unseen cities not in input data        : {sorted(unseen_not_in_data)} (OK - not in merged dataset)")
-    w(f"  All unseen cities (in data) in val     : {'YES (PASS)' if unseen_in_data <= unseen_in_val_or_bench else 'NO (FAIL: missing ' + str(unseen_in_data - unseen_in_val_or_bench) + ')'}")
+    if strategy == "seen_unseen":
+        # Check unseen cities: only verify those present in the input data
+        unseen_in_data = unseen_city_names & all_cities
+        unseen_in_val_or_bench = (val_cities | bench_cities) & unseen_city_names
+        unseen_not_in_data = unseen_city_names - all_cities
+        if unseen_not_in_data:
+            w(f"  Unseen cities not in input data        : {sorted(unseen_not_in_data)} (OK - not in merged dataset)")
+        w(f"  All unseen cities (in data) in val     : {'YES (PASS)' if unseen_in_data <= unseen_in_val_or_bench else 'NO (FAIL: missing ' + str(unseen_in_data - unseen_in_val_or_bench) + ')'}")
 
-    # Check no unseen city locations in train (location-level, not question-level via distractors)
-    train_unseen = train_cities & unseen_city_names
-    w(f"  No unseen city locations in train      : {'YES (PASS)' if len(train_unseen) == 0 else 'NO (FAIL: ' + str(train_unseen) + ')'}")
+        # Check no unseen city locations in train (location-level, not question-level via distractors)
+        train_unseen = train_cities & unseen_city_names
+        w(f"  No unseen city locations in train      : {'YES (PASS)' if len(train_unseen) == 0 else 'NO (FAIL: ' + str(train_unseen) + ')'}")
+    else:
+        w(f"  Strategy: per_city (all cities in all splits)")
+        w(f"  Train cities  : {len(train_cities)}")
+        w(f"  Val cities    : {len(val_cities)}")
+        w(f"  Bench cities  : {len(bench_cities)}")
 
     # SV count check
     all_records = train + validation + benchmark

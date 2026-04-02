@@ -109,3 +109,91 @@ def split_locations(
     print(f"  Train locations: {len(train_sids)}, questions: {len(train_records)}")
 
     return benchmark_records, validation_records, train_records
+
+
+def split_locations_by_sample(
+    flat_records: list[dict],
+    val_ratio: float = 0.15,
+    benchmark_ratio: float = 0.10,
+    seed: int = 42,
+) -> tuple[list, list, list]:
+    """Split by sampling a percentage of locations per city (no seen/unseen logic).
+
+    Every city contributes to all three splits proportionally.
+
+    Algorithm:
+        1. Group sample_ids by city.
+        2. For each city:
+           - Shuffle deterministically.
+           - First benchmark_ratio -> benchmark.
+           - Next val_ratio of remaining -> validation.
+           - Rest -> train.
+
+    Args:
+        flat_records: Flattened question records.
+        val_ratio: Fraction of non-benchmark locations per city for validation.
+        benchmark_ratio: Fraction of locations per city for benchmark.
+        seed: Random seed.
+
+    Returns:
+        (benchmark_records, validation_records, train_records)
+    """
+    rng = random.Random(seed)
+
+    # Group sample_ids by city
+    city_to_sids = defaultdict(set)
+    for rec in flat_records:
+        city_to_sids[rec["city"]].add(rec["sample_id"])
+
+    # Index: sample_id -> list of question records
+    sid_to_records = defaultdict(list)
+    for rec in flat_records:
+        sid_to_records[rec["sample_id"]].append(rec)
+
+    benchmark_sids = set()
+    validation_sids = set()
+    train_sids = set()
+
+    print(f"\n  {'City':<25s} {'Total':>6s} {'Bench':>6s} {'Val':>6s} {'Train':>6s}")
+    print(f"  {'-'*25} {'-'*6} {'-'*6} {'-'*6} {'-'*6}")
+
+    for city in sorted(city_to_sids.keys()):
+        sids = sorted(city_to_sids[city])
+        rng.shuffle(sids)
+
+        n_bench = max(1, round(len(sids) * benchmark_ratio))
+        bench = sids[:n_bench]
+        remaining = sids[n_bench:]
+
+        n_val = max(1, round(len(remaining) * val_ratio))
+        val = remaining[:n_val]
+        train = remaining[n_val:]
+
+        benchmark_sids.update(bench)
+        validation_sids.update(val)
+        train_sids.update(train)
+
+        print(f"  {city:<25s} {len(sids):>6d} {len(bench):>6d} {len(val):>6d} {len(train):>6d}")
+
+    # Build output lists
+    benchmark_records = []
+    for sid in benchmark_sids:
+        for rec in sid_to_records[sid]:
+            rec["benchmark_city_type"] = None
+            benchmark_records.append(rec)
+
+    validation_records = []
+    for sid in validation_sids:
+        for rec in sid_to_records[sid]:
+            validation_records.append(rec)
+
+    train_records = []
+    for sid in train_sids:
+        for rec in sid_to_records[sid]:
+            train_records.append(rec)
+
+    print(f"\n  Total benchmark locations: {len(benchmark_sids)}, questions: {len(benchmark_records)}")
+    print(f"  Validation locations: {len(validation_sids)}, questions: {len(validation_records)}")
+    print(f"  Train locations: {len(train_sids)}, questions: {len(train_records)}")
+
+    return benchmark_records, validation_records, train_records

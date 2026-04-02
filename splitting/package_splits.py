@@ -220,23 +220,33 @@ def main():
         default="packaged",
         help="Output directory for packaged splits (default: packaged/)",
     )
+    parser.add_argument(
+        "--split",
+        nargs="+",
+        choices=["train", "validation", "benchmark"],
+        default=["train", "validation", "benchmark"],
+        help="Which split(s) to package (default: all three)",
+    )
     args = parser.parse_args()
 
     os.makedirs(args.outdir, exist_ok=True)
 
-    # Load splits
-    splits = {
+    # Available splits
+    all_splits = {
         "train": os.path.join(args.splits_dir, "train.jsonl"),
         "validation": os.path.join(args.splits_dir, "validation.jsonl"),
         "benchmark": os.path.join(args.splits_dir, "benchmark_with_answers.jsonl"),
     }
+
+    # Filter to requested splits
+    splits = {name: all_splits[name] for name in args.split}
 
     for name, path in splits.items():
         if not os.path.exists(path):
             print(f"ERROR: {path} not found. Run split_dataset.py first.")
             sys.exit(1)
 
-    print("Packaging splits...\n")
+    print(f"Packaging splits: {', '.join(splits.keys())}\n")
 
     for name, path in splits.items():
         records = load_jsonl(path)
@@ -250,9 +260,8 @@ def main():
         print()
 
     print(f"Done! Packaged splits in {args.outdir}/")
-    print(f"  {args.outdir}/train/          ← training set (with answers)")
-    print(f"  {args.outdir}/validation/     ← validation set (with answers)")
-    print(f"  {args.outdir}/benchmark/      ← benchmark (public has nulled answers)")
+    for name in splits:
+        print(f"  {args.outdir}/{name}/")
 
 
 if __name__ == "__main__":

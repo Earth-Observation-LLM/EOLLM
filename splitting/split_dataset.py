@@ -26,7 +26,7 @@ from splitting.filters import (
     split_mismatch_subtypes,
     filter_mismatch_leaks,
 )
-from splitting.splitter import split_locations
+from splitting.splitter import split_locations, split_locations_by_sample
 from splitting.downsampler import stratified_downsample
 from splitting.stats_report import generate_report
 
@@ -104,6 +104,18 @@ def main():
     parser.add_argument("--input", required=True, help="Path to dataset_merged.jsonl")
     parser.add_argument("--outdir", default="splits", help="Output directory (default: splits/)")
     parser.add_argument("--seed", type=int, default=RANDOM_SEED, help="Random seed")
+    parser.add_argument(
+        "--strategy",
+        choices=["seen_unseen", "per_city"],
+        default="seen_unseen",
+        help="Split strategy: 'seen_unseen' (unseen cities -> val) or 'per_city' (N%% per city -> val)",
+    )
+    parser.add_argument(
+        "--val-ratio",
+        type=float,
+        default=0.15,
+        help="Validation ratio per city (only for --strategy per_city, default: 0.15)",
+    )
     args = parser.parse_args()
 
     os.makedirs(args.outdir, exist_ok=True)
@@ -157,26 +169,35 @@ def main():
     print(f"  Seen city questions: {seen_count}")
     print(f"  Unseen city questions: {unseen_count}")
 
-    # ── Step 7: Benchmark split ───────────────────────────────────────────
-    print("\n[STEP 7] Benchmark split (10% per city, location-level)...")
-    benchmark, remaining_val, remaining_train = split_locations(
-        flat, UNSEEN_CITIES, SEEN_CITIES, BENCHMARK_RATIO, args.seed
-    )
+    # ── Step 7: Split by strategy ────────────────────────────────────────
+    if args.strategy == "seen_unseen":
+        print("\n[STEP 7] Benchmark split (10% per city) + seen/unseen strategy...")
+        benchmark, remaining_val, remaining_train = split_locations(
+            flat, UNSEEN_CITIES, SEEN_CITIES, BENCHMARK_RATIO, args.seed
+        )
 
-    # ── Step 8: Leak filter on train ──────────────────────────────────────
-    print("\n[STEP 8] Mismatch easy leak filter (train only)...")
-    remaining_train, binary_disc, mcq_disc = filter_mismatch_leaks(
-        remaining_train, UNSEEN_CITIES
-    )
-    leak_stats = {"binary_discarded": binary_disc, "mcq_discarded": mcq_disc}
+        # ── Step 8: Leak filter on train (only for seen_unseen) ───────────
+        print("\n[STEP 8] Mismatch easy leak filter (train only)...")
+        remaining_train, binary_disc, mcq_disc = filter_mismatch_leaks(
+            remaining_train, UNSEEN_CITIES
+        )
+        leak_stats = {"binary_discarded": binary_disc, "mcq_discarded": mcq_disc}
 
-    # Re-check targets after leak filter
-    for topic in ["mismatch_binary_easy", "mismatch_mcq_easy"]:
-        actual = sum(1 for r in remaining_train if r["topic"] == topic)
-        target = QUESTION_TARGETS.get(topic)
-        if target is not None and actual < target:
-            print(f"  WARNING: {topic} has {actual} after leak filter, adjusting target from {target}")
-            QUESTION_TARGETS[topic] = actual
+        # Re-check targets after leak filter
+        for topic in ["mismatch_binary_easy", "mismatch_mcq_easy"]:
+            actual = sum(1 for r in remaining_train if r["topic"] == topic)
+            target = QUESTION_TARGETS.get(topic)
+            if target is not None and actual < target:
+                print(f"  WARNING: {topic} has {actual} after leak filter, adjusting target from {target}")
+                QUESTION_TARGETS[topic] = actual
+
+    elif args.strategy == "per_city":
+        print(f"\n[STEP 7] Per-city sampling strategy (val_ratio={args.val_ratio})...")
+        benchmark, remaining_val, remaining_train = split_locations_by_sample(
+            flat, val_ratio=args.val_ratio, benchmark_ratio=BENCHMARK_RATIO, seed=args.seed
+        )
+        leak_stats = {"binary_discarded": 0, "mcq_discarded": 0}
+        print("\n[STEP 8] Skipping leak filter (not applicable for per_city strategy)")
 
     # ── Step 9: Stratified downsampling (train only) ──────────────────────
     print("\n[STEP 9] Stratified downsampling (train only)...")
@@ -187,12 +208,12 @@ def main():
     print("\n[STEP 10] Adding metadata fields to all records...")
     for rec in train:
         rec["split"] = "train"
-        rec.setdefault("city_type", "seen")
+        rec.setdefault("city_type", "unseen" if rec["city"] in UNSEEN_CITIES else "seen")
         rec.setdefault("benchmark_city_type", None)
 
     for rec in validation:
         rec["split"] = "validation"
-        rec.setdefault("city_type", "unseen")
+        rec.setdefault("city_type", "unseen" if rec["city"] in UNSEEN_CITIES else "seen")
         rec.setdefault("benchmark_city_type", None)
 
     for rec in benchmark:
@@ -221,6 +242,7 @@ def main():
         train, validation, benchmark,
         UNSEEN_CITIES, SEEN_CITIES,
         leak_stats, report_path,
+        strategy=args.strategy,
     )
     print(f"\n{report}")
 
