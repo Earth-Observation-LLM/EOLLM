@@ -362,6 +362,39 @@ CITIES = {
         ],
     },
 
+    # ─────────────────────────────────────────────
+    # ADDITIONAL CITIES (key-to-name mapping for
+    # split pipeline; bbox/seeds not needed since
+    # locations are already sampled)
+    # ─────────────────────────────────────────────
+
+    "amsterdam":    {"name": "Amsterdam",       "country": "Netherlands",   "bbox": (0,0,0,0), "seeds": []},
+    "ankara":       {"name": "Ankara",          "country": "Turkiye",       "bbox": (0,0,0,0), "seeds": []},
+    "athens":       {"name": "Athens",          "country": "Greece",        "bbox": (0,0,0,0), "seeds": []},
+    "barcelona":    {"name": "Barcelona",       "country": "Spain",         "bbox": (0,0,0,0), "seeds": []},
+    "berlin":       {"name": "Berlin",          "country": "Germany",       "bbox": (0,0,0,0), "seeds": []},
+    "bursa":        {"name": "Bursa",           "country": "Turkiye",       "bbox": (0,0,0,0), "seeds": []},
+    "cape_town":    {"name": "Cape Town",       "country": "South Africa",  "bbox": (0,0,0,0), "seeds": []},
+    "chicago":      {"name": "Chicago",         "country": "United States", "bbox": (0,0,0,0), "seeds": []},
+    "helsinki":     {"name": "Helsinki",        "country": "Finland",       "bbox": (0,0,0,0), "seeds": []},
+    "istanbul":     {"name": "Istanbul",        "country": "Turkiye",       "bbox": (0,0,0,0), "seeds": []},
+    "izmir":        {"name": "Izmir",           "country": "Turkiye",       "bbox": (0,0,0,0), "seeds": []},
+    "kayseri":      {"name": "Kayseri",         "country": "Turkiye",       "bbox": (0,0,0,0), "seeds": []},
+    "london":       {"name": "London",          "country": "United Kingdom","bbox": (0,0,0,0), "seeds": []},
+    "mexico_city":  {"name": "Mexico City",     "country": "Mexico",        "bbox": (0,0,0,0), "seeds": []},
+    "mumbai":       {"name": "Mumbai",          "country": "India",         "bbox": (0,0,0,0), "seeds": []},
+    "nairobi":      {"name": "Nairobi",         "country": "Kenya",         "bbox": (0,0,0,0), "seeds": []},
+    "nyc":          {"name": "New York City",   "country": "United States", "bbox": (0,0,0,0), "seeds": []},
+    "paris":        {"name": "Paris",           "country": "France",        "bbox": (0,0,0,0), "seeds": []},
+    "rio":          {"name": "Rio de Janeiro",  "country": "Brazil",        "bbox": (0,0,0,0), "seeds": []},
+    "rome":         {"name": "Rome",            "country": "Italy",         "bbox": (0,0,0,0), "seeds": []},
+    "seoul":        {"name": "Seoul",           "country": "South Korea",   "bbox": (0,0,0,0), "seeds": []},
+    "singapore":    {"name": "Singapore",       "country": "Singapore",     "bbox": (0,0,0,0), "seeds": []},
+    "stockholm":    {"name": "Stockholm",       "country": "Sweden",        "bbox": (0,0,0,0), "seeds": []},
+    "sydney":       {"name": "Sydney",          "country": "Australia",     "bbox": (0,0,0,0), "seeds": []},
+    "taipei":       {"name": "Taipei",          "country": "Taiwan",        "bbox": (0,0,0,0), "seeds": []},
+    "tokyo":        {"name": "Tokyo",           "country": "Japan",         "bbox": (0,0,0,0), "seeds": []},
+    "toronto":      {"name": "Toronto",         "country": "Canada",        "bbox": (0,0,0,0), "seeds": []},
 }
 
 # How many samples per city

@@ -27,13 +27,20 @@ def _shuffle_options(correct, distractors, sample_id="", topic=""):
     return options, answer_key
 
 
-def generate_questions(sample):
+def generate_questions(sample, source_dirs=None):
     """Generate all possible MCQs from a sample's metadata.
 
     Each question uses a per-sample RNG seeded from sample_id so that
     distractor selection, question template choice, and option shuffling
     are all reproducible but varied across samples.
+
+    Args:
+        sample: Sample dict with OSM metadata and composite paths.
+        source_dirs: Optional list of dirs to search for source images.
+                     Default: [ROOT/output].
     """
+    if source_dirs is None:
+        source_dirs = [os.path.join(ROOT, "output")]
     from config import (LAND_USE_CATEGORIES, BUILDING_HEIGHT_CATEGORIES,
                         ROAD_LABELS, URBAN_DENSITY_CATEGORIES,
                         ROAD_SURFACE_BINS, ROAD_SURFACE_OPTIONS,
@@ -248,7 +255,11 @@ def generate_questions(sample):
     if arrow_paths and len(arrow_paths) == 4:
         for query_angle in query_angles:
             query_stv = f"images/sv/{sid}_{query_angle}.jpg"
-            if not os.path.exists(os.path.join(ROOT, "output", query_stv)):
+            stv_found = any(
+                os.path.exists(os.path.join(d, query_stv))
+                for d in source_dirs
+            )
+            if not stv_found:
                 continue
 
             correct_arrow = arrow_paths[query_angle]
@@ -417,11 +428,17 @@ def select_best_question(sample, questions, used_topics_counter):
     return scored[0][1]
 
 
-def run(samples=None):
-    """Main entry point."""
+def run(samples=None, source_dirs=None):
+    """Main entry point.
+
+    Args:
+        samples: List of sample dicts. If None, reads from metadata_raw.csv.
+        source_dirs: Optional list of dirs to search for source images.
+    """
     print("[Step 5/6] Generating questions...")
 
     if samples is None:
+        import pandas as pd
         csv_path = os.path.join(ROOT, "output", "metadata_raw.csv")
         samples = pd.read_csv(csv_path).to_dict('records')
 
@@ -432,7 +449,7 @@ def run(samples=None):
         sid = sample["sample_id"]
         print(f"  [{i+1}/{len(samples)}] {sid}...")
 
-        all_qs = generate_questions(sample)
+        all_qs = generate_questions(sample, source_dirs=source_dirs)
         total_qs += len(all_qs)
         print(f"    {len(all_qs)} feasible questions")
 
