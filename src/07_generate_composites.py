@@ -73,7 +73,7 @@ def _relative_stv_paths(sample):
     return [f"images/sv/{sid}_{a}.jpg" for a in STV_ANGLES]
 
 
-def tile_2x2(image_paths, output_path, tile_size=512):
+def tile_2x2(image_paths, output_path, tile_size=256):
     """Create a 2x2 grid from 4 image paths."""
     from PIL import Image
     canvas = Image.new('RGB', (tile_size * 2, tile_size * 2))
@@ -86,13 +86,13 @@ def tile_2x2(image_paths, output_path, tile_size=512):
     return output_path
 
 
-def tile_2x2_labeled(image_paths, output_path, labels, tile_size=512):
+def tile_2x2_labeled(image_paths, output_path, labels, tile_size=256):
     """Create a 2x2 grid with labels burned into each quadrant."""
     from PIL import Image, ImageDraw, ImageFont
     canvas = Image.new('RGB', (tile_size * 2, tile_size * 2))
     draw = ImageDraw.Draw(canvas)
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
     except (OSError, IOError):
         font = ImageFont.load_default()
 
