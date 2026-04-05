@@ -129,6 +129,25 @@ def load_base_samples(jsonl_path):
         sample.pop("stv_composite_path", None)
         sample.pop("stv_composite_labeled_path", None)
         # Keep: sample_id, location, images, metadata, validation
+
+        # Promote metadata fields to top level so step05/07 can read them.
+        # build_jsonl_record() nests OSM fields under "metadata", but
+        # generate_questions() and generate_composites() read from the top level.
+        meta = sample.get("metadata", {})
+        for key in [
+            "land_use_category", "osm_building_count", "osm_has_park",
+            "osm_amenity_count", "osm_amenity_types", "osm_road_surface",
+            "osm_junction_type", "osm_water_distance_m", "osm_transit_stop_count",
+            "road_bearing",
+        ]:
+            if key in meta:
+                sample.setdefault(key, meta[key])
+        # Key renames: JSONL uses different names than step05 expects
+        if "road_type" in meta:
+            sample.setdefault("highway_type", meta["road_type"])
+        if "osm_median_building_levels" in meta:
+            sample.setdefault("osm_median_levels", meta["osm_median_building_levels"])
+
         base.append(sample)
     return base
 
