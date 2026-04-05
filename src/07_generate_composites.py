@@ -23,29 +23,48 @@ STV_ANGLES = ["along_fwd", "cross_right", "along_bwd", "cross_left"]
 POS_LABELS = ["A", "B", "C", "D"]
 
 
-def _get_sat_path(sample):
+def _find_in_dirs(rel_path, source_dirs):
+    """Search for a relative image path across multiple source directories."""
+    for d in source_dirs:
+        full = os.path.join(d, rel_path)
+        if os.path.exists(full):
+            return full
+    return None
+
+
+def _get_sat_path(sample, source_dirs=None):
     """Get satellite image path for a sample."""
-    return os.path.join(ROOT, "output", "images", "sat",
-                        f"{sample['sample_id']}.png")
+    rel = os.path.join("images", "sat", f"{sample['sample_id']}.png")
+    if source_dirs:
+        return _find_in_dirs(rel, source_dirs) or ""
+    return os.path.join(ROOT, "output", rel)
 
 
-def _get_stv_paths(sample):
+def _get_stv_paths(sample, source_dirs=None):
     """Get all 4 STV angle paths for a sample."""
     sid = sample["sample_id"]
-    return [os.path.join(ROOT, "output", "images", "sv", f"{sid}_{a}.jpg")
-            for a in STV_ANGLES]
+    paths = []
+    for a in STV_ANGLES:
+        rel = os.path.join("images", "sv", f"{sid}_{a}.jpg")
+        if source_dirs:
+            paths.append(_find_in_dirs(rel, source_dirs) or "")
+        else:
+            paths.append(os.path.join(ROOT, "output", rel))
+    return paths
 
 
-def _stv_exists(sample):
+def _stv_exists(sample, source_dirs=None):
     """Check if at least the forward STV exists."""
     sid = sample["sample_id"]
-    return os.path.exists(
-        os.path.join(ROOT, "output", "images", "sv", f"{sid}_along_fwd.jpg"))
+    rel = os.path.join("images", "sv", f"{sid}_along_fwd.jpg")
+    if source_dirs:
+        return _find_in_dirs(rel, source_dirs) is not None
+    return os.path.exists(os.path.join(ROOT, "output", rel))
 
 
-def _all_stv_exist(sample):
+def _all_stv_exist(sample, source_dirs=None):
     """Check if all 4 STV angles exist."""
-    return all(os.path.exists(p) for p in _get_stv_paths(sample))
+    return all(os.path.exists(p) for p in _get_stv_paths(sample, source_dirs))
 
 
 def _relative_stv_paths(sample):
@@ -54,7 +73,7 @@ def _relative_stv_paths(sample):
     return [f"images/sv/{sid}_{a}.jpg" for a in STV_ANGLES]
 
 
-def tile_2x2(image_paths, output_path, tile_size=512):
+def tile_2x2(image_paths, output_path, tile_size=256):
     """Create a 2x2 grid from 4 image paths."""
     from PIL import Image
     canvas = Image.new('RGB', (tile_size * 2, tile_size * 2))
@@ -67,13 +86,13 @@ def tile_2x2(image_paths, output_path, tile_size=512):
     return output_path
 
 
-def tile_2x2_labeled(image_paths, output_path, labels, tile_size=512):
+def tile_2x2_labeled(image_paths, output_path, labels, tile_size=256):
     """Create a 2x2 grid with labels burned into each quadrant."""
     from PIL import Image, ImageDraw, ImageFont
     canvas = Image.new('RGB', (tile_size * 2, tile_size * 2))
     draw = ImageDraw.Draw(canvas)
     try:
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
     except (OSError, IOError):
         font = ImageFont.load_default()
 
@@ -164,14 +183,14 @@ def create_arrow_image(sat_path, output_path, bearing_deg,
     return output_path
 
 
-def _build_stv_composite(sample, composite_dir, suffix=""):
+def _build_stv_composite(sample, composite_dir, suffix="", source_dirs=None):
     """Build a 2x2 composite of all 4 STV angles for one sample.
 
     Returns (clean_path, labeled_path) as relative paths, or (None, None).
     """
     sid = sample["sample_id"]
-    stv_paths = _get_stv_paths(sample)
-    if not all(os.path.exists(p) for p in stv_paths):
+    stv_paths = _get_stv_paths(sample, source_dirs)
+    if not all(p and os.path.exists(p) for p in stv_paths):
         return None, None
 
     clean_name = f"{sid}_4angles{suffix}.png"
@@ -186,28 +205,43 @@ def _build_stv_composite(sample, composite_dir, suffix=""):
     return f"images/composite/{clean_name}", f"images/composite/{labeled_name}"
 
 
-def run(samples):
-    """Generate red-dot images, STV composites, and mismatch metadata."""
+def run(samples, output_base=None, source_dirs=None):
+    """Generate red-dot images, STV composites, and mismatch metadata.
+
+    Args:
+        samples: List of sample dicts.
+        output_base: Base directory for writing generated images (default: ROOT/output).
+        source_dirs: List of directories to search for source sat/sv images.
+                     Default: [ROOT/output]. Useful when source images are spread
+                     across multiple collection runs.
+    """
     from config import MISMATCH_MCQ_STRATEGY, MISMATCH_BINARY_STRATEGY
 
-    print("[Composites] Generating geolocation composites and metadata...")
+    if output_base is None:
+        output_base = os.path.join(ROOT, "output")
+    if source_dirs is None:
+        source_dirs = [os.path.join(ROOT, "output")]
 
-    composite_dir = os.path.join(ROOT, "output", "images", "composite")
-    marked_dir = os.path.join(ROOT, "output", "images", "sat_marked")
-    arrow_dir = os.path.join(ROOT, "output", "images", "sat_arrow")
+    print(f"[Composites] Generating composites (output: {output_base})...")
+
+    composite_dir = os.path.join(output_base, "images", "composite")
+    marked_dir = os.path.join(output_base, "images", "sat_marked")
+    arrow_dir = os.path.join(output_base, "images", "sat_arrow")
     os.makedirs(composite_dir, exist_ok=True)
     os.makedirs(marked_dir, exist_ok=True)
     os.makedirs(arrow_dir, exist_ok=True)
 
     # Pre-filter samples with valid images
-    samples_with_sat = [s for s in samples if os.path.exists(_get_sat_path(s))]
-    samples_with_stv = [s for s in samples if _all_stv_exist(s)]
+    samples_with_sat = [s for s in samples
+                        if os.path.exists(_get_sat_path(s, source_dirs))]
+    samples_with_stv = [s for s in samples
+                        if _all_stv_exist(s, source_dirs)]
 
     for i, sample in enumerate(samples):
         sid = sample["sample_id"]
-        sat_path = _get_sat_path(sample)
+        sat_path = _get_sat_path(sample, source_dirs)
 
-        if not os.path.exists(sat_path):
+        if not sat_path or not os.path.exists(sat_path):
             continue
 
         # ── Red dot image ──────────────────────────────────────────────
@@ -240,16 +274,17 @@ def run(samples):
             except Exception as e:
                 print(f"  [{i+1}/{len(samples)}] {sid}: arrows FAILED: {e}")
 
-        if not _all_stv_exist(sample):
+        if not _all_stv_exist(sample, source_dirs):
             continue
 
         # ── Per-sample STV composite (own 4 angles) ───────────────────
-        own_clean, own_labeled = _build_stv_composite(sample, composite_dir)
+        own_clean, own_labeled = _build_stv_composite(
+            sample, composite_dir, source_dirs=source_dirs)
         if own_clean:
             sample["stv_composite_path"] = own_clean
             sample["stv_composite_labeled_path"] = own_labeled
 
-        # ── Distractor pools ──────────────────────────────────────────
+        # ── Distractor pools (only samples in THIS run) ──────────────
         others = [s for s in samples_with_stv if s["sample_id"] != sid]
         same_city = [s for s in others if s["city"] == sample["city"]]
         cross_city = [s for s in others if s["city"] != sample["city"]]
@@ -293,12 +328,13 @@ def run(samples):
                 # Per-option 4-angle composite
                 opt_suffix = f"_{sid}_opt{opt_label}_{strategy}"
                 opt_clean, opt_labeled = _build_stv_composite(
-                    opt_sample, composite_dir, suffix=opt_suffix)
+                    opt_sample, composite_dir, suffix=opt_suffix,
+                    source_dirs=source_dirs)
                 option_composite_paths[opt_label] = opt_clean
 
                 if opt_clean:
                     per_option_clean_paths.append(
-                        os.path.join(ROOT, "output", opt_clean))
+                        os.path.join(output_base, opt_clean))
                 else:
                     per_option_clean_paths.append(None)
 
@@ -352,7 +388,8 @@ def run(samples):
             # Build composite for the negative sample if not already done
             neg_suffix = f"_{sid}_neg_{strategy}"
             neg_clean, neg_labeled = _build_stv_composite(
-                neg_sample, composite_dir, suffix=neg_suffix)
+                neg_sample, composite_dir, suffix=neg_suffix,
+                source_dirs=source_dirs)
 
             variant = {
                 "strategy": strategy,

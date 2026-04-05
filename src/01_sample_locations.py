@@ -10,6 +10,7 @@ import json
 import time
 import requests
 import pandas as pd
+import random
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -432,6 +433,17 @@ def run_city(city_key, city_cfg, num_samples=10):
     """Generate samples for one city. Returns list of sample dicts."""
     print(f"\n  [{city_cfg['name']}] Generating {num_samples} locations...")
 
+    # Check for cached generated locations
+    cache_path = os.path.join(ROOT, "data", f"{city_key}_generated_locations.json")
+    if os.path.exists(cache_path):
+        with open(cache_path) as f:
+            cached_samples = json.load(f)
+        if len(cached_samples) >= num_samples:
+            print(f"    Using cached generated locations: {len(cached_samples)} samples")
+            return cached_samples[:num_samples]
+        else:
+            print(f"    Cached locations insufficient ({len(cached_samples)} < {num_samples}), regenerating")
+
     # Download/cache OSM data
     roads_path = download_osm_roads(city_key, city_cfg)
     context_path = download_osm_context(city_key, city_cfg)
@@ -447,7 +459,25 @@ def run_city(city_key, city_cfg, num_samples=10):
           f"{len(context_idx['amenities'])} amenities, "
           f"{len(context_idx['parks'])} parks")
 
-    seeds = city_cfg["seeds"][:num_samples]
+    # Generate random seeds within bbox
+    random.seed(city_key)  # For reproducibility
+    s, w, n, e = city_cfg["bbox"]
+    seeds = []
+    attempts = 0
+    max_attempts = num_samples * 20  # Allow more attempts to find valid locations
+    while len(seeds) < num_samples and attempts < max_attempts:
+        lat = random.uniform(s, n)
+        lon = random.uniform(w, e)
+        road_info = snap_to_road(lat, lon, road_nodes)
+        if road_info:
+            name = f"generated_{len(seeds)+1}"
+            expected_char = "unknown"
+            seeds.append((name, lat, lon, expected_char))
+        attempts += 1
+
+    if len(seeds) < num_samples:
+        print(f"    WARNING: Only generated {len(seeds)}/{num_samples} valid locations after {attempts} attempts")
+
     samples = []
     skipped = []
 
@@ -499,6 +529,12 @@ def run_city(city_key, city_cfg, num_samples=10):
     if skipped:
         print(f"    WARNING: {len(skipped)}/{len(seeds)} seeds skipped: "
               f"{[s['name'] for s in skipped]}")
+
+    # Save generated samples for future use
+    with open(cache_path, "w") as f:
+        json.dump(samples, f, indent=2)
+    print(f"    Saved {len(samples)} generated locations to {cache_path}")
+
     return samples
 
 
