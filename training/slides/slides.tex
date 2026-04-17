@@ -84,7 +84,7 @@
     \textbf{Choice} & \textbf{Reason} \\
     \midrule
     bf16, not 4-bit & Qwen3.5 degrades with quantization \\[0.2em]
-    LoRA r=16 & Higher risks overfit on 27k samples \\[0.2em]
+    LoRA r=16 & Balanced capacity for 27k samples \\[0.2em]
     All-linear & Vision + language both need adaptation \\[0.2em]
     LR 2e-4 & Standard LoRA starting point \\
     \bottomrule
@@ -104,7 +104,7 @@
 \midrule
 Batch size & $4 \times 6 = 24$ effective & Largest before OOM \\
 Learning rate & $2 \times 10^{-4} \to 0$ & Linear decay with 40-step warmup \\
-LoRA rank & 16 (alpha = 16) & Balanced capacity vs overfit risk \\
+LoRA rank & 16 (alpha = 16) & Balanced for 27k samples \\
 max\_seq\_length & 8192 tokens & p99 = 1,535; generous headroom \\
 Image max edge & 768 px & Profile-matched to RTX 5090 \\
 Optimizer & AdamW 8-bit & VRAM efficient \\
