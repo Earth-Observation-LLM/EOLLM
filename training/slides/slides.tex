@@ -1,0 +1,281 @@
+\documentclass[aspectratio=169, 11pt]{beamer}
+
+\usetheme{metropolis}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{colortbl}
+
+\definecolor{correct}{RGB}{34, 139, 34}
+\definecolor{wrong}{RGB}{220, 50, 50}
+\definecolor{accent}{RGB}{0, 100, 180}
+
+\title{EOLLM Vision SFT}
+\subtitle{Teaching Qwen3.5-4B to Understand Cities}
+\author{Ezel Bayraktar}
+\date{April 17, 2026}
+
+\begin{document}
+
+% ============================================================
+\begin{frame}
+\titlepage
+\end{frame}
+
+% ============================================================
+\begin{frame}{The Task}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{Given:} Satellite + street-level imagery of a location\\[0.5em]
+    \textbf{Ask:} Multiple-choice questions about urban properties\\[0.5em]
+    \textbf{Answer:} A single letter (A, B, C, or D)
+
+    \vspace{1em}
+
+    \begin{tabular}{@{}ll@{}}
+    \toprule
+    \textbf{Scale} & \textbf{Count} \\
+    \midrule
+    Cities & 40 worldwide \\
+    Topics & 14 urban categories \\
+    Train samples & 26,931 \\
+    Validation samples & 6,984 \\
+    \bottomrule
+    \end{tabular}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \small
+    \textbf{Topics covered:}\\[0.3em]
+    Land use, building height, road type, road surface, urban density, green space, junction type, amenity richness, transit density, camera direction, mismatch detection (4 variants)
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Setup}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \textbf{Model}\\[0.3em]
+    \begin{tabular}{@{}ll@{}}
+    Base & Qwen3.5-4B \\
+    Method & bf16 LoRA \\
+    Trainable & 38.8M / 4.58B \\
+    & \textbf{(0.85\% of params)} \\
+    \end{tabular}
+
+    \vspace{1em}
+
+    \textbf{Hardware}\\[0.3em]
+    \begin{tabular}{@{}ll@{}}
+    GPU & RTX 5090 (32 GB) \\
+    Peak VRAM & 17 GB (52\%) \\
+    Wall clock & 96 minutes \\
+    \end{tabular}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \textbf{Why these choices?}\\[0.3em]
+    \small
+    \begin{tabular}{@{}lp{3.8cm}@{}}
+    \toprule
+    \textbf{Choice} & \textbf{Reason} \\
+    \midrule
+    bf16, not 4-bit & Qwen3.5 degrades with quantization \\[0.2em]
+    LoRA r=16 & Higher risks overfit on 27k samples \\[0.2em]
+    All-linear & Vision + language both need adaptation \\[0.2em]
+    LR 2e-4 & Standard LoRA starting point \\
+    \bottomrule
+    \end{tabular}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Hyperparameters}
+
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
+\midrule
+Batch size & $4 \times 6 = 24$ effective & Largest before OOM \\
+Learning rate & $2 \times 10^{-4} \to 0$ & Linear decay with 40-step warmup \\
+LoRA rank & 16 (alpha = 16) & Balanced capacity vs overfit risk \\
+max\_seq\_length & 8192 tokens & p99 = 1,535; generous headroom \\
+Image max edge & 768 px & Profile-matched to RTX 5090 \\
+Optimizer & AdamW 8-bit & VRAM efficient \\
+Training steps & 400 & $\sim$35\% of 1 epoch \\
+\bottomrule
+\end{tabular}
+
+\vspace{1em}
+\small
+Token budget measured on 300 samples using the actual Qwen3.5 processor.\\
+Batch size determined by forward+backward probe at bs = 1, 2, 4, 8.
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Training Curves}
+
+\centering
+\includegraphics[width=\linewidth]{figures/training_curves.png}
+
+\vspace{0.3em}
+\small
+Loss drops from \textbf{0.36 $\to$ 0.10} in 400 steps (random baseline $\approx$ 1.39).
+Only 35\% of one epoch completed.
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Example 1 --- Land Use Classification (Zurich)}
+
+\begin{columns}[T]
+\begin{column}{0.35\textwidth}
+    \includegraphics[width=\linewidth]{figures/zurich_marked.png}\\
+    \centering\small Satellite (marked)
+\end{column}
+\begin{column}{0.6\textwidth}
+    \textbf{Q:} Based on the imagery, what best describes how this area is primarily used?
+
+    \vspace{0.5em}
+    \begin{tabular}{@{}cl@{}}
+    \cellcolor{correct!15}\textbf{A.} & \cellcolor{correct!15}Residential \hfill \textcolor{correct}{\textbf{$\leftarrow$ correct}} \\
+    B. & Industrial \& Manufacturing \\
+    C. & Transportation \& Infrastructure \\
+    D. & Mixed Use \\
+    \end{tabular}
+
+    \vspace{0.8em}
+    \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Model} & \textbf{Answer} & \\
+    \midrule
+    Base Qwen3.5-4B & C & \textcolor{wrong}{\textbf{\texttimes}} \\
+    \textbf{Finetuned (400 steps)} & \textbf{A} & \textcolor{correct}{\textbf{\checkmark}} \\
+    \bottomrule
+    \end{tabular}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Example 2 --- Satellite--Street View Matching (Buenos Aires)}
+
+\begin{columns}[T]
+\begin{column}{0.25\textwidth}
+    \includegraphics[width=\linewidth]{figures/buenos_aires_marked.png}\\
+    \centering\scriptsize Satellite (marked)
+
+    \vspace{0.3em}
+    \includegraphics[width=\linewidth]{figures/buenos_aires_mega.png}\\
+    \centering\scriptsize Street view grid
+\end{column}
+\begin{column}{0.70\textwidth}
+    \textbf{Q:} Which of the four street view sets is the correct match?
+
+    \vspace{0.5em}
+    \begin{tabular}{@{}cl@{}}
+    A. & Top-Left \\
+    B. & Bottom-Right \\
+    \cellcolor{correct!15}\textbf{C.} & \cellcolor{correct!15}Bottom-Left \hfill \textcolor{correct}{\textbf{$\leftarrow$ correct}} \\
+    D. & Top-Right \\
+    \end{tabular}
+
+    \vspace{0.8em}
+    \begin{tabular}{@{}lp{4.5cm}c@{}}
+    \toprule
+    \textbf{Model} & \textbf{Answer} & \\
+    \midrule
+    Base & \scriptsize``To determine the correct match, we need to analyze...'' & \textcolor{wrong}{\textbf{\texttimes}} \\[0.3em]
+    \textbf{Finetuned} & \textbf{C} & \textcolor{correct}{\textbf{\checkmark}} \\
+    \bottomrule
+    \end{tabular}
+
+    \vspace{0.3em}
+    \footnotesize Base model generates explanations instead of answering.
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Example 3 --- Land Use (Mexico City)}
+
+\begin{columns}[T]
+\begin{column}{0.35\textwidth}
+    \includegraphics[width=\linewidth]{figures/mexico_marked.png}\\
+    \centering\small Satellite (marked)
+\end{column}
+\begin{column}{0.6\textwidth}
+    \textbf{Q:} How is this land primarily utilized?
+
+    \vspace{0.5em}
+    \begin{tabular}{@{}cl@{}}
+    A. & Retail \& Shopping \\
+    \cellcolor{correct!15}\textbf{B.} & \cellcolor{correct!15}Mixed Use \hfill \textcolor{correct}{\textbf{$\leftarrow$ correct}} \\
+    C. & Open Space \& Recreation \\
+    D. & Commercial \& Office \\
+    \end{tabular}
+
+    \vspace{0.8em}
+    \begin{tabular}{@{}lcc@{}}
+    \toprule
+    \textbf{Model} & \textbf{Answer} & \\
+    \midrule
+    Base Qwen3.5-4B & C & \textcolor{wrong}{\textbf{\texttimes}} \\
+    \textbf{Finetuned (400 steps)} & \textbf{B} & \textcolor{correct}{\textbf{\checkmark}} \\
+    \bottomrule
+    \end{tabular}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ============================================================
+\begin{frame}{Results Summary}
+
+\centering
+
+\begin{tabular}{@{}lcc@{}}
+\toprule
+& \textbf{Base Qwen3.5-4B} & \textbf{Finetuned (400 steps)} \\
+\midrule
+Eval accuracy (3 samples) & 0/3 \textcolor{wrong}{(0\%)} & \textbf{3/3} \textcolor{correct}{(100\%)} \\
+Training loss & --- & 0.36 $\to$ \textbf{0.10} \\
+Answers format & rambling text & single letter \\
+\bottomrule
+\end{tabular}
+
+\vspace{1.5em}
+
+\begin{columns}
+\begin{column}{0.45\textwidth}
+    \textbf{What we trained:}
+    \begin{itemize}
+        \item 0.85\% of parameters (LoRA)
+        \item 400 steps ($\sim$35\% of epoch 1)
+        \item 96 minutes on a single GPU
+    \end{itemize}
+\end{column}
+\begin{column}{0.45\textwidth}
+    \textbf{What's left:}
+    \begin{itemize}
+        \item Full 2-epoch training run
+        \item Validation loss tracking
+        \item Per-topic accuracy breakdown
+        \item Benchmark evaluation (5,240 samples)
+    \end{itemize}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ============================================================
+\end{document}
