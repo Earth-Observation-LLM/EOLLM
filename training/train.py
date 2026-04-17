@@ -287,7 +287,8 @@ def main():
 
     # --- Build datasets ---
     train_dataset = EollmDataset(train_records, str(split_dir), CFG["image_max_edge"])
-    val_dataset = EollmDataset(val_records, str(split_dir), CFG["image_max_edge"])
+    val_subset = val_records[:200] if SMOKE_TEST else val_records  # limit val in smoke test
+    val_dataset = EollmDataset(val_subset, str(split_dir), CFG["image_max_edge"])
 
     # --- Training config ---
     from trl import SFTTrainer, SFTConfig
