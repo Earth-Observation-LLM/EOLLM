@@ -38,7 +38,7 @@ from PIL import Image
 GPU_PROFILE = os.environ.get("GPU_PROFILE", "auto")
 
 PROFILES = {
-    "rtx_5090_32gb": dict(vram_gb=32,  image_max_edge=768,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=4,  finetune_vision_layers=True),
+    "rtx_5090_32gb": dict(vram_gb=32,  image_max_edge=768,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=8,  finetune_vision_layers=True),
     "rtx_4090_24gb": dict(vram_gb=24,  image_max_edge=640,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=2,  finetune_vision_layers=True),
     "rtx_3090_24gb": dict(vram_gb=24,  image_max_edge=512,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=2,  finetune_vision_layers=True),
     "a100_80gb":     dict(vram_gb=80,  image_max_edge=1024, lora_r=32, lora_alpha=32, lr=1e-4, initial_batch_guess=8,  finetune_vision_layers=True),
@@ -284,10 +284,12 @@ def measure_token_lengths(
         "max": lengths[-1],
     }
 
-    # Pick max_seq_length: p99 rounded up to next clean boundary
+    # Pick max_seq_length: p99 rounded up, with generous headroom (min 8192)
+    # 300 samples isn't fully representative, so we keep a safe floor
     p99 = result["p99"]
-    boundaries = [256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
+    boundaries = [2048, 4096, 8192, 16384, 32768]
     recommended = next((b for b in boundaries if b >= p99), 32768)
+    recommended = max(recommended, 8192)  # safe floor
     result["recommended_max_seq_length"] = recommended
 
     return result
@@ -316,7 +318,7 @@ def probe_batch_size(
     results = {}
     best_bs = 1
 
-    for bs in [1, 2, 4, 8]:
+    for bs in [1, 2, 4, 8, 16]:
         if bs > max_batch:
             break
         torch.cuda.empty_cache()
@@ -706,11 +708,21 @@ def main():
     print(f"  max_seq_length:   {max_seq_length}")
     print()
 
+    # --- Build validation dataset ---
+    val_dataset = EollmDataset(
+        records=val_records,
+        base_dir=str(split_dir),
+        max_edge=CFG["image_max_edge"],
+    )
+
+    eval_steps = max(50, steps_per_epoch // 4)  # ~4 evals per epoch
+
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
         data_collator=collator,
         train_dataset=train_dataset,
+        eval_dataset=val_dataset,
         args=SFTConfig(
             # Mandatory vision flags
             remove_unused_columns=False,
@@ -737,8 +749,49 @@ def main():
             output_dir=OUTPUT_DIR,
             report_to=REPORT_TO,
             dataloader_num_workers=0,  # PIL Images can't be pickled across workers
+
+            # Validation
+            eval_strategy="steps",
+            eval_steps=eval_steps,
+            per_device_eval_batch_size=batch_size,
         ),
     )
+
+    # Add a callback to log loss to CSV for plotting
+    from transformers import TrainerCallback
+
+    loss_log_path = str(_SCRIPT_DIR / "training_loss.csv")
+
+    class LossLogger(TrainerCallback):
+        def __init__(self):
+            self.steps = []
+            self.losses = []
+            self.lrs = []
+            self.eval_steps = []
+            self.eval_losses = []
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if logs and "loss" in logs:
+                self.steps.append(state.global_step)
+                self.losses.append(logs["loss"])
+                self.lrs.append(logs.get("learning_rate", 0))
+                # Write train CSV incrementally
+                with open(loss_log_path, "w") as f:
+                    f.write("step,loss,learning_rate\n")
+                    for s, l, r in zip(self.steps, self.losses, self.lrs):
+                        f.write(f"{s},{l},{r}\n")
+            if logs and "eval_loss" in logs:
+                self.eval_steps.append(state.global_step)
+                self.eval_losses.append(logs["eval_loss"])
+                # Write eval CSV incrementally
+                eval_csv_path = loss_log_path.replace("training_loss", "eval_loss")
+                with open(eval_csv_path, "w") as f:
+                    f.write("step,eval_loss\n")
+                    for s, l in zip(self.eval_steps, self.eval_losses):
+                        f.write(f"{s},{l}\n")
+
+    loss_logger = LossLogger()
+    trainer.add_callback(loss_logger)
 
     print("Starting training...")
     if SMOKE_TEST:
@@ -747,6 +800,49 @@ def main():
 
     trainer_stats = trainer.train()
 
+
+    # --- Generate training plots ---
+    if loss_logger.steps:
+        try:
+            import matplotlib
+            matplotlib.use("Agg")
+            import matplotlib.pyplot as plt
+
+            fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+            axes[0].plot(loss_logger.steps, loss_logger.losses, "b-", linewidth=1.5, label="Train")
+            if loss_logger.eval_steps:
+                axes[0].plot(loss_logger.eval_steps, loss_logger.eval_losses, "ro-",
+                             markersize=6, linewidth=2, label="Validation")
+            axes[0].set_xlabel("Step")
+            axes[0].set_ylabel("Loss")
+            axes[0].set_title("Training & Validation Loss")
+            axes[0].legend()
+            axes[0].grid(True, alpha=0.3)
+
+            axes[1].plot(loss_logger.steps, loss_logger.lrs, "r-", linewidth=1.5)
+            axes[1].set_xlabel("Step")
+            axes[1].set_ylabel("Learning Rate")
+            axes[1].set_title("Learning Rate Schedule")
+            axes[1].grid(True, alpha=0.3)
+
+            # Loss histogram (last 50% of training)
+            mid = len(loss_logger.losses) // 2
+            if mid > 0:
+                axes[2].hist(loss_logger.losses[mid:], bins=30, color="steelblue", alpha=0.8)
+                axes[2].set_xlabel("Loss")
+                axes[2].set_ylabel("Count")
+                axes[2].set_title(f"Loss Distribution (steps {loss_logger.steps[mid]}–{loss_logger.steps[-1]})")
+                axes[2].grid(True, alpha=0.3)
+
+            fig.suptitle(f"EOLLM Vision SFT — Qwen3.5-4B ({profile_name})", fontsize=14, fontweight="bold")
+            plt.tight_layout()
+            plot_path = str(_SCRIPT_DIR / "training_curves.png")
+            fig.savefig(plot_path, dpi=150)
+            plt.close()
+            print(f"Training curves saved to {plot_path}")
+        except ImportError:
+            print("matplotlib not available — skipping plots")
 
     # --- Save ---
     lora_dir = str(_SCRIPT_DIR / "qwen35-4b-vision-lora")
