@@ -101,3 +101,8 @@ old_outputs/
 assets/
 
 packaged/
+
+# Training runs (checkpoints, models, logs, plots)
+training/runs/
+training/unsloth_compiled_cache/
+unsloth_compiled_cache/
