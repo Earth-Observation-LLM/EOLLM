@@ -3,11 +3,12 @@
 import os
 import sys
 
-# Allow imports from project root
+# Allow imports from project root and src/
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from src.config import CITIES
+from config import CITIES
 
 
 # Build city_key -> canonical name mapping from config

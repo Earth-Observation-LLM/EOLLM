@@ -91,10 +91,10 @@ Desktop.ini
 api_keys.env
 
 # Generated output (images, datasets)
-output/
+dataset/output/
 
 # Downloaded OSM data (run setup_data.sh to regenerate)
-data/
+dataset/data/
 
 old_outputs/
 

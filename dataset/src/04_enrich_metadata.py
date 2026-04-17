@@ -14,7 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def load_api_keys():
     keys = {}
-    env_path = os.path.join(ROOT, "api_keys.env")
+    env_path = os.path.join(ROOT, "..", "api_keys.env")
     with open(env_path) as f:
         for line in f:
             line = line.strip()

@@ -40,7 +40,7 @@ Given a list of cities and seed coordinates, the pipeline:
 
 Satellite source is **auto-detected** from coordinates (NAIP for US, IGN for France, ESRI elsewhere). All sources fall back to Sentinel-2 (10 m/px) via GEE if the primary fails.
 
-Adding a new city requires editing only `src/config.py` -- see [USAGE.md](USAGE.md#adding-a-new-city).
+Adding a new city requires editing only `dataset/src/config.py` -- see [USAGE.md](USAGE.md#adding-a-new-city).
 
 ---
 
@@ -80,7 +80,7 @@ All answers are deterministic. Option shuffling uses per-sample RNG seeds for re
 ## Pipeline Architecture
 
 ```
-src/run_pipeline.py (orchestrator)
+dataset/src/run_pipeline.py (orchestrator)
  |
  |-- Step 1  01_sample_locations.py   Snap seeds to roads, extract OSM context
  |-- Step 2  02_fetch_satellite.py    Download satellite tiles (NAIP/IGN/ESRI/S2)
@@ -89,7 +89,7 @@ src/run_pipeline.py (orchestrator)
  |-- Step 5  07_generate_composites.py  Arrow overlays, 2x2 composites, distractor selection
  |-- Step 6  05_generate_questions.py   Generate all feasible MCQs per sample
  '-- Step 7  06_validate.py            Per-sample and dataset-level validation
-                                        --> output/dataset.jsonl
+                                        --> dataset/output/dataset.jsonl
 ```
 
 Each step's `run()` function takes a list of sample dicts and returns an enriched list. The orchestrator threads them together and writes the final JSONL.
@@ -124,7 +124,7 @@ Everything else is free. See [USAGE.md](USAGE.md#cost-estimate) for details.
 
 ### Final Dataset
 
-`output/dataset.jsonl` -- one JSON record per line:
+`dataset/output/dataset.jsonl` -- one JSON record per line:
 
 ```json
 {
@@ -160,7 +160,7 @@ Everything else is free. See [USAGE.md](USAGE.md#cost-estimate) for details.
 ### Directory Layout
 
 ```
-output/
+dataset/output/
   dataset.jsonl                          Final dataset
   sample_locations.csv                   Step 1 output
   metadata_raw.csv                       Step 4 output
@@ -171,7 +171,7 @@ output/
     sv/           {id}_{label}.jpg       640x640 street view (4 per sample)
     composite/    {id}_*.png             2x2 grids and mega-composites
 
-data/
+dataset/data/
   {city}_roads_osm.json                  Cached OSM road networks
   {city}_context_osm.json                Cached OSM context data
 ```
@@ -182,25 +182,25 @@ data/
 
 Two browser-based viewers are included for exploring the dataset:
 
-### Main Viewer (`viewer/index.html`)
+### Main Viewer (`dataset/viewer/index.html`)
 
 Browse all samples and question types. Filter by city, topic, difficulty. Inspect images, metadata, and answers.
 
 ```bash
-bash viewer/serve.sh
+bash dataset/viewer/serve.sh
 # Opens http://localhost:8765/viewer/
 ```
 
-### Geolocation Viewer (`viewer/geo.html`)
+### Geolocation Viewer (`dataset/viewer/geo.html`)
 
 Dedicated viewer for cross-view alignment tasks (camera_direction, mismatch_binary, mismatch_mcq). Shows arrow-annotated satellites and street view composites side-by-side.
 
 ```bash
-bash viewer/serve_geo.sh
-# Opens http://localhost:8080/viewer/geo.html
+bash dataset/viewer/serve_geo.sh
+# Opens http://localhost:8080/geo.html
 ```
 
-Both viewers load `output/dataset.jsonl` via file upload (drag-and-drop supported).
+Both viewers load `dataset/output/dataset.jsonl` via file upload (drag-and-drop supported).
 
 ---
 
@@ -208,7 +208,7 @@ Both viewers load `output/dataset.jsonl` via file upload (drag-and-drop supporte
 
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install -r dataset/requirements.txt
 
 # Authenticate Google Earth Engine (one-time)
 earthengine authenticate
@@ -217,16 +217,16 @@ earthengine authenticate
 cp api_keys.env.example api_keys.env
 # Edit api_keys.env with your Google Street View key
 
-# Set your GEE project ID in src/config.py
+# Set your GEE project ID in dataset/src/config.py
 
 # Pre-download OSM data (recommended, avoids rate limiting)
-bash setup_data.sh
+bash dataset/setup_data.sh
 
 # Run for a single city to test
-python src/run_pipeline.py --cities amsterdam --samples 3
+python dataset/src/run_pipeline.py --cities amsterdam --samples 3
 
 # Full run (all 6 cities, 10 samples each)
-python src/run_pipeline.py
+python dataset/src/run_pipeline.py
 ```
 
 For the complete setup guide, troubleshooting, and configuration reference, see **[USAGE.md](USAGE.md)**.
@@ -260,25 +260,41 @@ For the complete setup guide, troubleshooting, and configuration reference, see 
 
 ```
 EOLLM/
-  src/
-    run_pipeline.py             Orchestrator -- runs all steps, writes JSONL
-    config.py                   Cities, seeds, constants, satellite config
-    01_sample_locations.py      OSM road snapping + context extraction
-    02_fetch_satellite.py       Multi-source satellite fetching
-    03_fetch_streetview.py      Google Street View download + tunnel detection
-    04_enrich_metadata.py       Nominatim geocoding + Census enrichment
-    05_generate_questions.py    MCQ generation for 13 question types
-    06_validate.py              Per-sample and dataset-level validation
-    07_generate_composites.py   Image composites, arrows, distractor grids
-    question_templates.py       10 paraphrases per question type (130+ templates)
-    utils.py                    Haversine, bbox, bearing utilities
-  viewer/
-    index.html                  Full dataset browser
-    geo.html                    Geolocation question viewer
-    serve.sh                    Start local server for main viewer
-    serve_geo.sh                Start local server for geo viewer
-  setup_data.sh                 Pre-download all OSM data
-  api_keys.env.example          API key template
-  requirements.txt              Python dependencies
-  USAGE.md                      Detailed setup and usage guide
+  dataset/
+    src/
+      run_pipeline.py             Orchestrator -- runs all steps, writes JSONL
+      config.py                   Cities, seeds, constants, satellite config
+      01_sample_locations.py      OSM road snapping + context extraction
+      02_fetch_satellite.py       Multi-source satellite fetching
+      03_fetch_streetview.py      Google Street View download + tunnel detection
+      04_enrich_metadata.py       Nominatim geocoding + Census enrichment
+      05_generate_questions.py    MCQ generation for 13 question types
+      06_validate.py              Per-sample and dataset-level validation
+      07_generate_composites.py   Image composites, arrows, distractor grids
+      question_templates.py       10 paraphrases per question type (130+ templates)
+      utils.py                    Haversine, bbox, bearing utilities
+    splitting/
+      split_dataset.py            Location-level train/val/benchmark splitting
+      rebuild_dataset.py          Split-first, generate-second rebuild pipeline
+      flatten.py                  Flatten hierarchical records to per-question
+      filters.py                  Streetview filtering, deduplication, leak checks
+      splitter.py                 Benchmark/seen-unseen/per-city splitting logic
+      downsampler.py              Stratified downsampling for train split
+      package_splits.py           Package splits into self-contained directories
+      stats_report.py             Statistics and integrity reports
+      merge_images.py             Merge image directories across splits
+      test_image_integrity.py     Verify image paths in packaged splits
+    viewer/
+      index.html                  Full dataset browser
+      geo.html                    Geolocation question viewer
+      serve.sh                    Start local server for main viewer
+      serve_geo.sh                Start local server for geo viewer
+    presentation/
+      EOLLM_Dataset_Presentation.pptx
+      generate_presentation.py
+    setup_data.sh                 Pre-download all OSM data
+    requirements.txt              Python dependencies (dataset pipeline)
+  training/                       Model training (in development)
+  api_keys.env.example            API key template
+  USAGE.md                        Detailed setup and usage guide
 ```

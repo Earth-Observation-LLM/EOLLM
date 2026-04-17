@@ -22,7 +22,7 @@ SV_MAX_SNAP_DISTANCE_M = 80
 
 def load_api_key():
     """Load Google Street View API key from api_keys.env."""
-    env_path = os.path.join(ROOT, "api_keys.env")
+    env_path = os.path.join(ROOT, "..", "api_keys.env")
     with open(env_path) as f:
         for line in f:
             line = line.strip()

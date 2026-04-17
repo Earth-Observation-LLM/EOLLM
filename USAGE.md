@@ -44,7 +44,7 @@ Downloads satellite imagery via NAIP (US) or Sentinel-2 (global fallback).
 2. Create or select a Google Cloud project at [console.cloud.google.com](https://console.cloud.google.com/)
 3. Enable the Earth Engine API for your project
 4. Note your project ID (e.g., `my-project-123456`)
-5. Set it in `src/config.py`:
+5. Set it in `dataset/src/config.py`:
    ```python
    GEE_PROJECT = "my-project-123456"
    ```
@@ -108,20 +108,20 @@ git clone <repository-url>
 cd EOLLM
 
 # 2. Install Python dependencies
-pip install -r requirements.txt
+pip install -r dataset/requirements.txt
 
 # 3. Authenticate Google Earth Engine (one-time)
 earthengine authenticate
 
 # 4. Set your GEE project ID
-#    Edit src/config.py: GEE_PROJECT = "your-project-id"
+#    Edit dataset/src/config.py: GEE_PROJECT = "your-project-id"
 
 # 5. Create API keys file
 cp api_keys.env.example api_keys.env
 #    Edit api_keys.env with your keys
 
 # 6. Pre-download OSM data (recommended)
-bash setup_data.sh
+bash dataset/setup_data.sh
 ```
 
 ### Python Dependencies
@@ -141,7 +141,7 @@ bash setup_data.sh
 ### Full Run (All 6 Cities)
 
 ```bash
-python src/run_pipeline.py
+python dataset/src/run_pipeline.py
 ```
 
 Default: 5 samples per city = 30 total. Each city has up to 10 seed locations.
@@ -149,7 +149,7 @@ Default: 5 samples per city = 30 total. Each city has up to 10 seed locations.
 ### Select Specific Cities
 
 ```bash
-python src/run_pipeline.py --cities nyc paris amsterdam
+python dataset/src/run_pipeline.py --cities nyc paris amsterdam
 ```
 
 City keys: `nyc`, `paris`, `london`, `singapore`, `sao_paulo`, `amsterdam`
@@ -157,7 +157,7 @@ City keys: `nyc`, `paris`, `london`, `singapore`, `sao_paulo`, `amsterdam`
 ### Custom Sample Count
 
 ```bash
-python src/run_pipeline.py --cities nyc --samples 10
+python dataset/src/run_pipeline.py --cities nyc --samples 10
 ```
 
 Maximum is 10 (number of seed locations per city).
@@ -167,12 +167,12 @@ Maximum is 10 (number of seed locations per city).
 Each step can run standalone for debugging or re-running after a fix:
 
 ```bash
-python src/01_sample_locations.py    # Step 1: snap seeds, extract OSM context
-python src/02_fetch_satellite.py     # Step 2: download satellite tiles
-python src/03_fetch_streetview.py    # Step 3: download street view images
-python src/04_enrich_metadata.py     # Step 4: geocoding + census
-python src/05_generate_questions.py  # Step 6: generate MCQs
-python src/06_validate.py            # Step 7: validate dataset
+python dataset/src/01_sample_locations.py    # Step 1: snap seeds, extract OSM context
+python dataset/src/02_fetch_satellite.py     # Step 2: download satellite tiles
+python dataset/src/03_fetch_streetview.py    # Step 3: download street view images
+python dataset/src/04_enrich_metadata.py     # Step 4: geocoding + census
+python dataset/src/05_generate_questions.py  # Step 6: generate MCQs
+python dataset/src/06_validate.py            # Step 7: validate dataset
 ```
 
 ### What Happens During a Run
@@ -181,26 +181,26 @@ python src/06_validate.py            # Step 7: validate dataset
 Step 1  Sample Locations
         For each city: download OSM data (or use cache), snap seeds to nearest road,
         extract context (buildings, amenities, land use, water, transit) within buffer.
-        --> output/sample_locations.csv
+        --> dataset/output/sample_locations.csv
 
 Step 2  Satellite Fetch
         Per sample: auto-detect source (NAIP/IGN/ESRI), download 512x512 tile,
         validate >5 KB, fall back to next source if needed.
-        --> output/images/sat/{sample_id}.png
+        --> dataset/output/images/sat/{sample_id}.png
 
 Step 3  Street View
         Per sample: check coverage, verify snap <80m, download 4 road-aligned images,
         reject tunnel images via color analysis.
-        --> output/images/sv/{sample_id}_{direction}.jpg
+        --> dataset/output/images/sv/{sample_id}_{direction}.jpg
 
 Step 4  Metadata Enrichment
         Per sample: reverse geocode via Nominatim. For NYC: query US Census ACS5.
-        --> output/metadata_raw.csv
+        --> dataset/output/metadata_raw.csv
 
 Step 5  Composites
         Per sample: create marked satellite (red dot), arrow-annotated variants,
         2x2 street view grids, mega-composites for mismatch MCQ.
-        --> output/images/sat_marked/, sat_arrow/, composite/
+        --> dataset/output/images/sat_marked/, sat_arrow/, composite/
 
 Step 6  Question Generation
         Per sample: generate all feasible MCQs (up to 13 types), select best one
@@ -209,7 +209,7 @@ Step 6  Question Generation
 Step 7  Validation
         Per sample: check images, answers, options. Dataset-level: answer distribution,
         topic diversity, city coverage. CRITICAL issues remove samples.
-        --> output/dataset.jsonl
+        --> dataset/output/dataset.jsonl
 ```
 
 ### Estimated Time
@@ -229,7 +229,7 @@ Step 7  Validation
 
 ## Adding a New City
 
-Only one file to edit: `src/config.py`. No other code changes needed.
+Only one file to edit: `dataset/src/config.py`. No other code changes needed.
 
 ### 1. Find the Bounding Box
 
@@ -252,7 +252,7 @@ Pick 5-10 diverse neighborhoods. Each seed is a tuple:
 ### 3. Add the Entry
 
 ```python
-# In src/config.py, add to the CITIES dict:
+# In dataset/src/config.py, add to the CITIES dict:
 "tokyo": {
     "name": "Tokyo",
     "country": "Japan",
@@ -271,8 +271,8 @@ Pick 5-10 diverse neighborhoods. Each seed is a tuple:
 ### 4. Run
 
 ```bash
-bash setup_data.sh                              # downloads OSM for new city
-python src/run_pipeline.py --cities tokyo --samples 5
+bash dataset/setup_data.sh                      # downloads OSM for new city
+python dataset/src/run_pipeline.py --cities tokyo --samples 5
 ```
 
 **Satellite source is auto-detected:**
@@ -285,7 +285,7 @@ python src/run_pipeline.py --cities tokyo --samples 5
 
 ## Configuring Satellite Images
 
-In `src/config.py`:
+In `dataset/src/config.py`:
 
 ```python
 # Buffer radius in meters -- controls how much area each tile covers
@@ -315,7 +315,7 @@ SAT_IMAGE_PX = 512
 
 ## Enabling / Disabling Question Types
 
-In `src/config.py`:
+In `dataset/src/config.py`:
 
 ```python
 ENABLED_QUESTION_TYPES = {
@@ -354,7 +354,7 @@ MISMATCH_BINARY_STRATEGY = "both"
 ### Directory Layout
 
 ```
-output/
+dataset/output/
   dataset.jsonl                             Final dataset (1 JSON per line)
   sample_locations.csv                      Location + OSM context for all samples
   metadata_raw.csv                          Enriched with geocoding + census
@@ -387,7 +387,7 @@ Each line in `dataset.jsonl`:
 | `metadata` | object | Full OSM context, road info, census data, composite paths |
 | `validation` | object | Image presence flags, issue list |
 
-Image paths are relative to `output/`.
+Image paths are relative to `dataset/output/`.
 
 ### Loading the Dataset in Python
 
@@ -395,7 +395,7 @@ Image paths are relative to `output/`.
 import json
 
 samples = []
-with open("output/dataset.jsonl") as f:
+with open("dataset/output/dataset.jsonl") as f:
     for line in f:
         samples.append(json.loads(line))
 
@@ -412,12 +412,12 @@ for s in samples:
 import json
 from PIL import Image
 
-with open("output/dataset.jsonl") as f:
+with open("dataset/output/dataset.jsonl") as f:
     samples = [json.loads(line) for line in f]
 
 for s in samples:
-    sat = Image.open(f"output/{s['images']['satellite']}")
-    sv_fwd = Image.open(f"output/{s['images']['streetview_along_fwd']}")
+    sat = Image.open(f"dataset/output/{s['images']['satellite']}")
+    sv_fwd = Image.open(f"dataset/output/{s['images']['streetview_along_fwd']}")
 
     # Use all questions, not just the selected one
     for q in s["questions"]:
@@ -435,7 +435,7 @@ for s in samples:
 ### Main Dataset Viewer
 
 ```bash
-bash viewer/serve.sh
+bash dataset/viewer/serve.sh
 ```
 
 Opens `http://localhost:8765/viewer/` in your browser.
@@ -450,11 +450,11 @@ Opens `http://localhost:8765/viewer/` in your browser.
 ### Geolocation Viewer
 
 ```bash
-bash viewer/serve_geo.sh          # default port 8080
-bash viewer/serve_geo.sh 9090     # custom port
+bash dataset/viewer/serve_geo.sh          # default port 8080
+bash dataset/viewer/serve_geo.sh 9090     # custom port
 ```
 
-Opens `http://localhost:8080/viewer/geo.html`.
+Opens `http://localhost:8080/geo.html`.
 
 **Features:**
 - Dedicated view for camera_direction, mismatch_binary, mismatch_mcq
@@ -464,9 +464,10 @@ Opens `http://localhost:8080/viewer/geo.html`.
 
 ### Manual Server Start
 
-If the scripts don't work, start manually from the project root:
+If the scripts don't work, start manually from the dataset directory:
 
 ```bash
+cd dataset
 python3 -m http.server 8765
 # Open http://localhost:8765/viewer/ in your browser
 ```
@@ -480,7 +481,7 @@ python3 -m http.server 8765
 1. **Data check**: Each question type requires specific OSM tags or metadata to exist
 2. **Answer derivation**: The correct answer is computed from the data (e.g., building count -> density bin)
 3. **Distractor generation**: 3 wrong options are selected from the remaining valid categories
-4. **Template selection**: A random paraphrase is chosen from 10 options per topic (in `src/question_templates.py`)
+4. **Template selection**: A random paraphrase is chosen from 10 options per topic (in `dataset/src/question_templates.py`)
 5. **Scoring**: All feasible questions are scored; the best one is selected for topic diversity
 
 ### OSM Metadata Questions
@@ -552,7 +553,7 @@ Costs depend on your Google Cloud pricing tier. The $7/1,000 rate is the standar
 Error: Please authorize access to your Earth Engine account
 ```
 
-Run `earthengine authenticate` and follow the browser prompts. Verify `GEE_PROJECT` in `src/config.py` matches your Cloud project ID.
+Run `earthengine authenticate` and follow the browser prompts. Verify `GEE_PROJECT` in `dataset/src/config.py` matches your Cloud project ID.
 
 ### Overpass API Timeout (Sao Paulo)
 
@@ -560,7 +561,7 @@ Run `earthengine authenticate` and follow the browser prompts. Verify `GEE_PROJE
 ERROR: failed to download sao_paulo context after 3 attempts
 ```
 
-The Sao Paulo bbox is large. Wait a few minutes and re-run `bash setup_data.sh` (it skips already-downloaded files). Try during off-peak hours (European night -- Overpass servers are in Germany).
+The Sao Paulo bbox is large. Wait a few minutes and re-run `bash dataset/setup_data.sh` (it skips already-downloaded files). Try during off-peak hours (European night -- Overpass servers are in Germany).
 
 ### Street View Images Are Black / Tunnel-Like
 
@@ -584,7 +585,7 @@ Census enrichment is optional. Get a free key from [census.gov](https://api.cens
 Rate limited (attempt 2), waiting 60s...
 ```
 
-Handled automatically. The pipeline retries with backoff. Pre-downloading OSM with `setup_data.sh` avoids this during pipeline runs.
+Handled automatically. The pipeline retries with backoff. Pre-downloading OSM with `dataset/setup_data.sh` avoids this during pipeline runs.
 
 ### Pipeline Crashes Mid-Run
 
@@ -592,4 +593,4 @@ Steps are idempotent. Re-run the pipeline or the specific step -- cached data (O
 
 ### Viewer Shows No Data
 
-Make sure `output/dataset.jsonl` exists (run the pipeline first). The viewer loads data via file upload -- drag the JSONL file onto the viewer page or use the file picker.
+Make sure `dataset/output/dataset.jsonl` exists (run the pipeline first). The viewer loads data via file upload -- drag the JSONL file onto the viewer page or use the file picker.
