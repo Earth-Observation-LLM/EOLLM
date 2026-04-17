@@ -22,7 +22,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 # ---------------------------------------------------------------------------
 
 PROFILES = {
-    "rtx_5090_32gb": dict(vram_gb=32,  image_max_edge=768,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=8,  finetune_vision_layers=True),
+    "rtx_5090_32gb": dict(vram_gb=32,  image_max_edge=768,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=4,  finetune_vision_layers=True),
     "rtx_4090_24gb": dict(vram_gb=24,  image_max_edge=640,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=2,  finetune_vision_layers=True),
     "rtx_3090_24gb": dict(vram_gb=24,  image_max_edge=512,  lora_r=16, lora_alpha=16, lr=2e-4, initial_batch_guess=2,  finetune_vision_layers=True),
     "a100_80gb":     dict(vram_gb=80,  image_max_edge=1024, lora_r=32, lora_alpha=32, lr=1e-4, initial_batch_guess=8,  finetune_vision_layers=True),

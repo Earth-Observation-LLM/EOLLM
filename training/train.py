@@ -20,6 +20,9 @@ import os
 import sys
 import time
 
+# Reduce CUDA memory fragmentation
+os.environ.setdefault("PYTORCH_ALLOC_CONF", "expandable_segments:True")
+
 import torch
 
 from config import (
@@ -203,23 +206,21 @@ def main():
     )
     print("LoRA attached.\n")
 
-    # --- Probe samples (include worst-case image modes) ---
-    print("Building probe samples...")
-    probe_indices = []
-    seen_modes = set()
-    for i, rec in enumerate(train_records):
-        mode = rec["image_mode"]
-        if mode not in seen_modes:
-            probe_indices.append(i)
-            seen_modes.add(mode)
-        if len(probe_indices) >= 32:
-            break
-    for i in range(len(train_records)):
-        if len(probe_indices) >= 32:
-            break
-        if i not in set(probe_indices):
-            probe_indices.append(i)
-    probe_samples = [convert_record(train_records[i], str(split_dir), CFG["image_max_edge"]) for i in probe_indices]
+    # --- Probe samples — worst-case batches for accurate VRAM estimation ---
+    print("Building probe samples (worst-case: 5-image mismatch_binary)...")
+    # Probe must test with the heaviest samples (5-image mismatch_binary/composite)
+    # to avoid OOM on unlucky batches during training
+    heavy_indices = [i for i, r in enumerate(train_records)
+                     if r["image_mode"] in ("streetview_composite", "streetview_binary")][:32]
+    if len(heavy_indices) < 16:
+        # fallback: mix of heavy modes
+        for i, r in enumerate(train_records):
+            if len(heavy_indices) >= 32:
+                break
+            if i not in set(heavy_indices):
+                heavy_indices.append(i)
+    probe_samples = [convert_record(train_records[i], str(split_dir), CFG["image_max_edge"]) for i in heavy_indices]
+    print(f"  Built {len(probe_samples)} probe samples (all 5-image worst-case)")
 
     # --- Probe batch size ---
     print("Probing batch size...")
