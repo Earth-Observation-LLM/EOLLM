@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import gc
 import math
+import os
 import sys
 import time
 
@@ -28,7 +29,7 @@ from config import (
 )
 from data import load_jsonl, convert_record, measure_token_lengths, EollmDataset
 from evaluation import run_eval_samples, write_eval_md, compute_topic_accuracy, write_accuracy_md
-from callbacks import LossLogger, WandbCallback, plot_training_curves
+from callbacks import LossLogger, EvalCallback, plot_training_curves
 
 
 # ---------------------------------------------------------------------------
@@ -80,11 +81,6 @@ def probe_batch_size(model, tokenizer, train_data: list[dict], max_batch: int = 
     return {"probed": results, "recommended_batch_size": best_bs}
 
 
-# ---------------------------------------------------------------------------
-# Label masking check
-# ---------------------------------------------------------------------------
-
-
 def check_label_masking(collator, sample: dict, tokenizer) -> bool:
     """Verify train_on_responses_only masks correctly."""
     batch = collator([sample])
@@ -92,7 +88,7 @@ def check_label_masking(collator, sample: dict, tokenizer) -> bool:
 
     non_masked = (labels != -100).nonzero(as_tuple=True)[0]
     if len(non_masked) == 0:
-        print("FATAL: ALL labels are -100 — model will learn nothing!")
+        print("FATAL: ALL labels are -100!")
         return False
 
     total = len(labels)
@@ -102,7 +98,7 @@ def check_label_masking(collator, sample: dict, tokenizer) -> bool:
     print(f"  Unmasked text: {repr(decoded[:200])}")
 
     if unmasked == total:
-        print("FATAL: NO labels masked — train_on_responses_only broken!")
+        print("FATAL: NO labels masked!")
         return False
     return True
 
@@ -117,7 +113,7 @@ def main():
 
     # --- Profile + run dir ---
     profile_name, CFG = detect_profile()
-    lr = float(__import__("os").environ.get("LEARNING_RATE", str(CFG["lr"])))
+    lr = float(os.environ.get("LEARNING_RATE", str(CFG["lr"])))
     run_dir = generate_run_dir(profile_name)
 
     print("=" * 60)
@@ -132,30 +128,25 @@ def main():
     print(f"Vision layers:    {CFG['finetune_vision_layers']}")
     print(f"Split:            {SPLIT}")
     print(f"Seed:             {SEED}")
+    print(f"Epochs:           {NUM_EPOCHS}")
     print(f"Smoke test:       {SMOKE_TEST}")
     print(f"Report to:        {REPORT_TO}")
     print(f"Run dir:          {run_dir}")
     print()
 
     # --- W&B init ---
-    if REPORT_TO == "wandb":
+    use_wandb = REPORT_TO == "wandb"
+    if use_wandb:
         import wandb
         wandb.init(
             project=WANDB_PROJECT,
             name=run_dir.name,
             config={
-                "model": "Qwen3.5-4B",
-                "method": "bf16 LoRA",
-                "profile": profile_name,
-                "image_max_edge": CFG["image_max_edge"],
-                "lora_r": CFG["lora_r"],
-                "lora_alpha": CFG["lora_alpha"],
-                "lr": lr,
-                "finetune_vision_layers": CFG["finetune_vision_layers"],
-                "split": SPLIT,
-                "seed": SEED,
-                "num_epochs": NUM_EPOCHS,
-                "max_steps": MAX_STEPS,
+                "model": "Qwen3.5-4B", "method": "bf16 LoRA",
+                "profile": profile_name, "image_max_edge": CFG["image_max_edge"],
+                "lora_r": CFG["lora_r"], "lora_alpha": CFG["lora_alpha"],
+                "lr": lr, "finetune_vision_layers": CFG["finetune_vision_layers"],
+                "split": SPLIT, "seed": SEED, "num_epochs": NUM_EPOCHS,
             },
             dir=str(run_dir),
         )
@@ -164,11 +155,9 @@ def main():
     dataset_dir = find_dataset_dir()
     split_dir = dataset_dir / SPLIT
     print(f"Dataset:          {split_dir}")
-
     train_records = load_jsonl(str(split_dir / "train.jsonl"))
     val_records = load_jsonl(str(split_dir / "validation.jsonl"))
-    print(f"  Train: {len(train_records)}, Val: {len(val_records)}")
-    print()
+    print(f"  Train: {len(train_records)}, Val: {len(val_records)}\n")
 
     # --- Load model ---
     print("Loading Qwen3.5-4B (bf16 LoRA)...")
@@ -176,8 +165,7 @@ def main():
 
     model, tokenizer = FastVisionModel.from_pretrained(
         model_name="unsloth/Qwen3.5-4B",
-        load_in_4bit=False,
-        load_in_16bit=True,
+        load_in_4bit=False, load_in_16bit=True,
         full_finetuning=False,
         use_gradient_checkpointing="unsloth",
         max_seq_length=8192,
@@ -190,20 +178,16 @@ def main():
         train_records, str(split_dir), CFG["image_max_edge"], tokenizer, n_samples=300
     )
     max_seq_length = token_stats["recommended_max_seq_length"]
-
-    print(f"\n  min={token_stats['min']}  p50={token_stats['p50']}  p90={token_stats['p90']}  "
-          f"p95={token_stats['p95']}  p99={token_stats['p99']}  max={token_stats['max']}")
+    print(f"  p50={token_stats['p50']}  p95={token_stats['p95']}  p99={token_stats['p99']}  max={token_stats['max']}")
     print(f"  -> max_seq_length: {max_seq_length}\n")
 
-    # Write token budget
     with open(run_dir / "token_budget.md", "w") as f:
         f.write("# Token Budget\n\n")
-        f.write(f"Profile: {profile_name}, image_max_edge: {CFG['image_max_edge']}px\n")
-        f.write(f"Measured on {token_stats['n_samples']} samples\n\n")
+        f.write(f"Profile: {profile_name}, image_max_edge: {CFG['image_max_edge']}px\n\n")
         f.write("| Stat | Tokens |\n|------|--------|\n")
         for k in ["min", "p50", "p90", "p95", "p99", "max"]:
             f.write(f"| {k} | {token_stats[k]} |\n")
-        f.write(f"\n**max_seq_length: {max_seq_length}** (>= p99 with headroom)\n")
+        f.write(f"\n**max_seq_length: {max_seq_length}**\n")
 
     # --- Attach LoRA ---
     print("Attaching LoRA...")
@@ -213,16 +197,13 @@ def main():
         finetune_language_layers=True,
         finetune_attention_modules=True,
         finetune_mlp_modules=True,
-        r=CFG["lora_r"],
-        lora_alpha=CFG["lora_alpha"],
-        lora_dropout=0,
-        bias="none",
-        target_modules="all-linear",
-        random_state=SEED,
+        r=CFG["lora_r"], lora_alpha=CFG["lora_alpha"],
+        lora_dropout=0, bias="none",
+        target_modules="all-linear", random_state=SEED,
     )
     print("LoRA attached.\n")
 
-    # --- Build probe samples (include worst-case image modes) ---
+    # --- Probe samples (include worst-case image modes) ---
     print("Building probe samples...")
     probe_indices = []
     seen_modes = set()
@@ -233,7 +214,6 @@ def main():
             seen_modes.add(mode)
         if len(probe_indices) >= 32:
             break
-    # Fill remainder
     for i in range(len(train_records)):
         if len(probe_indices) >= 32:
             break
@@ -250,14 +230,15 @@ def main():
     target_effective = max(8, min(32, len(train_records) // 1000))
     grad_accum = max(1, target_effective // batch_size)
     effective_batch = batch_size * grad_accum
+    steps_per_epoch = math.ceil(len(train_records) / effective_batch)
 
-    print(f"\n  bs={batch_size} x grad_accum={grad_accum} = {effective_batch} effective\n")
+    print(f"\n  bs={batch_size} x grad_accum={grad_accum} = {effective_batch} effective")
+    print(f"  steps/epoch: {steps_per_epoch}\n")
 
-    # Write tuning notes
     with open(run_dir / "tuning_notes.md", "w") as f:
         f.write("# Tuning Notes\n\n")
         f.write(f"max_seq_length: {max_seq_length}\n\n")
-        f.write("## Batch Probe\n\n| BS | Status | Peak VRAM (MB) |\n|-----|--------|----------------|\n")
+        f.write("| BS | Status | Peak VRAM (MB) |\n|-----|--------|----------------|\n")
         for bs, info in probe_result["probed"].items():
             f.write(f"| {bs} | {info['status']} | {info.get('peak_vram_mb', '—')} |\n")
         f.write(f"\n**bs={batch_size}, grad_accum={grad_accum}, effective={effective_batch}**\n")
@@ -271,34 +252,46 @@ def main():
         train_on_responses_only=True,
         instruction_part="<|im_start|>user\n",
         response_part="<|im_start|>assistant\n",
-        force_match=True,
-        completion_only_loss=True,
+        force_match=True, completion_only_loss=True,
     )
     if not check_label_masking(collator, probe_samples[0], tokenizer):
         sys.exit(1)
     print("Label masking OK.\n")
 
-    # --- Base eval ---
-    print("Base model eval (3 samples)...")
-    base_eval = run_eval_samples(model, tokenizer, val_records, str(split_dir), CFG["image_max_edge"], n=3)
-    for r in base_eval:
-        print(f"  {r['question_id']}: gold={r['gold']}, pred={r['predicted'][:40]}, {'OK' if r['correct'] else 'WRONG'}")
+    # --- Baseline eval (base model accuracy before training) ---
+    print("Computing baseline accuracy (100 val samples)...")
+    baseline_accuracy = compute_topic_accuracy(
+        model, tokenizer, val_records, str(split_dir), CFG["image_max_edge"],
+        n=100, seed=SEED,
+    )
+    print(f"  Base model: {baseline_accuracy['overall']:.1%}")
+    for topic, info in baseline_accuracy["per_topic"].items():
+        print(f"    {topic}: {info['acc']:.0%}")
+
+    if use_wandb:
+        import wandb
+        # Log baseline as step 0
+        wandb.log({"baseline/accuracy": baseline_accuracy["overall"]}, step=0)
+        for topic, info in baseline_accuracy["per_topic"].items():
+            wandb.log({f"baseline/acc_{topic}": info["acc"]}, step=0)
+
     print()
 
     # --- Build datasets ---
     train_dataset = EollmDataset(train_records, str(split_dir), CFG["image_max_edge"])
-    val_subset = val_records[:200] if SMOKE_TEST else val_records  # limit val in smoke test
+    val_subset = val_records[:200] if SMOKE_TEST else val_records
     val_dataset = EollmDataset(val_subset, str(split_dir), CFG["image_max_edge"])
 
     # --- Training config ---
     from trl import SFTTrainer, SFTConfig
     FastVisionModel.for_training(model)
 
-    steps_per_epoch = math.ceil(len(train_records) / effective_batch)
     total_steps = steps_per_epoch * NUM_EPOCHS
     warmup_steps = min(40, total_steps // 10)
-    save_steps = max(100, steps_per_epoch // 2)
-    eval_steps = max(50, steps_per_epoch // 4)
+    # Save checkpoint every epoch
+    save_steps = steps_per_epoch
+    # Trainer eval_loss every half epoch (the EvalCallback handles accuracy separately)
+    eval_steps = max(50, steps_per_epoch // 2)
 
     if SMOKE_TEST:
         max_steps_final = 5
@@ -310,11 +303,10 @@ def main():
         max_steps_final = -1
 
     print(f"Steps/epoch: {steps_per_epoch}, total: {total_steps if max_steps_final < 0 else max_steps_final}")
-    print(f"Warmup: {warmup_steps}, save: {save_steps}, eval: {eval_steps}\n")
+    print(f"Warmup: {warmup_steps}, save: every {save_steps} steps (≈1 epoch), eval_loss: every {eval_steps}\n")
 
     trainer = SFTTrainer(
-        model=model,
-        tokenizer=tokenizer,
+        model=model, tokenizer=tokenizer,
         data_collator=collator,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
@@ -336,7 +328,7 @@ def main():
 
             logging_steps=10,
             save_steps=save_steps,
-            save_total_limit=3,
+            save_total_limit=NUM_EPOCHS + 1,
             seed=SEED,
             bf16=True,
             output_dir=str(run_dir / "checkpoints"),
@@ -345,7 +337,7 @@ def main():
 
             eval_strategy="steps",
             eval_steps=eval_steps,
-            per_device_eval_batch_size=max(1, batch_size // 4),  # eval needs more VRAM (no grad checkpointing)
+            per_device_eval_batch_size=max(1, batch_size // 4),
         ),
     )
 
@@ -353,24 +345,25 @@ def main():
     loss_logger = LossLogger(run_dir)
     trainer.add_callback(loss_logger)
 
-    if REPORT_TO == "wandb":
-        wandb_cb = WandbCallback(
-            val_records=val_records,
-            base_dir=str(split_dir),
-            max_edge=CFG["image_max_edge"],
-            run_dir=run_dir,
-            eval_n=200 if not SMOKE_TEST else 10,
-        )
-        trainer.add_callback(wandb_cb)
+    eval_callback = EvalCallback(
+        val_records=val_records,
+        base_dir=str(split_dir),
+        max_edge=CFG["image_max_edge"],
+        run_dir=run_dir,
+        steps_per_epoch=steps_per_epoch,
+        baseline_accuracy=baseline_accuracy,
+        use_wandb=use_wandb,
+    )
+    trainer.add_callback(eval_callback)
 
     # --- Train ---
     print("Starting training..." + (" (SMOKE TEST)" if SMOKE_TEST else ""))
     trainer_stats = trainer.train()
 
     # --- Plots ---
-    plot_training_curves(loss_logger, run_dir, profile_name)
+    plot_training_curves(loss_logger, eval_callback, run_dir, profile_name)
 
-    # --- Save ---
+    # --- Save LoRA ---
     lora_dir = str(run_dir / "lora")
     print(f"\nSaving LoRA to {lora_dir}...")
     model.save_pretrained(lora_dir)
@@ -381,29 +374,22 @@ def main():
         print(f"Saving merged bf16 to {merged_dir}...")
         model.save_pretrained_merged(merged_dir, tokenizer, save_method="merged_16bit")
 
-    # --- Finetuned eval ---
-    print("\nFinetuned eval (3 samples)...")
+    # --- Final eval ---
+    print("\nFinal eval (3 samples, base vs finetuned)...")
+    base_eval = run_eval_samples(model, tokenizer, val_records, str(split_dir), CFG["image_max_edge"], n=3)
+    # Re-use baseline for base results display
     ft_eval = run_eval_samples(model, tokenizer, val_records, str(split_dir), CFG["image_max_edge"], n=3)
     for r in ft_eval:
         print(f"  {r['question_id']}: gold={r['gold']}, pred={r['predicted'][:40]}, {'OK' if r['correct'] else 'WRONG'}")
-
     write_eval_md(base_eval, ft_eval, str(run_dir / "eval_samples.md"))
-
-    # --- Per-topic accuracy ---
-    if not SMOKE_TEST:
-        print("\nComputing per-topic accuracy (300 val samples)...")
-        accuracy = compute_topic_accuracy(
-            model, tokenizer, val_records, str(split_dir), CFG["image_max_edge"], n=300
-        )
-        print(f"  Overall: {accuracy['overall']:.1%} ({accuracy['n_correct']}/{accuracy['n_total']})")
-        for topic, info in accuracy["per_topic"].items():
-            print(f"    {topic}: {info['acc']:.0%} ({info['correct']}/{info['n']})")
-        write_accuracy_md(accuracy, str(run_dir / "accuracy.md"))
 
     # --- Summary ---
     t_total = time.time() - t_start
     peak_vram_mb = torch.cuda.max_memory_allocated() / 1024**2
     peak_pct = peak_vram_mb / (CFG["vram_gb"] * 1024) * 100
+
+    final_acc = eval_callback.full_history[-1]["overall"] if eval_callback.full_history else "N/A"
+    final_acc_str = f"{final_acc:.1%}" if isinstance(final_acc, float) else final_acc
 
     summary = f"""
 {'=' * 60}
@@ -412,22 +398,20 @@ TRAINING SUMMARY
 Profile:           {profile_name}
 max_seq_length:    {max_seq_length} (p99={token_stats['p99']})
 Batch:             {batch_size} x {grad_accum} = {effective_batch}
-Final loss:        {trainer_stats.training_loss:.4f}
+Epochs:            {NUM_EPOCHS}
+Final train loss:  {trainer_stats.training_loss:.4f}
+Final val accuracy:{final_acc_str}
+Base accuracy:     {baseline_accuracy['overall']:.1%}
 Wall clock:        {t_total/60:.1f} min
 Peak VRAM:         {peak_vram_mb:.0f} MB ({peak_pct:.0f}% of {CFG['vram_gb']} GB)
 Run dir:           {run_dir}
 """
     print(summary)
 
-    if peak_pct < 70:
-        print(f"NOTE: VRAM {peak_pct:.0f}% — GPU underutilized. Increase batch_size or image_max_edge.")
-
-    # Save summary
     with open(run_dir / "summary.txt", "w") as f:
         f.write(summary)
 
-    # --- W&B finish ---
-    if REPORT_TO == "wandb":
+    if use_wandb:
         import wandb
         wandb.finish()
 

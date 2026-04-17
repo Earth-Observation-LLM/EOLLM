@@ -100,6 +100,7 @@ def compute_topic_accuracy(
     indices = rng.sample(range(len(records)), min(n, len(records)))
 
     topic_results: dict[str, list[bool]] = defaultdict(list)
+    diff_results: dict[str, list[bool]] = defaultdict(list)
 
     for idx in indices:
         rec = records[idx]
@@ -130,6 +131,8 @@ def compute_topic_accuracy(
         generated = tokenizer.decode(output_ids[0][input_len:], skip_special_tokens=True).strip()
         correct = generated.startswith(rec["answer"])
         topic_results[rec["topic"]].append(correct)
+        difficulty = rec.get("difficulty", "unknown")
+        diff_results[difficulty].append(correct)
 
     per_topic = {}
     total_correct = 0
@@ -141,9 +144,16 @@ def compute_topic_accuracy(
         total_correct += n_correct
         total_n += n_total
 
+    per_difficulty = {}
+    for diff, results in sorted(diff_results.items()):
+        n_correct = sum(results)
+        n_total = len(results)
+        per_difficulty[diff] = {"acc": n_correct / n_total if n_total else 0, "correct": n_correct, "n": n_total}
+
     return {
         "overall": total_correct / total_n if total_n else 0,
         "per_topic": per_topic,
+        "per_difficulty": per_difficulty,
         "n_total": total_n,
         "n_correct": total_correct,
     }
