@@ -14,15 +14,25 @@
 
 ## 0. TL;DR
 
-The v1 dataset works as *training data* for exploratory runs but **cannot ship to a conference** in its current form. Key failures:
+The v1 dataset works as *training data* for exploratory runs but **cannot ship to a conference** in its current form. Key failures, split by channel (what the model actually sees vs what a JSONL reviewer sees — per `CATEGORY_A_VERIFICATION.md`):
 
-1. **4 of 14 topics are 100%-solvable without vision** — either via a JSONL metadata field (`image_mode`), a filename-embedded city leak (`option_stv_paths`), or a closed-set answer pool (`green_space`). Some of these reach the model; some only reach a reviewer who inspects the JSONL. Both matter.
-2. **Benchmark is not disjoint** from train. 4 sample pairs are byte-identical across splits (20 images × shared hashes). The "held-out" claim in the README is false.
-3. **Non-vision baseline on v1 val = 66.7%**, benchmark = 67.6%. A text-only control model reaches two-thirds of the accuracy without any image understanding, so any trained model that reports 75% is effectively demonstrating ~8 pp of learned vision + 67 pp of prior memorization.
-4. **Structural diversity is low**: 10 question templates per topic (0 unique to val), 8-option pool per topic with only 2 strings ever correct for some topics, 10 templates × no paraphrase-held-out split.
-5. **Class imbalance** reduces whole topics to trivial (road_surface = 95% Asphalt) or near-unlearnable (building_height skyscraper = 1.6% of train).
+### Text-channel leaks (model CAN exploit these during training)
+1. **Closed-set correct-option pool.** `green_space` has only 2 distinct correct strings (of 8); `road_surface` = 95% "Asphalt"; `mismatch_binary_*` have 2 strings each. A model learns "pick from {short allowed pool}" and wins with no vision.
+2. **Template reuse.** All 10 val question templates appear verbatim in train for every topic. No test of phrasing-robustness.
 
-A v2 regeneration must fix 1–4 and substantially improve 5. Below, each issue is specified: cause, blast radius, proposed fix, acceptance check.
+### Reviewer-only / public-benchmark leaks (NOT model-exploitable today)
+3. **`image_mode` field** deterministically encodes the mismatch_binary answer in the JSONL. **Verified model never reads this field as text** — it's a code-branch router. A reviewer reading the raw JSONL, however, gets the answer for free on 11,442 records. Must strip from public release.
+4. **`option_stv_paths` filenames** contain the city name (`lisbon_0036_...`). **Verified filenames never reach the model** (PIL objects only). But a reviewer reading the JSONL identifies the same-city option trivially. Must obfuscate filenames in public release.
+
+### Pixel-channel / structural issues (depend on model capability to exploit)
+5. **Mismatch-mcq city-matching via image content.** A vision model with geographic knowledge (CLIP-tier) can city-identify SVs directly from pixels. 62% of `option_stv_paths` distractors are cross-city; the correct option is always same-city. Same-city far-distractors fix this.
+6. **Benchmark is not disjoint** from train — 4 sample pairs are byte-identical across splits (20 images × shared hashes). The "held-out" claim in the README is false.
+
+### Structural / balance issues
+7. **Class imbalance** reduces whole topics to trivial (road_surface = 95% Asphalt) or near-unlearnable (building_height skyscraper = 1.6% of train).
+8. **Non-vision baseline using all available leakage channels** = 66.7% val / 67.6% bench. This is the number a reviewer-with-full-JSONL would cite against your paper — even though the model as trained can only reach ~50% via text-channel signals (items 1–2 above).
+
+A v2 regeneration must fix all of the above. Below, each issue is specified: cause, blast radius, proposed fix, acceptance check.
 
 ---
 
@@ -74,7 +84,7 @@ v1 green_space has 8 option strings in total, of which only 2 ever appear as cor
 
 **Blast radius.** All 4 mismatch topics × all 3 splits = 11,442 records. A reviewer running `python -c "import json; [print(r['image_mode'], r['answer']) for r in ...]"` sees the bijection in 30 seconds.
 
-**Whether the model actually sees it today.** Needs verification by Category A agent (pending). Based on static read of `training/data.py`, the field is used only to route code branches — not interpolated into prompt text. If Category A confirms this, then the leak is JSONL-only, not model-visible.
+**Whether the model actually sees it today.** **Confirmed by Category A audit (`CATEGORY_A_VERIFICATION.md`, Agent E, 2026-04-18): NOT model-visible.** `image_mode` is used only as a code-branch router in `data.py::convert_record`; it is never stringified into the prompt text. The leak is **reviewer-only** (someone inspecting the raw JSONL). The fix below still matters for public benchmark release but not for the model's training signal.
 
 **Fix.**
 - Collapse `image_mode` values so the match/no-match label is NOT distinguishable from the field. E.g., both rendering branches use `image_mode: "streetview_pair"`.
@@ -89,7 +99,9 @@ v1 green_space has 8 option strings in total, of which only 2 ever appear as cor
 
 **Blast radius.** 2,000 train + 561 val + 421 bench = 2,982 records (100% of mismatch_mcq_easy).
 
-**Whether the model actually sees it today.** Filenames are NOT fed to the model — `data.py` passes `PIL.Image` objects, not paths. So the leak is JSONL-only. BUT: a visual city-recognition model (CLIP, any VLM with geographic knowledge) can potentially identify the city from the SV image itself, not just the filename. That's a content-level leak, not a filename leak — see §2.3.
+**Whether the model actually sees it today.** **Confirmed by Category A audit: filenames are NOT fed to the model.** `data.py::convert_record` passes `PIL.Image` objects via `{"type": "image", "image": PIL.Image}` — only pixels reach the vision encoder; path strings never enter `input_ids`. The filename-channel leak is reviewer-only.
+
+BUT: a visual city-recognition model (CLIP, any VLM with geographic knowledge) can potentially identify the city from the SV image itself, not just the filename. Category A verified 62% of option_stv_paths filenames match the satellite's city (so the city-match shortcut is real at the dataset design level), but exploiting it requires reading pixels and recognizing geography — that's a content-level leak, not a filename leak — see §2.3.
 
 **Fix.**
 - **Filename side**: hash all filenames (§1.2). No city string in any path.
@@ -310,5 +322,5 @@ This framing preserves the value of the v1 run as a capability demonstration whi
 
 - Agent C programmatic verification of v1 leakage: `audit_scratch/out_01..13_*.txt`, scripts `audit_scratch/0{1..13}_*.py`.
 - Agent D conference-grade deep audit: `DATASET_ISSUES.md`, scripts `audit_scratch/D_*.py`.
-- Agent E (model-visibility verification): `CATEGORY_A_VERIFICATION.md` (pending — will confirm per-field whether v1 leaks are model-visible or JSONL-only; update §2.1 verdict once complete).
+- Agent E (model-visibility verification): `CATEGORY_A_VERIFICATION.md` — per-field verdict on text-channel vs pixel-channel vs routing-only. Confirmed §2.1 (image_mode) and §2.2 (filenames) are reviewer-only, not model-visible. §2.4 (green_space closed-set) and §2.6 (template reuse) are confirmed model-exploitable.
 - Domain-expert review: this document, §0 and §2.
