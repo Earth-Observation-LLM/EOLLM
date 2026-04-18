@@ -21,8 +21,8 @@ Vision SFT (Supervised Fine-Tuning) of **Qwen3.5-4B** on the EOLLM urban VQA dat
 
 - **GPU:** NVIDIA RTX 5090 (32 GB VRAM, Blackwell sm_120)
 - **Stack:** CUDA 12.8, torch 2.10.0+cu128, transformers 5.5.0, unsloth 2026.4.2, triton 3.6.0
-- **Environment:** `conda activate unsloth`
-- **Peak VRAM usage:** ~17 GB (52% of budget at bs=4) — room to increase batch size
+- **Environment:** `conda activate unsloth` (reproduced on remote via `environment.yml` + `remote_setup.sh`)
+- **Peak VRAM usage:** ~20 GB (63% of budget at bs=8) — validated on the 2-epoch local run
 
 ## Dataset
 
@@ -73,8 +73,8 @@ Each topic has ~2,000 training records (except green_space: 1,500 and building_h
 
 | Parameter | Value | Why |
 |---|---|---|
-| Batch size | 4 per device | Largest that fit in VRAM (bs=8 OOM'd) |
-| Gradient accumulation | 6 | Effective batch = 24 |
+| Batch size | 8 per device | Actual probe result on RTX 5090 (rtx_5090_32gb profile) |
+| Gradient accumulation | 3 | Effective batch = 24 |
 | Learning rate | 2e-4 | Standard LoRA starting point |
 | LR scheduler | linear (warmup → decay) | |
 | Warmup steps | 40 | ~10% of total steps |

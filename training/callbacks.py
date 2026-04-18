@@ -95,6 +95,42 @@ class EvalCallback(TrainerCallback):
         self.quick_history: list[dict] = []  # [{step, accuracy, per_topic}]
         self.full_history: list[dict] = []
 
+        # Pre-compute per-topic majority-class baseline on the val set.
+        # For topics with skewed answer distributions (e.g. mismatch_binary =
+        # 50/50 yes/no, amenity_richness = 31% modal B), random=25% is the
+        # wrong floor to compare against. Majority baseline = what you'd get
+        # by always predicting the most common correct letter for that topic.
+        self.topic_baselines: dict[str, dict] = self._compute_topic_baselines(val_records)
+
+    @staticmethod
+    def _compute_topic_baselines(records: list[dict]) -> dict[str, dict]:
+        """Compute per-topic (n_options, majority_rate, random_rate) from records.
+
+        majority_rate = fraction of records whose answer == the topic's modal answer.
+        random_rate = 1/n_options (2 for binary, 4 for MCQ).
+        """
+        from collections import defaultdict, Counter
+        by_topic: dict[str, list] = defaultdict(list)
+        opts_by_topic: dict[str, set] = defaultdict(set)
+        for r in records:
+            t = r.get("topic", "unknown")
+            by_topic[t].append(r.get("answer"))
+            for letter in (r.get("options") or {}).keys():
+                opts_by_topic[t].add(letter)
+
+        result = {}
+        for topic, answers in by_topic.items():
+            n_opts = len(opts_by_topic[topic]) or 4
+            counts = Counter(answers)
+            total = sum(counts.values()) or 1
+            majority = max(counts.values()) / total
+            result[topic] = {
+                "n_options": n_opts,
+                "majority": majority,
+                "random": 1.0 / n_opts,
+            }
+        return result
+
     def on_step_end(self, args, state, control, model=None, processing_class=None, **kwargs):
         step = state.global_step
         epoch_progress = step / self.steps_per_epoch
@@ -221,15 +257,28 @@ class EvalCallback(TrainerCallback):
             lines.append(f"**vs Base model:** {base_acc:.1%} → {accuracy['overall']:.1%} "
                          f"(**{'+' if delta >= 0 else ''}{delta:.1%}**)\n")
 
-        # Per-topic table
+        # Per-topic table. Includes per-topic random (1/n_options) and majority
+        # (modal-answer fraction) baselines so a reader can see which topics are
+        # genuinely lifted by the model vs. which are at or near the prior floor.
+        # Binary-mismatch topics have random=50%, not 25% — crucial for honest
+        # reporting of "+77% over base" claims.
         lines.append("## Per-Topic Accuracy\n")
-        lines.append("| Topic | Accuracy | Correct/Total | vs Base |")
-        lines.append("|-------|----------|---------------|---------|")
+        lines.append("| Topic | Accuracy | Correct/Total | vs Base | vs Random | vs Majority |")
+        lines.append("|-------|----------|---------------|---------|-----------|-------------|")
         for topic, info in sorted(accuracy["per_topic"].items()):
             base_topic_acc = self.baseline.get("per_topic", {}).get(topic, {}).get("acc", 0) if self.baseline else 0
-            delta_t = info["acc"] - base_topic_acc
-            lines.append(f"| {topic} | {info['acc']:.1%} | {info['correct']}/{info['n']} | "
-                         f"{'+' if delta_t >= 0 else ''}{delta_t:.1%} |")
+            tb = self.topic_baselines.get(topic, {"random": 0.25, "majority": 0.25})
+            delta_base = info["acc"] - base_topic_acc
+            delta_rand = info["acc"] - tb["random"]
+            delta_maj = info["acc"] - tb["majority"]
+            lines.append(
+                f"| {topic} | {info['acc']:.1%} | {info['correct']}/{info['n']} | "
+                f"{'+' if delta_base >= 0 else ''}{delta_base:.1%} | "
+                f"{'+' if delta_rand >= 0 else ''}{delta_rand:.1%} "
+                f"(rand={tb['random']:.0%}) | "
+                f"{'+' if delta_maj >= 0 else ''}{delta_maj:.1%} "
+                f"(maj={tb['majority']:.0%}) |"
+            )
 
         # Trend (quick eval history)
         if len(self.quick_history) > 1:
