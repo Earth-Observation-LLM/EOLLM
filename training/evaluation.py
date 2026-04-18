@@ -1,5 +1,8 @@
 """
 evaluation.py — Inference, accuracy metrics, and eval reporting.
+
+Shares generation settings and letter-parsing with eval_base.py so mid-training
+eval and external base/adapter evals produce comparable numbers. No sampling.
 """
 
 from __future__ import annotations
@@ -12,6 +15,56 @@ import torch
 
 from config import SEED, SYSTEM_PROMPT
 from data import convert_record
+from eval_base import parse_letter, _pad_id
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+def _set_left_padding(tokenizer) -> None:
+    """Decoder-only generation needs left-padding for correct attention over
+    the prompt. Processor wraps an inner tokenizer; set both if present."""
+    for obj in (tokenizer, getattr(tokenizer, "tokenizer", None)):
+        if obj is not None and hasattr(obj, "padding_side"):
+            obj.padding_side = "left"
+
+
+def _generate_letter(model, tokenizer, inputs) -> str | None:
+    """Greedy 16-token decode; return parsed letter or None."""
+    pad_id = _pad_id(tokenizer)
+    with torch.no_grad():
+        output_ids = model.generate(
+            **inputs,
+            max_new_tokens=16,
+            use_cache=True,
+            do_sample=False,
+            pad_token_id=pad_id,
+        )
+    input_len = inputs["input_ids"].shape[1]
+    generated = tokenizer.decode(output_ids[0][input_len:], skip_special_tokens=True).strip()
+    return generated, parse_letter(generated)
+
+
+def _prepare_inference_inputs(rec: dict, base_dir: str, max_edge: int, tokenizer):
+    """Build tokenizer inputs for a single inference sample. Returns (inputs, images)."""
+    converted = convert_record(rec, base_dir, max_edge)
+    user_msg = converted["messages"][1]
+    images = [p["image"] for p in user_msg["content"] if p["type"] == "image"]
+
+    inf_messages = [
+        {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
+        {"role": "user", "content": [
+            p if p["type"] == "text" else {"type": "image"}
+            for p in user_msg["content"]
+        ]},
+    ]
+
+    text = tokenizer.apply_chat_template(inf_messages, add_generation_prompt=True, tokenize=False)
+    img_input = images[0] if len(images) == 1 else images
+    inputs = tokenizer(img_input, text, add_special_tokens=False, return_tensors="pt").to("cuda")
+    return inputs
 
 
 # ---------------------------------------------------------------------------
@@ -26,42 +79,21 @@ def run_eval_samples(
     base_dir: str,
     max_edge: int,
     n: int = 3,
+    seed: int = SEED + 1,
 ) -> list[dict]:
-    """Run inference on n random validation samples."""
+    """Run inference on n random validation samples. Greedy; shared parser."""
     from unsloth import FastVisionModel
     FastVisionModel.for_inference(model)
+    _set_left_padding(tokenizer)
 
-    rng = random.Random(SEED + 1)
+    rng = random.Random(seed)
     indices = rng.sample(range(len(records)), min(n, len(records)))
     results = []
 
     for idx in indices:
         rec = records[idx]
-        converted = convert_record(rec, base_dir, max_edge)
-
-        user_msg = converted["messages"][1]
-        images = [p["image"] for p in user_msg["content"] if p["type"] == "image"]
-
-        inf_messages = [
-            {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
-            {"role": "user", "content": [
-                p if p["type"] == "text" else {"type": "image"}
-                for p in user_msg["content"]
-            ]},
-        ]
-
-        text = tokenizer.apply_chat_template(inf_messages, add_generation_prompt=True, tokenize=False)
-        img_input = images[0] if len(images) == 1 else images
-        inputs = tokenizer(img_input, text, add_special_tokens=False, return_tensors="pt").to("cuda")
-
-        with torch.no_grad():
-            output_ids = model.generate(
-                **inputs, max_new_tokens=32, use_cache=True,
-                temperature=0.7, top_p=0.8, top_k=20,
-            )
-
-        input_len = inputs["input_ids"].shape[1]
-        generated = tokenizer.decode(output_ids[0][input_len:], skip_special_tokens=True).strip()
+        inputs = _prepare_inference_inputs(rec, base_dir, max_edge, tokenizer)
+        generated, letter = _generate_letter(model, tokenizer, inputs)
 
         results.append({
             "question_id": rec["question_id"],
@@ -69,7 +101,8 @@ def run_eval_samples(
             "question": rec["question"],
             "gold": rec["answer"],
             "predicted": generated,
-            "correct": generated.startswith(rec["answer"]),
+            "letter": letter,
+            "correct": letter == rec["answer"],
         })
 
     return results
@@ -91,10 +124,11 @@ def compute_topic_accuracy(
 ) -> dict:
     """Compute accuracy grouped by topic on n random validation samples.
 
-    Returns {"overall": float, "per_topic": {topic: {"acc": float, "n": int, "correct": int}}, "n_total": int}
+    Greedy decoding; shared parse_letter. Deterministic for a given (seed, n).
     """
     from unsloth import FastVisionModel
     FastVisionModel.for_inference(model)
+    _set_left_padding(tokenizer)
 
     rng = random.Random(seed)
     indices = rng.sample(range(len(records)), min(n, len(records)))
@@ -104,32 +138,9 @@ def compute_topic_accuracy(
 
     for idx in indices:
         rec = records[idx]
-        converted = convert_record(rec, base_dir, max_edge)
-
-        user_msg = converted["messages"][1]
-        images = [p["image"] for p in user_msg["content"] if p["type"] == "image"]
-
-        inf_messages = [
-            {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
-            {"role": "user", "content": [
-                p if p["type"] == "text" else {"type": "image"}
-                for p in user_msg["content"]
-            ]},
-        ]
-
-        text = tokenizer.apply_chat_template(inf_messages, add_generation_prompt=True, tokenize=False)
-        img_input = images[0] if len(images) == 1 else images
-        inputs = tokenizer(img_input, text, add_special_tokens=False, return_tensors="pt").to("cuda")
-
-        with torch.no_grad():
-            output_ids = model.generate(
-                **inputs, max_new_tokens=32, use_cache=True,
-                temperature=0.7, top_p=0.8, top_k=20,
-            )
-
-        input_len = inputs["input_ids"].shape[1]
-        generated = tokenizer.decode(output_ids[0][input_len:], skip_special_tokens=True).strip()
-        correct = generated.startswith(rec["answer"])
+        inputs = _prepare_inference_inputs(rec, base_dir, max_edge, tokenizer)
+        _, letter = _generate_letter(model, tokenizer, inputs)
+        correct = letter == rec["answer"]
         topic_results[rec["topic"]].append(correct)
         difficulty = rec.get("difficulty", "unknown")
         diff_results[difficulty].append(correct)

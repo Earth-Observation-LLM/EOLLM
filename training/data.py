@@ -1,9 +1,14 @@
 """
 data.py — Dataset loading, record conversion, and token measurement.
 
-Image handling corrections (from domain expert):
-  - camera_direction: show ONLY the 4 satellite-with-arrow option images (no street view)
-  - mismatch_binary: show satellite_marked + 4 individual SV images (not composited into grid)
+Image handling:
+  - camera_direction (satellite_arrow): query street-view + 4 arrow-overlaid
+    satellite images with corner A/B/C/D labels so the model can tell which
+    image the letter refers to (burned-in, top-left, 10% of image width).
+  - mismatch_binary (streetview_binary / streetview_composite): satellite_marked +
+    4 individual SV images, each with a corner A/B/C/D label.
+  - streetview_mega (mismatch_mcq): satellite_marked + mega composite grid (the
+    grid itself already labels each cell).
 """
 
 from __future__ import annotations
@@ -13,7 +18,7 @@ import os
 import sys
 from typing import Any
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from config import SEED, SYSTEM_PROMPT, find_dataset_dir, SPLIT
 
@@ -48,6 +53,56 @@ def resize_image(img: Image.Image, max_edge: int) -> Image.Image:
 
 
 # ---------------------------------------------------------------------------
+# Corner A/B/C/D labels for multi-image options
+# ---------------------------------------------------------------------------
+
+# Cached font lookup — picked once per process.
+_LABEL_FONT_CACHE: dict[int, ImageFont.ImageFont] = {}
+
+_LABEL_FONT_CANDIDATES = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+]
+
+
+def _get_label_font(size: int) -> ImageFont.ImageFont:
+    if size not in _LABEL_FONT_CACHE:
+        font = None
+        for path in _LABEL_FONT_CANDIDATES:
+            if os.path.exists(path):
+                font = ImageFont.truetype(path, size)
+                break
+        if font is None:
+            font = ImageFont.load_default()
+        _LABEL_FONT_CACHE[size] = font
+    return _LABEL_FONT_CACHE[size]
+
+
+def add_corner_label(img: Image.Image, letter: str) -> Image.Image:
+    """Burn a small white-box A/B/C/D label into the top-left corner.
+
+    Style: "V1 small white box" — 10% of image width, thin 2px black border,
+    75%-of-box bold black letter. Chosen to be clearly visible while occupying
+    minimal pixel area so model vision capacity isn't diverted to decoration.
+    """
+    img = img.copy()
+    draw = ImageDraw.Draw(img)
+    box_size = max(24, int(img.width * 0.10))
+    pad = max(4, int(img.width * 0.015))
+    x0, y0 = pad, pad
+    x1, y1 = pad + box_size, pad + box_size
+    draw.rectangle([x0, y0, x1, y1], fill=(255, 255, 255), outline=(0, 0, 0), width=2)
+    font = _get_label_font(max(12, int(box_size * 0.75)))
+    bbox = draw.textbbox((0, 0), letter, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    tx = x0 + (box_size - tw) // 2 - bbox[0]
+    ty = y0 + (box_size - th) // 2 - bbox[1]
+    draw.text((tx, ty), letter, fill=(0, 0, 0), font=font)
+    return img
+
+
+# ---------------------------------------------------------------------------
 # Record conversion
 # ---------------------------------------------------------------------------
 
@@ -68,35 +123,50 @@ def convert_record(record: dict, base_dir: str, max_edge: int) -> dict:
     user_content: list[dict] = [{"type": "text", "text": text}]
 
     if mode == "satellite_arrow":
-        # camera_direction: show ONLY the 4 satellite-with-arrow option images
-        # Domain expert correction: no street view query image
+        # camera_direction: query street-view + 4 arrow-overlaid satellites.
+        # The query SV is the photographer's viewpoint; the 4 sats each show the
+        # same location with a red arrow in a different direction. Without the
+        # query SV the task is unanswerable. Each option sat gets a burned-in
+        # A/B/C/D label so the model can bind the letter to the image directly
+        # rather than relying on positional ordering in the content stream.
+        query_sv = result.get("query_sv")
+        if query_sv is not None:
+            user_content.append({
+                "type": "image",
+                "image": resize_image(query_sv, max_edge),
+            })
         if result.get("options"):
             for letter in ("A", "B", "C", "D"):
                 if letter in result["options"]:
+                    sized = resize_image(result["options"][letter], max_edge)
                     user_content.append({
                         "type": "image",
-                        "image": resize_image(result["options"][letter], max_edge),
+                        "image": add_corner_label(sized, letter),
                     })
 
     elif mode in ("streetview_composite", "streetview_binary"):
-        # mismatch_binary: satellite_marked + 4 individual SV images
-        # Domain expert correction: individual images, NOT composited into a grid
+        # mismatch_binary: satellite_marked + 4 individual SV images. The SV
+        # images are in cardinal-angle order (along_fwd / along_bwd / cross_left /
+        # cross_right) — we burn A/B/C/D corner labels so the model can refer to
+        # specific SV angles unambiguously.
         sat_path = os.path.join(base_dir, record["images"]["satellite"])
         sat_marked = make_sat_marked(sat_path)
         user_content.append({"type": "image", "image": resize_image(sat_marked, max_edge)})
 
         if mode == "streetview_composite":
-            # match=True or match=False with own SV: show query location's 4 angles
-            for angle in STV_ANGLES:
-                sv_path = os.path.join(base_dir, record["images"][f"streetview_{angle}"])
-                sv_img = Image.open(sv_path)
-                user_content.append({"type": "image", "image": resize_image(sv_img, max_edge)})
+            sv_iter = [
+                (angle, os.path.join(base_dir, record["images"][f"streetview_{angle}"]))
+                for angle in STV_ANGLES
+            ]
         else:
-            # streetview_binary (match=False): show negative location's 4 SV images
+            # streetview_binary (match=False): negative location's 4 SV images
             neg_paths = record.get("mismatch_negative_stv_paths") or []
-            for path in neg_paths:
-                sv_img = Image.open(os.path.join(base_dir, path))
-                user_content.append({"type": "image", "image": resize_image(sv_img, max_edge)})
+            sv_iter = [(None, os.path.join(base_dir, p)) for p in neg_paths]
+
+        for (_angle, sv_path), letter in zip(sv_iter, ("A", "B", "C", "D")):
+            sv_img = Image.open(sv_path)
+            sized = resize_image(sv_img, max_edge)
+            user_content.append({"type": "image", "image": add_corner_label(sized, letter)})
 
     elif mode == "streetview_mega":
         # mismatch_mcq: satellite_marked + mega composite (keeps the grid — MCQ needs it)

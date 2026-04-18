@@ -110,7 +110,7 @@ class EvalCallback(TrainerCallback):
         if current_epoch > self._last_full_eval and step >= self.steps_per_epoch:
             self._last_full_eval = current_epoch
             self._epoch_count = current_epoch
-            self._run_full_eval(model, processing_class, step, current_epoch)
+            self._run_full_eval(model, processing_class, step, current_epoch, state=state)
 
     def _run_quick_eval(self, model, tokenizer, step, epoch_progress):
         """100 random val samples — fast per-topic accuracy snapshot."""
@@ -134,17 +134,25 @@ class EvalCallback(TrainerCallback):
 
         FastVisionModel.for_training(model)
 
-    def _run_full_eval(self, model, tokenizer, step, epoch):
-        """Full val set — comprehensive accuracy + epoch verdict."""
+    def _run_full_eval(self, model, tokenizer, step, epoch, state=None):
+        """Full val set — comprehensive accuracy + epoch verdict.
+
+        If `state` (TrainerState) is passed, appends {'eval_accuracy': ...} to
+        state.log_history so HF EarlyStoppingCallback (which watches
+        `metric_for_best_model`) can see it.
+        """
         from evaluation import compute_topic_accuracy
         from unsloth import FastVisionModel
 
         print(f"\n[eval] FULL eval at step {step} (epoch {epoch})...")
         t0 = time.time()
+        # Seed the eval deterministically (independent of step, so the same
+        # val set is sampled identically every time). We evaluate the full set
+        # so only tie-breaking order depends on seed.
         accuracy = compute_topic_accuracy(
             model, tokenizer, self.val_records,
             self.base_dir, self.max_edge,
-            n=len(self.val_records), seed=step,
+            n=len(self.val_records),
         )
         elapsed = time.time() - t0
 
@@ -153,6 +161,15 @@ class EvalCallback(TrainerCallback):
 
         for topic, info in sorted(accuracy["per_topic"].items()):
             print(f"  {topic}: {info['acc']:.0%} ({info['correct']}/{info['n']})")
+
+        # Expose eval_accuracy to HF Trainer so EarlyStoppingCallback can watch
+        # it via metric_for_best_model="eval_accuracy".
+        if state is not None:
+            state.log_history.append({
+                "step": step,
+                "epoch": epoch,
+                "eval_accuracy": accuracy["overall"],
+            })
 
         # Write epoch verdict
         verdict_path = self.run_dir / f"epoch_{epoch}_verdict.md"
