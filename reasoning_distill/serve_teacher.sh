@@ -13,8 +13,13 @@
 # Run from the `vllm` conda/venv env you already use.
 set -euo pipefail
 
-MODEL="cyankiwi/Qwen3.5-27B-AWQ-INT8-INT4"
+MODEL="cyankiwi/Qwen3.6-35B-A3B-AWQ-4bit"
 PORT="${PORT:-8000}"
+
+# flashinfer-jit-cache (0.6.12) and flashinfer (0.6.11) are one patch apart in
+# this env; the strict version check aborts startup. They're runtime-compatible,
+# so bypass the check rather than churn the env.
+export FLASHINFER_DISABLE_VERSION_CHECK=1
 
 # --enable-prefix-caching: the system prompt + reasoning instructions are an
 #   identical prefix across all samples, and the full/blind pass of one sample

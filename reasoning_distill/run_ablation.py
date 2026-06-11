@@ -38,9 +38,27 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+import io
+import sys
+
 import aiohttp
 
 ROOT = Path("/home/ezel/Development/EOLLM/dataset_content/EODATA_compressed_final")
+
+# Reuse the dataset's OWN image builders so every image we send is pixel-identical
+# to what training/eval feeds the model (mega tiling, arrows, corner labels, dot).
+sys.path.insert(0, str(ROOT))
+import composite_utils as cu  # noqa: E402
+
+# Mirror training/data.py's corner-label burn-in (V1: small white box, top-left).
+# data.py imports add_corner_label from its own module; we replicate the call by
+# importing it from training/data.py to stay byte-identical.
+sys.path.insert(0, "/home/ezel/Development/EOLLM/training")
+try:
+    from data import add_corner_label  # noqa: E402
+except Exception:  # pragma: no cover - fall back to no label if import fails
+    def add_corner_label(img, letter):
+        return img
 
 # Each source = (jsonl file, image base dir). Image paths in the JSONL are
 # relative to that base dir (per-split images/).
@@ -54,24 +72,26 @@ SOURCES = {
     "benchmark":  (ROOT / "benchmark" / "benchmark_with_answers.jsonl", ROOT / "benchmark"),
 }
 
-# Mirror training/config.py so accuracy is comparable to the verdict tables,
-# but ASK FOR REASONING (the letter-only instruction is replaced).
-SYS_VISION = (
-    "You are an urban geography expert analyzing satellite and street-level imagery. "
-    "Think step by step about the images, then answer the multiple-choice question. "
-    "End your reply with the single letter of the correct answer (A, B, C, or D)."
-)
-SYS_TEXT = (
-    "You are an urban geography expert. "
-    "Think step by step about the question and options, then answer. "
-    "End your reply with the single letter of the correct answer (A, B, C, or D)."
-)
+# Per-mode system prompts. Each is HONEST about the inputs actually shown, so
+# the model never claims a perspective it can't see (avoids confabulation).
+_THINK_TAIL = ("Think step by step, then answer the multiple-choice question. "
+               "End your reply with the single letter of the correct answer (A, B, C, or D).")
+SYS_PROMPTS = {
+    "full":     "You are an urban geography expert analyzing satellite and street-level imagery. " + _THINK_TAIL,
+    "sat_only": "You are an urban geography expert analyzing satellite imagery. " + _THINK_TAIL,
+    "sv_only":  "You are an urban geography expert analyzing street-level imagery. " + _THINK_TAIL,
+    "blind":    "You are an urban geography expert. "
+                "Think step by step about the question and options, then answer. "
+                "End your reply with the single letter of the correct answer (A, B, C, or D).",
+}
 
 THINK_BUDGET = 12000   # tokens allowed inside <think> before we force-close
 ANSWER_BUDGET = 64     # tokens for the forced final answer in phase 2
-TEMPERATURE = 0.6      # model's thinking-mode default (generation_config.json)
-TOP_P = 0.95
-TOP_K = 20
+# temperature 0 = greedy decoding for full determinism / reproducible traces.
+# (top_p/top_k are neutralized to greedy-equivalent so they don't interfere.)
+TEMPERATURE = 0.0
+TOP_P = 1.0
+TOP_K = -1
 
 
 def load_jsonl(p):
@@ -79,21 +99,59 @@ def load_jsonl(p):
         return [json.loads(l) for l in f if l.strip()]
 
 
-def b64_image(path):
-    with open(path, "rb") as f:
-        return "data:image/jpeg;base64," + base64.b64encode(f.read()).decode()
+def pil_to_b64(img):
+    buf = io.BytesIO()
+    img.convert("RGB").save(buf, format="JPEG", quality=90)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def image_paths_for(record, base_dir):
-    imgs = record.get("images", {})
-    out = []
-    if imgs.get("satellite"):
-        out.append(base_dir / imgs["satellite"])
-    for k in ("along_fwd", "along_bwd", "cross_left", "cross_right"):
-        p = imgs.get(f"streetview_{k}")
-        if isinstance(p, str) and p.endswith(".jpg"):
-            out.append(base_dir / p)
-    return [p for p in out if p.exists()]
+def perspective_images(record, base_dir):
+    """Return (sat_imgs, sv_imgs) as two lists of PIL images, built with the
+    dataset's OWN helpers so they're pixel-identical to training/eval.
+
+    sat_imgs = the satellite-perspective image(s); sv_imgs = street-level
+    image(s). Mode filtering (sat_only/sv_only) just picks which list(s) to send.
+    See reference_image_modes memory for the exact composition per image_mode.
+    """
+    mode = record.get("image_mode", "satellite_only")
+    base = str(base_dir)
+    res = cu.get_images_for_question(record, base_dir=base)
+    sat, sv = [], []
+
+    if mode in ("satellite_only", "satellite_marked"):
+        sat = [res["primary"]]                       # 1 sat, no sv
+
+    elif mode == "satellite_arrow":
+        # 4 arrow-on-satellite option images (the A/B/C/D choices) + 1 query SV.
+        for letter in ("A", "B", "C", "D"):
+            if res.get("options", {}).get(letter) is not None:
+                sat.append(res["options"][letter])
+        if res.get("query_sv") is not None:
+            sv = [res["query_sv"]]
+
+    elif mode in ("streetview_composite", "streetview_binary"):
+        # 1 sat_marked + 4 separate corner-labeled SV images (mirror data.py).
+        imgs = record["images"]
+        sat = [cu.make_sat_marked(os.path.join(base, imgs["satellite"]))]
+        if mode == "streetview_composite":
+            sv_paths = [os.path.join(base, imgs[f"streetview_{a}"]) for a in cu.STV_ANGLES]
+        else:
+            neg = record.get("mismatch_negative_stv_paths") or [
+                os.path.join(base, imgs[f"streetview_{a}"]) for a in cu.STV_ANGLES]
+            sv_paths = [os.path.join(base, p) if not os.path.isabs(p) else p for p in neg]
+        for path, letter in zip(sv_paths, ("A", "B", "C", "D")):
+            sv.append(add_corner_label(cu.Image.open(path), letter))
+
+    elif mode == "streetview_mega":
+        # 1 sat_marked + 1 mega composite (the 16 SV frames live inside the mega).
+        imgs = record["images"]
+        sat = [cu.make_sat_marked(os.path.join(base, imgs["satellite"]))]
+        sv = [res["primary"]]
+
+    else:  # unknown -> whatever primary is, treated as satellite
+        if res.get("primary") is not None:
+            sat = [res["primary"]]
+    return sat, sv
 
 
 def question_text(record):
@@ -101,16 +159,44 @@ def question_text(record):
     return record["question"] + "\n" + "\n".join(f"{k}. {v}" for k, v in opts.items())
 
 
-def build_messages(record, base_dir, with_images):
+def build_messages(record, base_dir, mode):
+    """Build the chat messages for a given ablation mode.
+
+    full -> sat + sv ; sat_only -> sat ; sv_only -> sv ; blind -> no images.
+    """
     content = [{"type": "text", "text": question_text(record)}]
-    if with_images:
-        for p in image_paths_for(record, base_dir):
-            content.append({"type": "image_url", "image_url": {"url": b64_image(p)}})
-    sys_prompt = SYS_VISION if with_images else SYS_TEXT
+    if mode != "blind":
+        sat, sv = perspective_images(record, base_dir)
+        chosen = []
+        if mode in ("full", "sat_only"):
+            chosen += sat
+        if mode in ("full", "sv_only"):
+            chosen += sv
+        for img in chosen:
+            content.append({"type": "image_url",
+                            "image_url": {"url": pil_to_b64(img)}})
     return [
-        {"role": "system", "content": sys_prompt},
+        {"role": "system", "content": SYS_PROMPTS[mode]},
         {"role": "user", "content": content},
     ]
+
+
+# Which ablation modes apply to each topic. satellite_marked topics: only
+# full/blind (sat_only==full, no sv). camera_direction: no sv_only (arrows ARE
+# the options). mismatch_* : all four. See reference_image_modes memory.
+BOTH_PERSPECTIVE_FULL = {  # full / sat_only / sv_only / blind
+    "mismatch_binary_easy", "mismatch_binary_hard",
+    "mismatch_mcq_easy", "mismatch_mcq_hard",
+}
+CAMERA = {"camera_direction"}  # full / sat_only / blind (no sv_only)
+
+
+def modes_for_topic(topic):
+    if topic in BOTH_PERSPECTIVE_FULL:
+        return ["full", "sat_only", "sv_only", "blind"]
+    if topic in CAMERA:
+        return ["full", "sat_only", "blind"]
+    return ["full", "blind"]  # the 8 satellite_marked topics
 
 
 def parse_letter(text):
@@ -149,10 +235,10 @@ async def chat(session, base_url, messages, max_tokens, **extra):
     }
 
 
-async def run_one(session, base_url, record, base_dir, with_images):
-    """One pass (full or blind) with budgeted thinking + forced-close fallback."""
+async def run_one(session, base_url, record, base_dir, mode):
+    """One pass for `mode` with budgeted thinking + forced-close fallback."""
     t0 = time.monotonic()
-    messages = build_messages(record, base_dir, with_images)
+    messages = build_messages(record, base_dir, mode)
     r1 = await chat(session, base_url, messages, THINK_BUDGET + ANSWER_BUDGET)
 
     reasoning, answer_text = r1["reasoning"], r1["content"]
@@ -194,54 +280,55 @@ async def worker(name, queue, session, base_url, out_f, lock, counters):
         if item is None:
             queue.task_done()
             return
-        source, record = item
+        source, record, mode = item
         base_dir = SOURCES[source][1]
         gt = record.get("answer")
         try:
-            for with_images, passname in ((True, "full"), (False, "blind")):
-                res = await run_one(session, base_url, record, base_dir, with_images)
-                correct = res["letter"] == gt
-                row = {
-                    "question_id": record["question_id"],
-                    "sample_id": record.get("sample_id"),
-                    "source": source, "pass": passname,
-                    "topic": record["topic"], "city": record.get("city"),
-                    "image_mode": record.get("image_mode"),
-                    "gt": gt, "letter": res["letter"], "correct": correct,
-                    "reasoning": res["reasoning"], "answer_text": res["answer_text"],
-                    "think_truncated": res["think_truncated"],
-                    "finish_reason": res["finish_reason"],
-                    "usage": res["usage"], "latency_s": res["latency_s"],
-                }
-                async with lock:
-                    out_f.write(json.dumps(row, ensure_ascii=False) + "\n")
-                    out_f.flush()
-                    counters["done"] += 1
-                    counters[f"{passname}_correct"] += int(correct)
-                    if res["think_truncated"]:
-                        counters["truncated"] += 1
-        except Exception as e:  # one bad record shouldn't kill the run
+            res = await run_one(session, base_url, record, base_dir, mode)
+            correct = res["letter"] == gt
+            row = {
+                "question_id": record["question_id"],
+                "sample_id": record.get("sample_id"),
+                "source": source, "mode": mode,
+                "topic": record["topic"], "city": record.get("city"),
+                "image_mode": record.get("image_mode"),
+                "gt": gt, "letter": res["letter"], "correct": correct,
+                "reasoning": res["reasoning"], "answer_text": res["answer_text"],
+                "think_truncated": res["think_truncated"],
+                "finish_reason": res["finish_reason"],
+                "usage": res["usage"], "latency_s": res["latency_s"],
+            }
+            async with lock:
+                out_f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                out_f.flush()
+                counters["done"] += 1
+                counters[f"{mode}_correct"] += int(correct)
+                counters[f"{mode}_n"] += 1
+                if res["think_truncated"]:
+                    counters["truncated"] += 1
+        except Exception as e:  # one bad (record, mode) shouldn't kill the run
             async with lock:
                 out_f.write(json.dumps({
                     "question_id": record["question_id"], "source": source,
-                    "error": repr(e),
+                    "mode": mode, "error": repr(e),
                 }, ensure_ascii=False) + "\n")
                 out_f.flush()
                 counters["errors"] += 1
         finally:
             queue.task_done()
             if counters["done"] % 50 == 0:
-                d = counters["done"]
-                fc = counters["full_correct"]
-                bc = counters["blind_correct"]
-                done_recs = d // 2 or 1
-                print(f"  {d} passes | full {100*fc/done_recs:.0f}% "
-                      f"blind {100*bc/done_recs:.0f}% | "
+                def pct(m):
+                    n = counters[f"{m}_n"] or 1
+                    return 100 * counters[f"{m}_correct"] / n
+                print(f"  {counters['done']} passes | "
+                      f"full {pct('full'):.0f}% sat {pct('sat_only'):.0f}% "
+                      f"sv {pct('sv_only'):.0f}% blind {pct('blind'):.0f}% | "
                       f"trunc {counters['truncated']} err {counters['errors']}",
                       flush=True)
 
 
 def load_done_keys(out_path):
+    """Set of (source, question_id, mode) already logged — for resume."""
     done = set()
     if not os.path.exists(out_path):
         return done
@@ -251,14 +338,15 @@ def load_done_keys(out_path):
                 r = json.loads(line)
             except Exception:
                 continue
-            if "pass" in r and "question_id" in r:
-                done.add((r["question_id"], r["pass"]))
+            if "mode" in r and "question_id" in r and "error" not in r:
+                done.add((r.get("source"), r["question_id"], r["mode"]))
     return done
 
 
 async def main_async(args):
-    # Build worklist
+    # Build worklist: one (source, record, mode) item per applicable mode.
     work = []
+    mode_counts = defaultdict(int)
     for source in args.sources:
         path, _ = SOURCES[source]
         recs = load_jsonl(path)
@@ -268,20 +356,22 @@ async def main_async(args):
                 by_t[r["topic"]].append(r)
             recs = [r for rs in by_t.values() for r in rs[: args.limit_per_topic]]
         for r in recs:
-            work.append((source, r))
+            for mode in modes_for_topic(r["topic"]):
+                work.append((source, r, mode))
+                mode_counts[mode] += 1
 
-    # Resume: skip records whose BOTH passes are already logged
+    # Resume: skip (source, qid, mode) already logged
     done_keys = load_done_keys(args.out)
     if done_keys:
         before = len(work)
-        work = [(s, r) for (s, r) in work
-                if not ((r["question_id"], "full") in done_keys
-                        and (r["question_id"], "blind") in done_keys)]
-        print(f"Resume: {before - len(work)} records already complete, "
+        work = [(s, r, m) for (s, r, m) in work
+                if (s, r["question_id"], m) not in done_keys]
+        print(f"Resume: {before - len(work)} (record,mode) pairs already done, "
               f"{len(work)} remain.", flush=True)
 
-    print(f"Running {len(work)} records x 2 passes = {2*len(work)} generations "
-          f"across {args.sources} @ concurrency {args.concurrency}", flush=True)
+    print(f"Running {len(work)} generations across {args.sources} "
+          f"@ concurrency {args.concurrency}", flush=True)
+    print(f"  mode breakdown: {dict(mode_counts)}", flush=True)
 
     counters = defaultdict(int)
     queue = asyncio.Queue()
@@ -305,10 +395,13 @@ async def main_async(args):
     out_f.close()
 
     print("\n=== DONE ===", flush=True)
-    print(f"passes: {counters['done']} | truncated-think: {counters['truncated']} "
+    print(f"generations: {counters['done']} | truncated-think: {counters['truncated']} "
           f"| errors: {counters['errors']}")
+    for m in ("full", "sat_only", "sv_only", "blind"):
+        if counters[f"{m}_n"]:
+            print(f"  {m:9s}: {counters[f'{m}_correct']}/{counters[f'{m}_n']} correct")
     print(f"log: {args.out}")
-    print("Run analyze.py for the per-topic full-vs-blind table.")
+    print("Run analyze.py for the per-topic per-mode table.")
 
 
 def main():

@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
-"""Per-topic image-ablation analysis over ablation_log.jsonl.
+"""Per-topic, per-mode ablation analysis over ablation_log.jsonl.
 
-Reads the log produced by run_ablation.py and prints, per (source, topic):
-  full%   blind%   gap   visual/leaked/hard/regress buckets   truncated
+Modes: full (all imgs) / sat_only / sv_only / blind (no imgs).
+Not every topic has every mode (satellite_marked topics are full/blind only;
+camera_direction has no sv_only). Missing modes print as '-'.
 
-gap = full% - blind% = how much the images actually help = visual dependency.
-High blind% (≈ full%) => topic is solvable without vision => structural leak.
+Reads what each (source, topic, mode) scored and reports accuracy side by side so
+you can see which perspective carries the signal:
+  full≈blind                  -> text/structural leak (vision doesn't help)
+  sat_only≈full, sv_only low  -> satellite alone solves it
+  sv_only≈full, sat_only low  -> street-view alone solves it
+  full > both single-view     -> genuinely needs BOTH perspectives
 
-This is the publishable "teacher benchmarked on our dataset" table. Safe to run
-mid-run on a partial log.
-
+Safe to run mid-run on a partial log.
   python analyze.py
   python analyze.py --source benchmark
 """
 import argparse
 import json
 from collections import defaultdict
+
+MODES = ["full", "sat_only", "sv_only", "blind"]
 
 
 def main():
@@ -24,9 +29,9 @@ def main():
     ap.add_argument("--source", default=None, help="filter to one source")
     args = ap.parse_args()
 
-    # key -> {full: letter/correct, blind: letter/correct}
-    rec = defaultdict(dict)
-    errors = trunc = 0
+    # (source, topic, mode) -> [correct, total]
+    agg = defaultdict(lambda: [0, 0])
+    trunc = errors = 0
     with open(args.log) as f:
         for line in f:
             try:
@@ -36,40 +41,39 @@ def main():
             if "error" in r:
                 errors += 1
                 continue
-            if args.source and r["source"] != args.source:
+            if args.source and r.get("source") != args.source:
                 continue
-            rec[(r["source"], r["question_id"], r["topic"])][r["pass"]] = r["correct"]
+            key = (r["source"], r["topic"], r["mode"])
+            agg[key][1] += 1
+            agg[key][0] += int(r["correct"])
             if r.get("think_truncated"):
                 trunc += 1
 
-    # aggregate per (source, topic) over records with BOTH passes
-    agg = defaultdict(lambda: defaultdict(int))
-    for (source, qid, topic), passes in rec.items():
-        if "full" not in passes or "blind" not in passes:
-            continue
-        fc, bc = passes["full"], passes["blind"]
-        a = agg[(source, topic)]
-        a["n"] += 1
-        a["full"] += fc
-        a["blind"] += bc
-        bucket = ("visual" if fc and not bc else "leaked" if fc and bc
-                  else "regress" if not fc and bc else "hard")
-        a[bucket] += 1
+    # collect topics per source
+    rows = defaultdict(dict)  # (source, topic) -> mode -> (corr,tot)
+    for (source, topic, mode), (c, t) in agg.items():
+        rows[(source, topic)][mode] = (c, t)
 
-    print(f"{'source':11s} {'topic':22s} {'n':>5} {'full%':>6} {'blind%':>7} "
-          f"{'gap':>5} {'vis':>5} {'leak':>5} {'hard':>5} {'regr':>5}")
-    print("-" * 92)
-    for (source, topic) in sorted(agg):
-        a = agg[(source, topic)]
-        n = a["n"] or 1
-        fp, bp = 100 * a["full"] / n, 100 * a["blind"] / n
-        print(f"{source:11s} {topic:22s} {a['n']:>5} {fp:>5.0f}% {bp:>6.0f}% "
-              f"{fp-bp:>+4.0f}% {a['visual']:>5} {a['leaked']:>5} "
-              f"{a['hard']:>5} {a['regress']:>5}")
+    hdr = f"{'source':11s} {'topic':22s} {'n':>5}"
+    for m in MODES:
+        hdr += f" {m:>9}"
+    print(hdr)
+    print("-" * len(hdr))
+    for (source, topic) in sorted(rows):
+        modes = rows[(source, topic)]
+        n = max((t for (_, t) in modes.values()), default=0)
+        line = f"{source:11s} {topic:22s} {n:>5}"
+        for m in MODES:
+            if m in modes:
+                c, t = modes[m]
+                line += f" {100*c/(t or 1):>8.0f}%"
+            else:
+                line += f" {'-':>9}"
+        print(line)
 
-    print(f"\ncomplete record-pairs: {sum(a['n'] for a in agg.values())} | "
-          f"truncated-think passes: {trunc} | errors: {errors}")
-    print("gap>0 = vision helps; gap≈0 with high blind% = structural leak.")
+    print(f"\ntruncated-think: {trunc} | errors: {errors}")
+    print("Read: full≈blind=leak | one single-view≈full=that perspective solves it"
+          " | full>both=needs both.")
 
 
 if __name__ == "__main__":
