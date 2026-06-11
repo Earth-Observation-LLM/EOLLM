@@ -13,13 +13,22 @@
 # Run from the `vllm` conda/venv env you already use.
 set -euo pipefail
 
-MODEL="cyankiwi/Qwen3.6-35B-A3B-AWQ-4bit"
+MODEL="cyankiwi/Qwen3.5-27B-AWQ-INT8-INT4"
 PORT="${PORT:-8000}"
 
 # flashinfer-jit-cache (0.6.12) and flashinfer (0.6.11) are one patch apart in
 # this env; the strict version check aborts startup. They're runtime-compatible,
 # so bypass the check rather than churn the env.
 export FLASHINFER_DISABLE_VERSION_CHECK=1
+
+# FlashInfer mis-probes the RTX 5090 (Blackwell sm_120) and aborts with
+# "requires sm75 or higher" instead of falling back. Two places touch it:
+#  1) attention backend — force a Blackwell-friendly one.
+#  2) the top-k/top-p sampler — explicitly opt OUT so it uses the PyTorch-native
+#     sampler instead of running FlashInfer's broken capability probe. (We run
+#     greedy/temp-0 anyway, so the native sampler is fine.)
+export VLLM_ATTENTION_BACKEND=FLASH_ATTN
+export VLLM_USE_FLASHINFER_SAMPLER=0
 
 # --enable-prefix-caching: the system prompt + reasoning instructions are an
 #   identical prefix across all samples, and the full/blind pass of one sample

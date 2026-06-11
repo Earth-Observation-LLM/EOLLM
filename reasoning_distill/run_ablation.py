@@ -74,18 +74,22 @@ SOURCES = {
 
 # Per-mode system prompts. Each is HONEST about the inputs actually shown, so
 # the model never claims a perspective it can't see (avoids confabulation).
-_THINK_TAIL = ("Think step by step, then answer the multiple-choice question. "
-               "End your reply with the single letter of the correct answer (A, B, C, or D).")
+# We tell it to be concise (Qwen3.5 over-thinks) and to emit a strict JSON
+# answer-only object after thinking, so parsing is unambiguous.
+_THINK_TAIL = (
+    "Reason concisely — do not over-think; reach a decision efficiently. "
+    "After your reasoning, output ONLY a JSON object on its own line: "
+    '{"answer": "X"} where X is one of A, B, C, or D.')
 SYS_PROMPTS = {
     "full":     "You are an urban geography expert analyzing satellite and street-level imagery. " + _THINK_TAIL,
     "sat_only": "You are an urban geography expert analyzing satellite imagery. " + _THINK_TAIL,
     "sv_only":  "You are an urban geography expert analyzing street-level imagery. " + _THINK_TAIL,
-    "blind":    "You are an urban geography expert. "
-                "Think step by step about the question and options, then answer. "
-                "End your reply with the single letter of the correct answer (A, B, C, or D).",
+    "blind":    "You are an urban geography expert. " + _THINK_TAIL,
 }
 
-THINK_BUDGET = 12000   # tokens allowed inside <think> before we force-close
+THINK_BUDGET = 8000    # tokens allowed inside <think> before we force-close.
+                       # Qwen3.5 tends to over-think; 8k caps wall-clock while
+                       # leaving room for genuine reasoning (median was ~5k).
 ANSWER_BUDGET = 64     # tokens for the forced final answer in phase 2
 # temperature 0 = greedy decoding for full determinism / reproducible traces.
 # (top_p/top_k are neutralized to greedy-equivalent so they don't interfere.)
@@ -200,38 +204,64 @@ def modes_for_topic(topic):
 
 
 def parse_letter(text):
-    """Robust answer-letter extraction (ignores letters inside words)."""
+    """Robust answer-letter extraction. Prefers the {"answer":"X"} JSON we ask
+    for; falls back to plain-text heuristics (ignoring letters inside words)."""
     import re
     if not text:
         return None
     t = text.strip()
+    # 1) JSON answer object (what the prompt requests) — take the LAST one.
+    js = re.findall(r'"answer"\s*:\s*"?\(?([ABCD])\)?"?', t, re.I)
+    if js:
+        return js[-1].upper()
+    # 2) whole reply is just a letter: "C", "C."
     m = re.fullmatch(r"\(?([ABCD])\)?[.):]?", t, re.I)
     if m:
         return m.group(1).upper()
+    # 3) "Answer: X" near the end
     m = re.search(r"answer\s*(?:is|:)?\s*\(?([ABCD])\)?\b", t, re.I)
     if m:
         return m.group(1).upper()
-    # last standalone A-D token wins (the final commitment)
+    # 4) last standalone A-D token wins (the final commitment)
     matches = re.findall(r"(?<![A-Za-z])([ABCD])(?![A-Za-z])", t)
     return matches[-1].upper() if matches else None
 
 
-async def chat(session, base_url, messages, max_tokens, **extra):
+class ContextOverflow(Exception):
+    """A 400 from the server, almost always max-context exceeded."""
+
+
+async def chat(session, base_url, messages, max_tokens, _attempt=0, **extra):
     payload = {
         "model": "teacher", "messages": messages,
         "max_tokens": max_tokens, "temperature": TEMPERATURE,
         "top_p": TOP_P, "top_k": TOP_K, **extra,
     }
-    async with session.post(f"{base_url}/v1/chat/completions", json=payload) as r:
-        r.raise_for_status()
-        data = await r.json()
+    try:
+        async with session.post(f"{base_url}/v1/chat/completions", json=payload) as r:
+            if r.status == 400:
+                # context overflow / bad request — not retryable as-is
+                raise ContextOverflow(await r.text())
+            r.raise_for_status()
+            data = await r.json()
+    except (aiohttp.ClientConnectionError, aiohttp.ServerDisconnectedError,
+            asyncio.TimeoutError) as e:
+        # transient — exponential backoff up to 4 tries
+        if _attempt >= 4:
+            raise
+        await asyncio.sleep(2 ** _attempt)
+        return await chat(session, base_url, messages, max_tokens,
+                          _attempt=_attempt + 1, **extra)
     choice = data["choices"][0]
     msg = choice["message"]
+    # This vLLM build returns the <think> body under "reasoning" (not
+    # "reasoning_content"); keep the fallback for portability.
+    reasoning = msg.get("reasoning") or msg.get("reasoning_content") or ""
     return {
-        "reasoning": msg.get("reasoning_content") or "",
+        "reasoning": reasoning,
         "content": msg.get("content") or "",
         "finish_reason": choice.get("finish_reason"),
-        "usage": data.get("usage", {}),
+        "usage": data.get("usage", {}) or {},
     }
 
 
@@ -239,28 +269,50 @@ async def run_one(session, base_url, record, base_dir, mode):
     """One pass for `mode` with budgeted thinking + forced-close fallback."""
     t0 = time.monotonic()
     messages = build_messages(record, base_dir, mode)
-    r1 = await chat(session, base_url, messages, THINK_BUDGET + ANSWER_BUDGET)
+    ctx_overflow = False
+    try:
+        r1 = await chat(session, base_url, messages, THINK_BUDGET + ANSWER_BUDGET)
+    except ContextOverflow:
+        # Prompt + image tokens left too little room for the full think budget.
+        # Retry with a much smaller budget so we still get an answer.
+        ctx_overflow = True
+        r1 = await chat(session, base_url, messages, 2048)
 
     reasoning, answer_text = r1["reasoning"], r1["content"]
     think_truncated = False
 
-    # Spiral case: budget hit while still inside <think> (parser put everything in
-    # reasoning_content, content empty, finish_reason=length). Force-close.
+    # Spiral case: budget hit while still inside <think> (content empty,
+    # finish_reason=length). Force the model to commit to an answer.
     if not answer_text.strip() and r1["finish_reason"] == "length":
         think_truncated = True
-        forced = messages + [{
-            "role": "assistant",
-            "content": f"<think>\n{reasoning}\n</think>\n\n",
-        }]
-        # continue_final_message: append generation to the assistant turn we just
-        # supplied (the force-closed think block) instead of starting a new turn.
-        # These are top-level chat-request fields in vLLM, not extra_body.
-        r2 = await chat(session, base_url, forced, ANSWER_BUDGET,
-                        add_generation_prompt=False,
-                        continue_final_message=True)
-        answer_text = r2["content"] or r2["reasoning"]
-        r1["usage"] = {k: r1["usage"].get(k, 0) + r2["usage"].get(k, 0)
-                       for k in set(r1["usage"]) | set(r2["usage"])}
+        # Follow-up turn: feed back the (truncated) thinking and demand only the
+        # JSON answer. A plain new user turn is more robust across vLLM template
+        # quirks than continue_final_message (which 400s on multi-image prompts).
+        followup = messages + [
+            {"role": "assistant",
+             "content": f"<think>\n{reasoning}\n</think>"},
+            {"role": "user",
+             "content": 'Based on your reasoning above, give your final answer now '
+                        'as ONLY this JSON object: {"answer": "X"} '
+                        'where X is A, B, C, or D.'},
+        ]
+        try:
+            r2 = await chat(session, base_url, followup, ANSWER_BUDGET)
+            answer_text = r2["content"] or r2["reasoning"]
+            r2usage = r2["usage"]
+        except ContextOverflow:
+            # No room even for the follow-up — fall back to parsing the
+            # conclusion straight out of the truncated reasoning.
+            answer_text = reasoning[-400:]
+            r2usage = {}
+        merged = {}
+        for k in set(r1["usage"]) | set(r2usage):
+            a, b = r1["usage"].get(k), r2usage.get(k)
+            if isinstance(a, (int, float)) or isinstance(b, (int, float)):
+                merged[k] = (a or 0) + (b or 0)
+            else:
+                merged[k] = a if a is not None else b
+        r1["usage"] = merged
 
     letter = parse_letter(answer_text) or parse_letter(reasoning)
     return {
@@ -269,6 +321,7 @@ async def run_one(session, base_url, record, base_dir, mode):
         "letter": letter,
         "finish_reason": r1["finish_reason"],
         "think_truncated": think_truncated,
+        "ctx_overflow": ctx_overflow,
         "usage": r1["usage"],
         "latency_s": round(time.monotonic() - t0, 2),
     }
@@ -295,6 +348,7 @@ async def worker(name, queue, session, base_url, out_f, lock, counters):
                 "gt": gt, "letter": res["letter"], "correct": correct,
                 "reasoning": res["reasoning"], "answer_text": res["answer_text"],
                 "think_truncated": res["think_truncated"],
+                "ctx_overflow": res["ctx_overflow"],
                 "finish_reason": res["finish_reason"],
                 "usage": res["usage"], "latency_s": res["latency_s"],
             }

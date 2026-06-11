@@ -31,7 +31,8 @@ def main():
 
     # (source, topic, mode) -> [correct, total]
     agg = defaultdict(lambda: [0, 0])
-    trunc = errors = 0
+    trunc = errors = overflow = 0
+    think_chars = []
     with open(args.log) as f:
         for line in f:
             try:
@@ -48,6 +49,9 @@ def main():
             agg[key][0] += int(r["correct"])
             if r.get("think_truncated"):
                 trunc += 1
+            if r.get("ctx_overflow"):
+                overflow += 1
+            think_chars.append(len(r.get("reasoning", "") or ""))
 
     # collect topics per source
     rows = defaultdict(dict)  # (source, topic) -> mode -> (corr,tot)
@@ -71,7 +75,13 @@ def main():
                 line += f" {'-':>9}"
         print(line)
 
-    print(f"\ntruncated-think: {trunc} | errors: {errors}")
+    import statistics
+    tc = sorted(think_chars) or [0]
+    med = statistics.median(tc)
+    p95 = tc[min(len(tc) - 1, int(0.95 * len(tc)))]
+    print(f"\nthink chars: median {int(med)} p95 {int(p95)} max {max(tc)}  "
+          f"(~chars/4 ≈ tokens)")
+    print(f"forced-close(truncated): {trunc} | ctx-overflow: {overflow} | errors: {errors}")
     print("Read: full≈blind=leak | one single-view≈full=that perspective solves it"
           " | full>both=needs both.")
 
