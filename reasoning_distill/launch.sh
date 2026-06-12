@@ -36,7 +36,7 @@ start_run() {
   fi
   echo "Starting ablation run (per-city train+val + benchmark, both passes) in screen 'ablation'..."
   screen -dmS ablation bash -lc \
-    "source /home/ezel/miniconda3/etc/profile.d/conda.sh && conda activate $VLLM_ENV && python $RD/run_ablation.py --concurrency 24 2>&1 | tee $RD/run.log"
+    "source /home/ezel/miniconda3/etc/profile.d/conda.sh && conda activate $VLLM_ENV && python $RD/run_ablation.py --concurrency 32 2>&1 | tee $RD/run.log"
   echo "Started. Watch progress: tail -f $RD/run.log"
 }
 

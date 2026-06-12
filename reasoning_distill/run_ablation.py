@@ -87,9 +87,10 @@ SYS_PROMPTS = {
     "blind":    "You are an urban geography expert. " + _THINK_TAIL,
 }
 
-THINK_BUDGET = 8000    # tokens allowed inside <think> before we force-close.
-                       # Qwen3.5 tends to over-think; 8k caps wall-clock while
-                       # leaving room for genuine reasoning (median was ~5k).
+THINK_BUDGET = 4000    # tokens allowed inside <think> before we force-close.
+                       # Qwen3.5 over-thinks hard (median ~5k tok, spirals to
+                       # 8k+); 4k roughly halves wall-clock for the 105k-gen run.
+                       # Spilled-over thinking is force-closed into a JSON answer.
 ANSWER_BUDGET = 64     # tokens for the forced final answer in phase 2
 # temperature 0 = greedy decoding for full determinism / reproducible traces.
 # (top_p/top_k are neutralized to greedy-equivalent so they don't interfere.)
