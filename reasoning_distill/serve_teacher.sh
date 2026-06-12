@@ -44,7 +44,7 @@ exec vllm serve "$MODEL" \
   --served-model-name teacher \
   --port "$PORT" \
   --dtype bfloat16 \
-  --max-model-len 32768 \
+  --max-model-len 26384 \
   --gpu-memory-utilization 0.94 \
   --max-num-seqs 32 \
   --max-num-batched-tokens 8192 \
