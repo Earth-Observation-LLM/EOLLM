@@ -43,7 +43,24 @@ import sys
 
 import aiohttp
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import summary as summ  # noqa: E402  (live structured summary builder)
+
 ROOT = Path("/home/ezel/Development/EOLLM/dataset_content/EODATA_compressed_final")
+RESULTS_DIR = Path("/home/ezel/Development/EOLLM/reasoning_distill/results")
+
+# Set from CLI in main(); stamped into every row so a combined log stays
+# attributable per model.
+MODEL_LABEL = "unknown"
+# The name the vLLM server answers to (its --served-model-name). Different
+# servers may use different names; settable so we can target any server.
+SERVED_NAME = "teacher"
+
+# Live-summary cadence: refresh at least every this many completed generations,
+# AND at least every this many seconds — whichever comes first — so the live
+# view never goes stale and the final partial batch (<100) is never missed.
+SUMMARY_EVERY_N = 100
+SUMMARY_EVERY_S = 60
 
 # Reuse the dataset's OWN image builders so every image we send is pixel-identical
 # to what training/eval feeds the model (mega tiling, arrows, corner labels, dot).
@@ -87,11 +104,15 @@ SYS_PROMPTS = {
     "blind":    "You are an urban geography expert. " + _THINK_TAIL,
 }
 
-THINK_BUDGET = 4000    # tokens allowed inside <think> before we force-close.
-                       # Qwen3.5 over-thinks hard (median ~5k tok, spirals to
-                       # 8k+); 4k roughly halves wall-clock for the 105k-gen run.
-                       # Spilled-over thinking is force-closed into a JSON answer.
-ANSWER_BUDGET = 64     # tokens for the forced final answer in phase 2
+THINK_BUDGET = 8000    # tokens allowed inside <think> before we force-close.
+                       # 8k lets most traces complete naturally (good distillation
+                       # material); spilled-over thinking is force-closed into a
+                       # JSON answer so an answer is always captured.
+ANSWER_BUDGET = 256    # tokens for the forced final answer in phase 2 — roomy
+                       # enough that the model can restate before the JSON.
+PARSE_RETRIES = 4      # if no A/B/C/D parses out, re-run the pass up to 4x
+                       # (a malformed/missing JSON is a parse miss, not a real
+                       # answer — give it patience before recording a failure).
 # temperature 0 = greedy decoding for full determinism / reproducible traces.
 # (top_p/top_k are neutralized to greedy-equivalent so they don't interfere.)
 TEMPERATURE = 0.0
@@ -186,22 +207,23 @@ def build_messages(record, base_dir, mode):
     ]
 
 
-# Which ablation modes apply to each topic. satellite_marked topics: only
-# full/blind (sat_only==full, no sv). camera_direction: no sv_only (arrows ARE
-# the options). mismatch_* : all four. See reference_image_modes memory.
+# Which ablation modes apply to each topic.
+# - satellite_marked topics (8): only full/blind — sat_only≡full, no SV exists.
+# - mismatch_* (4): all four — sat and SV are separate images, both removable.
+# - camera_direction: full/blind ONLY. Its sat_only would drop the query SV, but
+#   the question ("which arrow matches THIS street view?") is undefined without
+#   it, and sv_only would drop the 4 arrow-satellites that ARE the answer options.
+#   So neither single-perspective mode is meaningful here. (Confirmed in review.)
 BOTH_PERSPECTIVE_FULL = {  # full / sat_only / sv_only / blind
     "mismatch_binary_easy", "mismatch_binary_hard",
     "mismatch_mcq_easy", "mismatch_mcq_hard",
 }
-CAMERA = {"camera_direction"}  # full / sat_only / blind (no sv_only)
 
 
 def modes_for_topic(topic):
     if topic in BOTH_PERSPECTIVE_FULL:
         return ["full", "sat_only", "sv_only", "blind"]
-    if topic in CAMERA:
-        return ["full", "sat_only", "blind"]
-    return ["full", "blind"]  # the 8 satellite_marked topics
+    return ["full", "blind"]  # satellite_marked topics + camera_direction
 
 
 def parse_letter(text):
@@ -234,7 +256,7 @@ class ContextOverflow(Exception):
 
 async def chat(session, base_url, messages, max_tokens, _attempt=0, **extra):
     payload = {
-        "model": "teacher", "messages": messages,
+        "model": SERVED_NAME, "messages": messages,
         "max_tokens": max_tokens, "temperature": TEMPERATURE,
         "top_p": TOP_P, "top_k": TOP_K, **extra,
     }
@@ -328,7 +350,23 @@ async def run_one(session, base_url, record, base_dir, mode):
     }
 
 
-async def worker(name, queue, session, base_url, out_f, lock, counters):
+async def run_one_with_retries(session, base_url, record, base_dir, mode):
+    """run_one, but if no A/B/C/D parses out, retry up to PARSE_RETRIES times.
+    A missing/malformed answer is a parse miss (model rambled, bad JSON), not a
+    genuine response — give it patience before recording a failed parse."""
+    res = None
+    for attempt in range(PARSE_RETRIES + 1):
+        res = await run_one(session, base_url, record, base_dir, mode)
+        if res["letter"]:
+            res["parse_attempts"] = attempt + 1
+            return res
+    # exhausted retries — return the last attempt with letter=None
+    res["parse_attempts"] = PARSE_RETRIES + 1
+    return res
+
+
+async def worker(name, queue, session, base_url, out_f, lock, counters,
+                 all_rows, maybe_flush_summary_locked=None):
     while True:
         item = await queue.get()
         if item is None:
@@ -338,9 +376,10 @@ async def worker(name, queue, session, base_url, out_f, lock, counters):
         base_dir = SOURCES[source][1]
         gt = record.get("answer")
         try:
-            res = await run_one(session, base_url, record, base_dir, mode)
+            res = await run_one_with_retries(session, base_url, record, base_dir, mode)
             correct = res["letter"] == gt
             row = {
+                "model": MODEL_LABEL,
                 "question_id": record["question_id"],
                 "sample_id": record.get("sample_id"),
                 "source": source, "mode": mode,
@@ -350,20 +389,26 @@ async def worker(name, queue, session, base_url, out_f, lock, counters):
                 "reasoning": res["reasoning"], "answer_text": res["answer_text"],
                 "think_truncated": res["think_truncated"],
                 "ctx_overflow": res["ctx_overflow"],
+                "parse_attempts": res.get("parse_attempts", 1),
                 "finish_reason": res["finish_reason"],
                 "usage": res["usage"], "latency_s": res["latency_s"],
             }
             async with lock:
                 out_f.write(json.dumps(row, ensure_ascii=False) + "\n")
                 out_f.flush()
+                all_rows.append(row)          # in-memory mirror for live summary
                 counters["done"] += 1
                 counters[f"{mode}_correct"] += int(correct)
                 counters[f"{mode}_n"] += 1
                 if res["think_truncated"]:
                     counters["truncated"] += 1
+                self_log(counters)
+                if maybe_flush_summary_locked is not None:
+                    maybe_flush_summary_locked()  # sync, under lock
         except Exception as e:  # one bad (record, mode) shouldn't kill the run
             async with lock:
                 out_f.write(json.dumps({
+                    "model": MODEL_LABEL,
                     "question_id": record["question_id"], "source": source,
                     "mode": mode, "error": repr(e),
                 }, ensure_ascii=False) + "\n")
@@ -371,34 +416,71 @@ async def worker(name, queue, session, base_url, out_f, lock, counters):
                 counters["errors"] += 1
         finally:
             queue.task_done()
-            if counters["done"] % 50 == 0:
-                def pct(m):
-                    n = counters[f"{m}_n"] or 1
-                    return 100 * counters[f"{m}_correct"] / n
-                print(f"  {counters['done']} passes | "
-                      f"full {pct('full'):.0f}% sat {pct('sat_only'):.0f}% "
-                      f"sv {pct('sv_only'):.0f}% blind {pct('blind'):.0f}% | "
-                      f"trunc {counters['truncated']} err {counters['errors']}",
-                      flush=True)
 
 
-def load_done_keys(out_path):
-    """Set of (source, question_id, mode) already logged — for resume."""
-    done = set()
-    if not os.path.exists(out_path):
-        return done
-    with open(out_path) as f:
-        for line in f:
-            try:
-                r = json.loads(line)
-            except Exception:
-                continue
-            if "mode" in r and "question_id" in r and "error" not in r:
-                done.add((r.get("source"), r["question_id"], r["mode"]))
-    return done
+def self_log(counters):
+    """Periodic stdout progress line (called under lock)."""
+    if counters["done"] % 50 == 0 and counters["done"] > 0:
+        def pct(m):
+            n = counters[f"{m}_n"] or 1
+            return 100 * counters[f"{m}_correct"] / n
+        print(f"  {counters['done']} done | "
+              f"full {pct('full'):.0f}% sat {pct('sat_only'):.0f}% "
+              f"sv {pct('sv_only'):.0f}% blind {pct('blind'):.0f}% | "
+              f"trunc {counters['truncated']} err {counters['errors']}",
+              flush=True)
+
+
+def write_summary(out_dir, rows, meta):
+    """Build the structured summary from the IN-MEMORY rows and write
+    summary.json + .md. Avoids re-parsing the (growing) JSONL each flush —
+    critical at 100k+ rows where a re-read would block the event loop."""
+    s = summ.build_summary(rows, meta=meta)
+    # atomic-ish write (write temp then replace) so a reader never sees a partial file
+    for name, payload in (("summary.json", json.dumps(s, indent=2, ensure_ascii=False)),
+                          ("summary.md", summ.render_markdown(s))):
+        tmp = out_dir / (name + ".tmp")
+        tmp.write_text(payload)
+        tmp.replace(out_dir / name)
+    return s
+
+
+async def summary_refresher(out_dir, all_rows, meta, counters, stop_evt, total, t_start):
+    """Background task: refresh the live summary every SUMMARY_EVERY_S seconds
+    from the in-memory rows. Guarantees a time-based floor between N-triggers."""
+    while not stop_evt.is_set():
+        try:
+            await asyncio.wait_for(stop_evt.wait(), timeout=SUMMARY_EVERY_S)
+        except asyncio.TimeoutError:
+            pass
+        done = counters["done"]
+        elapsed = max(1e-6, time.monotonic() - t_start)
+        gpm = round(done / elapsed * 60, 1)
+        remaining = max(0, total - done)
+        eta_min = round(remaining / gpm, 1) if gpm > 0 else None
+        meta.update({
+            "updated": _now_iso(),
+            "gens_per_min": gpm,
+            "eta": f"{eta_min} min" if eta_min is not None else None,
+        })
+        write_summary(out_dir, list(all_rows), meta)
+
+
+def _now_iso():
+    # Date.now() is unavailable in some sandboxes; use time.time via strftime.
+    import datetime
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 async def main_async(args):
+    global MODEL_LABEL, SERVED_NAME
+    MODEL_LABEL = args.label
+    SERVED_NAME = args.served_name
+
+    out_dir = RESULTS_DIR / args.label
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log_path = str(out_dir / "ablation_log.jsonl")
+
     # Build worklist: one (source, record, mode) item per applicable mode.
     work = []
     mode_counts = defaultdict(int)
@@ -414,9 +496,15 @@ async def main_async(args):
             for mode in modes_for_topic(r["topic"]):
                 work.append((source, r, mode))
                 mode_counts[mode] += 1
+    total_planned = len(work)
 
-    # Resume: skip (source, qid, mode) already logged
-    done_keys = load_done_keys(args.out)
+    # Resume: skip (source, qid, mode) already logged in THIS model's log, and
+    # PRELOAD the prior rows so the live summary reflects total progress (not
+    # just this process's new work) and we never re-parse the file mid-run.
+    all_rows = summ.load_rows(log_path) if os.path.exists(log_path) else []
+    all_rows = [r for r in all_rows if "error" not in r]  # drop old error rows
+    done_keys = {(r.get("source"), r.get("question_id"), r.get("mode"))
+                 for r in all_rows if r.get("question_id") and r.get("mode")}
     if done_keys:
         before = len(work)
         work = [(s, r, m) for (s, r, m) in work
@@ -424,52 +512,112 @@ async def main_async(args):
         print(f"Resume: {before - len(work)} (record,mode) pairs already done, "
               f"{len(work)} remain.", flush=True)
 
-    print(f"Running {len(work)} generations across {args.sources} "
+    print(f"[{args.label}] Running {len(work)} generations across {args.sources} "
           f"@ concurrency {args.concurrency}", flush=True)
     print(f"  mode breakdown: {dict(mode_counts)}", flush=True)
+    print(f"  results dir: {out_dir}", flush=True)
+
+    meta = {
+        "model": args.label,
+        "model_name": args.model_name,
+        "served_name": args.served_name,
+        "base_url": args.base_url,
+        "sources": args.sources,
+        "think_budget": THINK_BUDGET,
+        "answer_budget": ANSWER_BUDGET,
+        "parse_retries": PARSE_RETRIES,
+        "temperature": TEMPERATURE,
+        "concurrency": args.concurrency,
+        "total": total_planned,
+        "already_done": total_planned - len(work),
+        "started": _now_iso(),
+    }
+    (out_dir / "run_meta.json").write_text(json.dumps(meta, indent=2))
 
     counters = defaultdict(int)
+    counters["_summary_dirty_at"] = 0
     queue = asyncio.Queue()
     for item in work:
         queue.put_nowait(item)
     for _ in range(args.concurrency):
         queue.put_nowait(None)
 
-    out_f = open(args.out, "a")
+    out_f = open(log_path, "a")
     lock = asyncio.Lock()
-    timeout = aiohttp.ClientTimeout(total=900)
+    t_start = time.monotonic()
+    stop_evt = asyncio.Event()
+    done_at_start = len(all_rows)  # for accurate throughput on resume
+    # N-based summary flush — MUST be called while holding `lock` (it reads the
+    # shared counters/all_rows). The dirty_at guard makes it fire once per N
+    # even with many workers contending.
+    def maybe_flush_summary_locked():
+        if counters["done"] - counters["_summary_dirty_at"] >= SUMMARY_EVERY_N:
+            counters["_summary_dirty_at"] = counters["done"]
+            elapsed = max(1e-6, time.monotonic() - t_start)
+            new_done = counters["done"] - done_at_start
+            gpm = round(new_done / elapsed * 60, 1)
+            meta.update({"updated": _now_iso(), "gens_per_min": gpm,
+                         "eta": f"{round(max(0,total_planned-counters['done'])/gpm,1)} min" if gpm else None})
+            write_summary(out_dir, list(all_rows), meta)
+
+    timeout = aiohttp.ClientTimeout(total=1200)
     connector = aiohttp.TCPConnector(limit=args.concurrency + 4)
     async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
+        refresher = asyncio.create_task(
+            summary_refresher(out_dir, all_rows, meta, counters, stop_evt,
+                              total_planned, t_start))
         workers = [
             asyncio.create_task(
-                worker(f"w{i}", queue, session, args.base_url, out_f, lock, counters))
+                worker(f"w{i}", queue, session, args.base_url, out_f, lock,
+                       counters, all_rows, maybe_flush_summary_locked))
             for i in range(args.concurrency)
         ]
         await queue.join()
         await asyncio.gather(*workers)
+        stop_evt.set()
+        await refresher
     out_f.close()
+
+    # FINAL flush — guarantees the last partial batch (<SUMMARY_EVERY_N) is
+    # captured. Rebuild from the LOG (authoritative, includes error rows) so the
+    # final summary is complete even if all_rows missed anything.
+    meta["updated"] = _now_iso()
+    meta["finished"] = _now_iso()
+    final = write_summary(out_dir, summ.load_rows(log_path), meta)
 
     print("\n=== DONE ===", flush=True)
     print(f"generations: {counters['done']} | truncated-think: {counters['truncated']} "
           f"| errors: {counters['errors']}")
+    print(f"overall acc: {final['progress']['overall_acc']}%")
     for m in ("full", "sat_only", "sv_only", "blind"):
         if counters[f"{m}_n"]:
             print(f"  {m:9s}: {counters[f'{m}_correct']}/{counters[f'{m}_n']} correct")
-    print(f"log: {args.out}")
-    print("Run analyze.py for the per-topic per-mode table.")
+    print(f"results: {out_dir}/  (ablation_log.jsonl, summary.json, summary.md)")
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--base-url", default="http://localhost:8000")
+    ap.add_argument("--served-name", default="teacher",
+                    help="the name the vLLM server answers to (--served-model-name)")
+    ap.add_argument("--model-name", default="qwen3.5-27b",
+                    help="human model identifier; label defaults to <model-name>_<timestamp>")
+    ap.add_argument("--served-model", dest="model_name",
+                    help="(alias of --model-name)")
+    ap.add_argument("--label", default=None,
+                    help="run label = results/<label>/ dir. Default: <model-name>_<timestamp>")
     ap.add_argument("--sources", nargs="+",
                     default=["train", "validation", "benchmark"],
                     choices=list(SOURCES))
-    ap.add_argument("--concurrency", type=int, default=24)
+    ap.add_argument("--concurrency", type=int, default=32)
     ap.add_argument("--limit-per-topic", type=int, default=0,
                     help="cap records per topic per source (smoke testing)")
-    ap.add_argument("--out", default="reasoning_distill/ablation_log.jsonl")
     args = ap.parse_args()
+    if not args.label:
+        import datetime
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe = args.model_name.replace("/", "-")
+        args.label = f"{safe}_{ts}"
     asyncio.run(main_async(args))
 
 

@@ -1,0 +1,7 @@
+results/
+*.log
+*_log.jsonl
+*.contaminated.jsonl
+smoke_log.jsonl
+stress_log.jsonl
+discovery_log.jsonl

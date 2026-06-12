@@ -3,9 +3,13 @@
 # can be monitored later. Idempotent-ish: refuses to start a screen that already
 # exists.
 #
-#   ./launch.sh server     # start vLLM in screen "teacher" (run first)
-#   ./launch.sh run        # start the ablation run in screen "ablation"
-#   ./launch.sh status     # list screens + tail logs
+#   ./launch.sh server                 # start vLLM in screen "teacher" (optional)
+#   ./launch.sh run [MODEL_NAME]       # ablation run in screen "ablation"
+#   ./launch.sh status                 # list screens + tail logs
+#
+#   MODEL_NAME defaults to qwen3.5-27b. Results land in reasoning_distill/
+#   results/<MODEL_NAME>_<timestamp>/.  Point at a different server/model via env:
+#     SERVED_NAME=teacher BASE_URL=http://localhost:8000 ./launch.sh run gemma4-31b
 #
 # Monitor:  screen -r teacher   |   screen -r ablation   (detach: Ctrl-a d)
 # Logs also tee'd to reasoning_distill/*.log so you can `tail -f` without attaching.
@@ -26,18 +30,21 @@ start_server() {
 }
 
 start_run() {
+  local MODEL_NAME="${1:-qwen3.5-27b}"
+  local BASE_URL="${BASE_URL:-http://localhost:8000}"
+  local SERVED_NAME="${SERVED_NAME:-teacher}"
   if screen -list | grep -q "\.ablation\b"; then
     echo "screen 'ablation' already running. Attach: screen -r ablation"; exit 1
   fi
   # Guard: server must be up
-  if ! curl -sf http://localhost:8000/v1/models >/dev/null 2>&1; then
-    echo "Teacher server not responding on :8000. Start it first: ./launch.sh server"
+  if ! curl -sf "$BASE_URL/v1/models" >/dev/null 2>&1; then
+    echo "Server not responding at $BASE_URL. Start your vLLM server first."
     exit 1
   fi
-  echo "Starting ablation run (per-city train+val + benchmark, both passes) in screen 'ablation'..."
+  echo "Starting ablation run for model='$MODEL_NAME' (per-city train+val + benchmark, all modes) in screen 'ablation'..."
   screen -dmS ablation bash -lc \
-    "source /home/ezel/miniconda3/etc/profile.d/conda.sh && conda activate $VLLM_ENV && python $RD/run_ablation.py --concurrency ${ABLATION_CONCURRENCY:-32} 2>&1 | tee $RD/run.log"
-  echo "Started. Watch progress: tail -f $RD/run.log"
+    "source /home/ezel/miniconda3/etc/profile.d/conda.sh && conda activate $VLLM_ENV && python $RD/run_ablation.py --model-name '$MODEL_NAME' --base-url '$BASE_URL' --served-name '$SERVED_NAME' --concurrency ${ABLATION_CONCURRENCY:-32} 2>&1 | tee $RD/run.log"
+  echo "Started. Watch progress: tail -f $RD/run.log   (results: $RD/results/${MODEL_NAME}_*/)"
 }
 
 status() {
@@ -48,7 +55,7 @@ status() {
 
 case "${1:-}" in
   server) start_server ;;
-  run)    start_run ;;
+  run)    start_run "${2:-}" ;;
   status) status ;;
-  *) echo "usage: $0 {server|run|status}"; exit 1 ;;
+  *) echo "usage: $0 {server|run [MODEL_NAME]|status}"; exit 1 ;;
 esac
