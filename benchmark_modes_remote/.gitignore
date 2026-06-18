@@ -1,0 +1,7 @@
+# Per-row prediction logs are large and fully reproducible from the run.
+# Keep the human-readable reports + summaries in git, not the raw predictions.
+results/**/*_predictions.jsonl
+results/**/*_roc_curves.json
+logs/
+__pycache__/
+*.pyc
