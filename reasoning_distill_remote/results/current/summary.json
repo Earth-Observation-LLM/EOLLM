@@ -1,0 +1,472 @@
+{
+  "meta": {
+    "model": "current",
+    "strategy": "current",
+    "model_name": "qwen3.5-9b-awq",
+    "served_name": "qwen9b",
+    "base_url": "http://localhost:8000",
+    "data": "/home/ain480/evaluation/EarthMLLMEval/data/benchmark_with_answers.jsonl",
+    "sources": [
+      "benchmark"
+    ],
+    "modes": [
+      "full",
+      "sat_only",
+      "sv_only",
+      "blind"
+    ],
+    "think_budget": 16000,
+    "answer_budget": 256,
+    "parse_retries": 4,
+    "temperature": 0.0,
+    "concurrency": 256,
+    "total": 180,
+    "already_done": 0,
+    "started": "2026-06-18 12:30:43",
+    "updated": "2026-06-18 12:30:49",
+    "gens_per_min": 1693.4,
+    "eta": "0.0 min",
+    "finished": "2026-06-18 12:30:49"
+  },
+  "progress": {
+    "completed": 180,
+    "errors": 0,
+    "ctx_overflow": 0,
+    "parse_retried": 0,
+    "unparsed_after_retries": 0,
+    "overall_acc": 45.56,
+    "median_latency_s": 5.6,
+    "median_completion_tok": 7
+  },
+  "accuracy_by_topic_mode": {
+    "amenity_richness": {
+      "full": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 0.0,
+        "n": 5
+      }
+    },
+    "building_height": {
+      "full": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 60.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 40.0,
+        "n": 5
+      }
+    },
+    "green_space": {
+      "full": {
+        "acc": 0.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 0.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 0.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 60.0,
+        "n": 5
+      }
+    },
+    "junction_type": {
+      "full": {
+        "acc": 80.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 60.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 100.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 80.0,
+        "n": 5
+      }
+    },
+    "land_use": {
+      "full": {
+        "acc": 60.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 60.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 40.0,
+        "n": 5
+      }
+    },
+    "road_surface": {
+      "full": {
+        "acc": 100.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 80.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 100.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 80.0,
+        "n": 5
+      }
+    },
+    "road_type": {
+      "full": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 20.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 20.0,
+        "n": 5
+      }
+    },
+    "transit_density": {
+      "full": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 60.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 20.0,
+        "n": 5
+      }
+    },
+    "urban_density": {
+      "full": {
+        "acc": 20.0,
+        "n": 5
+      },
+      "sat_only": {
+        "acc": 40.0,
+        "n": 5
+      },
+      "sv_only": {
+        "acc": 20.0,
+        "n": 5
+      },
+      "blind": {
+        "acc": 40.0,
+        "n": 5
+      }
+    }
+  },
+  "accuracy_by_source": {
+    "benchmark": {
+      "amenity_richness": {
+        "full": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 0.0,
+          "n": 5
+        }
+      },
+      "building_height": {
+        "full": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 60.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 40.0,
+          "n": 5
+        }
+      },
+      "green_space": {
+        "full": {
+          "acc": 0.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 0.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 0.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 60.0,
+          "n": 5
+        }
+      },
+      "junction_type": {
+        "full": {
+          "acc": 80.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 60.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 100.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 80.0,
+          "n": 5
+        }
+      },
+      "land_use": {
+        "full": {
+          "acc": 60.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 60.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 40.0,
+          "n": 5
+        }
+      },
+      "road_surface": {
+        "full": {
+          "acc": 100.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 80.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 100.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 80.0,
+          "n": 5
+        }
+      },
+      "road_type": {
+        "full": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 20.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 20.0,
+          "n": 5
+        }
+      },
+      "transit_density": {
+        "full": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 60.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 20.0,
+          "n": 5
+        }
+      },
+      "urban_density": {
+        "full": {
+          "acc": 20.0,
+          "n": 5
+        },
+        "sat_only": {
+          "acc": 40.0,
+          "n": 5
+        },
+        "sv_only": {
+          "acc": 20.0,
+          "n": 5
+        },
+        "blind": {
+          "acc": 40.0,
+          "n": 5
+        }
+      }
+    }
+  },
+  "think_stats": {
+    "full": {
+      "n": 45,
+      "median_think_tok": 0,
+      "p90_think_tok": 0,
+      "max_think_tok": 0,
+      "truncated": 0,
+      "truncated_pct": 0.0
+    },
+    "sat_only": {
+      "n": 45,
+      "median_think_tok": 0,
+      "p90_think_tok": 0,
+      "max_think_tok": 0,
+      "truncated": 0,
+      "truncated_pct": 0.0
+    },
+    "sv_only": {
+      "n": 45,
+      "median_think_tok": 0,
+      "p90_think_tok": 0,
+      "max_think_tok": 0,
+      "truncated": 0,
+      "truncated_pct": 0.0
+    },
+    "blind": {
+      "n": 45,
+      "median_think_tok": 0,
+      "p90_think_tok": 0,
+      "max_think_tok": 0,
+      "truncated": 0,
+      "truncated_pct": 0.0
+    }
+  },
+  "visual_dependency": {
+    "urban_density": {
+      "fb_regress": 1,
+      "neither_solves": 3,
+      "fb_hard": 3,
+      "sat_solves": 1,
+      "fb_leaked": 1,
+      "both_solve": 1
+    },
+    "junction_type": {
+      "fb_leaked": 3,
+      "sv_solves": 2,
+      "fb_visual": 1,
+      "both_solve": 3,
+      "fb_regress": 1
+    },
+    "building_height": {
+      "fb_hard": 3,
+      "sv_solves": 1,
+      "fb_leaked": 2,
+      "both_solve": 2,
+      "neither_solves": 2
+    },
+    "amenity_richness": {
+      "fb_visual": 2,
+      "sat_solves": 1,
+      "fb_hard": 3,
+      "neither_solves": 2,
+      "sv_solves": 1,
+      "both_solve": 1
+    },
+    "land_use": {
+      "fb_hard": 2,
+      "neither_solves": 2,
+      "fb_leaked": 2,
+      "both_solve": 2,
+      "fb_visual": 1,
+      "sv_solves": 1
+    },
+    "road_type": {
+      "fb_visual": 2,
+      "both_solve": 1,
+      "fb_regress": 1,
+      "neither_solves": 3,
+      "sat_solves": 1,
+      "fb_hard": 2
+    },
+    "transit_density": {
+      "fb_hard": 3,
+      "neither_solves": 2,
+      "fb_leaked": 1,
+      "both_solve": 2,
+      "fb_visual": 1,
+      "sat_solves": 1
+    },
+    "road_surface": {
+      "fb_leaked": 4,
+      "both_solve": 4,
+      "fb_visual": 1,
+      "sv_solves": 1
+    },
+    "green_space": {
+      "fb_regress": 3,
+      "neither_solves": 5,
+      "fb_hard": 2
+    }
+  }
+}

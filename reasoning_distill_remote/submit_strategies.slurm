@@ -65,8 +65,11 @@ ctx_for() {  # per-strategy max-model-len
   case "$1" in
     current)   echo 16384 ;;
     think16k)  echo 24576 ;;
-    multistep) echo 24576 ;;
-    *)         echo 24576 ;;
+    # multistep turns are UNCAPPED (model writes freely on each of 4 turns);
+    # give the accumulating chat history generous room so a long observe/reason
+    # turn never starves the later turns of context. 96GB box has the headroom.
+    multistep) echo 32768 ;;
+    *)         echo 32768 ;;
   esac
 }
 

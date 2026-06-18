@@ -112,16 +112,22 @@ TOP_K = -1
 
 THINK_BUDGET = 16000     # think16k: tokens allowed inside <think> before force-close.
 ANSWER_BUDGET = 256      # tokens for a forced/normal final JSON answer.
-# Per-turn budgets for the thinking-OFF strategies. Generous enough for a few
-# sentences of description / reasoning, tiny for the final letter.
-OBSERVE_BUDGET = 600     # multistep T1: image description
-REASON_BUDGET = 512      # multistep T2: free-form reasoning
-CHECK_BUDGET = 384       # multistep T3: self-check
-# M1 (zero-trust review): 64 was too tight — a model that prefaces the JSON
-# ("Based on my reasoning, {"answer":"C"}") + any restated option text can hit
-# the limit mid-JSON, yielding finish_reason=length and an unparseable fragment.
-# Under temp-0 the truncation is deterministic, so retries can't help — only a
-# roomier budget can. 256 is ample for a one-line JSON answer and cheap.
+
+# MULTISTEP: do NOT cap the conversational turns. The smoke run showed 33% of
+# observe turns truncating at 600 tok and producing cut-off descriptions, which
+# weakens the downstream reasoning and would unfairly handicap multistep in the
+# head-to-head. Per the design intent, the model writes as much as it wants on
+# observe / reason / self_check — bounded only by the model's context window.
+# We pass a large ceiling (effectively "no cap": vLLM clamps it to whatever
+# context remains after the prompt). The 24576-token context + a small prompt
+# leaves >20k tokens of room, far beyond any natural description.
+TURN_BUDGET_UNCAPPED = 20000  # ~= no cap; vLLM clamps to remaining context.
+OBSERVE_BUDGET = TURN_BUDGET_UNCAPPED   # multistep T1: image description
+REASON_BUDGET = TURN_BUDGET_UNCAPPED    # multistep T2: free-form reasoning
+CHECK_BUDGET = TURN_BUDGET_UNCAPPED     # multistep T3: self-check
+# The COMMIT turn is the ONLY one that should be short — it must emit just the
+# JSON. Kept roomy enough that a preface + the JSON never truncates mid-object
+# (the M1 fix), but not unbounded since it's meant to be terminal.
 COMMIT_BUDGET = 256      # multistep T4 / current: the final JSON answer
 PARSE_RETRIES = 4        # re-run a pass up to N times if no A/B/C/D parses out
 
@@ -256,6 +262,9 @@ _IMG_NOTE = {
 
 _JSON_RULE = ('Output ONLY a JSON object on its own line and nothing else: '
               '{"answer": "X"} where X is exactly one of A, B, C, or D.')
+# Mid-sentence variant (lowercase lead-in) for when the rule follows other text.
+_JSON_RULE_MID = ('output ONLY a JSON object on its own line and nothing else: '
+                  '{"answer": "X"} where X is exactly one of A, B, C, or D.')
 
 
 # ---- per-view observation checklist (multistep T1) ------------------------
@@ -279,9 +288,12 @@ _OBS_SV = (
 def sys_prompt(mode, strategy):
     base = f"You are {_ROLE[mode]}, answering a multiple-choice question about one location."
     if strategy == "think16k":
-        return (base + " Think step by step about what the image(s) actually "
-                "show before deciding. Reason carefully but do not pad — reach a "
-                "well-supported decision. After your reasoning, " + _JSON_RULE)
+        # Honest about whether there's imagery to reason over (blind has none).
+        think = (" Think step by step about what the images actually show before "
+                 "deciding." if mode != "blind"
+                 else " Think step by step before deciding.")
+        return (base + think + " Reason carefully but do not pad — reach a "
+                "well-supported decision. After your reasoning, " + _JSON_RULE_MID)
     if strategy == "current":
         return base + " " + _JSON_RULE
     # multistep — the per-turn user prompts carry the instructions; keep the

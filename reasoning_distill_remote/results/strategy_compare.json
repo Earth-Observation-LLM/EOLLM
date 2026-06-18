@@ -1,0 +1,78 @@
+{
+  "strategies": {
+    "current": {
+      "topic_synergy": {
+        "land_use": 0.0,
+        "building_height": -20.0,
+        "urban_density": -20.0,
+        "junction_type": -20.0,
+        "green_space": 0.0,
+        "amenity_richness": 0.0,
+        "road_type": 0.0,
+        "road_surface": 0.0,
+        "transit_density": -20.0
+      }
+    },
+    "think16k": {
+      "topic_synergy": {
+        "land_use": 0.0,
+        "building_height": 0.0,
+        "urban_density": 0.0,
+        "junction_type": -40.0,
+        "green_space": -20.0,
+        "amenity_richness": 0.0,
+        "road_type": -20.0,
+        "road_surface": -20.0,
+        "transit_density": -20.0
+      }
+    },
+    "multistep": {
+      "topic_synergy": {
+        "land_use": -20.0,
+        "building_height": 0.0,
+        "urban_density": 0.0,
+        "junction_type": -40.0,
+        "green_space": -40.0,
+        "amenity_richness": 0.0,
+        "road_type": -40.0,
+        "road_surface": -20.0,
+        "transit_density": -20.0
+      }
+    }
+  },
+  "overall": {
+    "current": {
+      "acc": {
+        "full": 46.666666666666664,
+        "sat_only": 44.44444444444444,
+        "sv_only": 48.888888888888886,
+        "blind": 42.22222222222222
+      },
+      "synergy": -2.2222222222222214,
+      "vision_gain": 4.444444444444443,
+      "n_rows": 180
+    },
+    "think16k": {
+      "acc": {
+        "full": 46.666666666666664,
+        "sat_only": 51.111111111111114,
+        "sv_only": 53.333333333333336,
+        "blind": 37.77777777777778
+      },
+      "synergy": -6.666666666666671,
+      "vision_gain": 8.888888888888886,
+      "n_rows": 180
+    },
+    "multistep": {
+      "acc": {
+        "full": 51.111111111111114,
+        "sat_only": 55.55555555555556,
+        "sv_only": 62.22222222222222,
+        "blind": 44.44444444444444
+      },
+      "synergy": -11.111111111111107,
+      "vision_gain": 6.666666666666671,
+      "n_rows": 180
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "model": "think16k",
+  "strategy": "think16k",
+  "model_name": "qwen3.5-9b-awq",
+  "served_name": "qwen9b",
+  "base_url": "http://localhost:8000",
+  "data": "/home/ain480/evaluation/EarthMLLMEval/data/benchmark_with_answers.jsonl",
+  "sources": [
+    "benchmark"
+  ],
+  "modes": [
+    "full",
+    "sat_only",
+    "sv_only",
+    "blind"
+  ],
+  "think_budget": 16000,
+  "answer_budget": 256,
+  "parse_retries": 4,
+  "temperature": 0.0,
+  "concurrency": 256,
+  "total": 180,
+  "already_done": 0,
+  "started": "2026-06-18 12:33:33"
+}
