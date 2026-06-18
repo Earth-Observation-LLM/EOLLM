@@ -1,0 +1,949 @@
+{
+  "overall": {
+    "accuracy": 0.4717557251908397,
+    "correct": 2472,
+    "total": 5240
+  },
+  "classification_metrics": {
+    "n_clf": 5240,
+    "weighted_f1": 0.4709,
+    "macro_f1": 0.4687,
+    "weighted_precision": 0.472,
+    "weighted_recall": 0.4718,
+    "per_labelset": {
+      "A/B": {
+        "n": 842,
+        "weighted_f1": 0.5234,
+        "macro_f1": 0.523
+      },
+      "A/B/C/D": {
+        "n": 4398,
+        "weighted_f1": 0.4611,
+        "macro_f1": 0.4612
+      }
+    }
+  },
+  "confidence_interval": {
+    "mean": 0.4714433206106872,
+    "p05": 0.46068702290076335,
+    "p95": 0.48244274809160304
+  },
+  "answer_distribution": {
+    "gold": {
+      "D": 1096,
+      "B": 1550,
+      "A": 1533,
+      "C": 1061
+    },
+    "prediction": {
+      "B": 1509,
+      "A": 1676,
+      "C": 1117,
+      "D": 938
+    }
+  },
+  "by_topic": {
+    "amenity_richness": {
+      "accuracy": 0.3182897862232779,
+      "correct": 134,
+      "total": 421
+    },
+    "building_height": {
+      "accuracy": 0.5789473684210527,
+      "correct": 110,
+      "total": 190
+    },
+    "camera_direction": {
+      "accuracy": 0.24703087885985747,
+      "correct": 104,
+      "total": 421
+    },
+    "green_space": {
+      "accuracy": 0.8177339901477833,
+      "correct": 166,
+      "total": 203
+    },
+    "junction_type": {
+      "accuracy": 0.5748502994011976,
+      "correct": 192,
+      "total": 334
+    },
+    "land_use": {
+      "accuracy": 0.5558194774346793,
+      "correct": 234,
+      "total": 421
+    },
+    "mismatch_binary_easy": {
+      "accuracy": 0.5914489311163895,
+      "correct": 249,
+      "total": 421
+    },
+    "mismatch_binary_hard": {
+      "accuracy": 0.45605700712589076,
+      "correct": 192,
+      "total": 421
+    },
+    "mismatch_mcq_easy": {
+      "accuracy": 0.39667458432304037,
+      "correct": 167,
+      "total": 421
+    },
+    "mismatch_mcq_hard": {
+      "accuracy": 0.33729216152019004,
+      "correct": 142,
+      "total": 421
+    },
+    "road_surface": {
+      "accuracy": 0.9075907590759076,
+      "correct": 275,
+      "total": 303
+    },
+    "road_type": {
+      "accuracy": 0.505938242280285,
+      "correct": 213,
+      "total": 421
+    },
+    "transit_density": {
+      "accuracy": 0.28028503562945367,
+      "correct": 118,
+      "total": 421
+    },
+    "urban_density": {
+      "accuracy": 0.4180522565320665,
+      "correct": 176,
+      "total": 421
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "accuracy": 0.5941176470588235,
+      "correct": 1414,
+      "total": 2380
+    },
+    "hard": {
+      "accuracy": 0.39667458432304037,
+      "correct": 334,
+      "total": 842
+    },
+    "medium": {
+      "accuracy": 0.3587710604558969,
+      "correct": 724,
+      "total": 2018
+    }
+  },
+  "by_land_use": {
+    "commercial": {
+      "accuracy": 0.41843971631205673,
+      "correct": 118,
+      "total": 282
+    },
+    "industrial": {
+      "accuracy": 0.45,
+      "correct": 54,
+      "total": 120
+    },
+    "institutional": {
+      "accuracy": 0.43859649122807015,
+      "correct": 25,
+      "total": 57
+    },
+    "mixed": {
+      "accuracy": 0.4985507246376812,
+      "correct": 516,
+      "total": 1035
+    },
+    "open_space": {
+      "accuracy": 0.3903966597077244,
+      "correct": 374,
+      "total": 958
+    },
+    "residential": {
+      "accuracy": 0.4967718794835007,
+      "correct": 1385,
+      "total": 2788
+    }
+  },
+  "by_country": {
+    "Argentina": {
+      "accuracy": 0.4768211920529801,
+      "correct": 72,
+      "total": 151
+    },
+    "Australia": {
+      "accuracy": 0.424,
+      "correct": 53,
+      "total": 125
+    },
+    "Austria": {
+      "accuracy": 0.3576158940397351,
+      "correct": 54,
+      "total": 151
+    },
+    "Belgium": {
+      "accuracy": 0.4873417721518987,
+      "correct": 77,
+      "total": 158
+    },
+    "Brazil": {
+      "accuracy": 0.5148514851485149,
+      "correct": 52,
+      "total": 101
+    },
+    "Canada": {
+      "accuracy": 0.5308641975308642,
+      "correct": 86,
+      "total": 162
+    },
+    "Cyprus": {
+      "accuracy": 0.5671641791044776,
+      "correct": 76,
+      "total": 134
+    },
+    "Estonia": {
+      "accuracy": 0.4528301886792453,
+      "correct": 72,
+      "total": 159
+    },
+    "Finland": {
+      "accuracy": 0.4716981132075472,
+      "correct": 75,
+      "total": 159
+    },
+    "France": {
+      "accuracy": 0.5375,
+      "correct": 86,
+      "total": 160
+    },
+    "Germany": {
+      "accuracy": 0.44366197183098594,
+      "correct": 63,
+      "total": 142
+    },
+    "Greece": {
+      "accuracy": 0.46496815286624205,
+      "correct": 73,
+      "total": 157
+    },
+    "Hungary": {
+      "accuracy": 0.5064935064935064,
+      "correct": 78,
+      "total": 154
+    },
+    "Iceland": {
+      "accuracy": 0.55625,
+      "correct": 89,
+      "total": 160
+    },
+    "India": {
+      "accuracy": 0.4567901234567901,
+      "correct": 37,
+      "total": 81
+    },
+    "Italy": {
+      "accuracy": 0.46564885496183206,
+      "correct": 61,
+      "total": 131
+    },
+    "Japan": {
+      "accuracy": 0.4930555555555556,
+      "correct": 71,
+      "total": 144
+    },
+    "Kenya": {
+      "accuracy": 0.4528301886792453,
+      "correct": 24,
+      "total": 53
+    },
+    "Mexico": {
+      "accuracy": 0.5753424657534246,
+      "correct": 84,
+      "total": 146
+    },
+    "Netherlands": {
+      "accuracy": 0.4657534246575342,
+      "correct": 68,
+      "total": 146
+    },
+    "Portugal": {
+      "accuracy": 0.40425531914893614,
+      "correct": 57,
+      "total": 141
+    },
+    "Russia": {
+      "accuracy": 0.38489208633093525,
+      "correct": 107,
+      "total": 278
+    },
+    "Singapore": {
+      "accuracy": 0.4444444444444444,
+      "correct": 56,
+      "total": 126
+    },
+    "South Africa": {
+      "accuracy": 0.5238095238095238,
+      "correct": 55,
+      "total": 105
+    },
+    "South Korea": {
+      "accuracy": 0.391304347826087,
+      "correct": 54,
+      "total": 138
+    },
+    "Spain": {
+      "accuracy": 0.44375,
+      "correct": 71,
+      "total": 160
+    },
+    "Sweden": {
+      "accuracy": 0.484375,
+      "correct": 62,
+      "total": 128
+    },
+    "Switzerland": {
+      "accuracy": 0.4863013698630137,
+      "correct": 71,
+      "total": 146
+    },
+    "Taiwan": {
+      "accuracy": 0.49606299212598426,
+      "correct": 63,
+      "total": 127
+    },
+    "Turkey": {
+      "accuracy": 0.4860813704496788,
+      "correct": 227,
+      "total": 467
+    },
+    "Turkiye": {
+      "accuracy": 0.460093896713615,
+      "correct": 98,
+      "total": 213
+    },
+    "UK": {
+      "accuracy": 0.48484848484848486,
+      "correct": 64,
+      "total": 132
+    },
+    "USA": {
+      "accuracy": 0.4459016393442623,
+      "correct": 136,
+      "total": 305
+    }
+  },
+  "by_city": {
+    "Amsterdam": {
+      "accuracy": 0.4657534246575342,
+      "correct": 68,
+      "total": 146
+    },
+    "Ankara": {
+      "accuracy": 0.5909090909090909,
+      "correct": 52,
+      "total": 88
+    },
+    "Antalya": {
+      "accuracy": 0.46218487394957986,
+      "correct": 55,
+      "total": 119
+    },
+    "Athens": {
+      "accuracy": 0.46496815286624205,
+      "correct": 73,
+      "total": 157
+    },
+    "Barcelona": {
+      "accuracy": 0.44375,
+      "correct": 71,
+      "total": 160
+    },
+    "Berlin": {
+      "accuracy": 0.44366197183098594,
+      "correct": 63,
+      "total": 142
+    },
+    "Brussels": {
+      "accuracy": 0.4873417721518987,
+      "correct": 77,
+      "total": 158
+    },
+    "Budapest": {
+      "accuracy": 0.5064935064935064,
+      "correct": 78,
+      "total": 154
+    },
+    "Buenos Aires": {
+      "accuracy": 0.4768211920529801,
+      "correct": 72,
+      "total": 151
+    },
+    "Bursa": {
+      "accuracy": 0.5631067961165048,
+      "correct": 58,
+      "total": 103
+    },
+    "Cape Town": {
+      "accuracy": 0.5238095238095238,
+      "correct": 55,
+      "total": 105
+    },
+    "Chicago": {
+      "accuracy": 0.44785276073619634,
+      "correct": 73,
+      "total": 163
+    },
+    "Helsinki": {
+      "accuracy": 0.4716981132075472,
+      "correct": 75,
+      "total": 159
+    },
+    "Istanbul": {
+      "accuracy": 0.4915254237288136,
+      "correct": 58,
+      "total": 118
+    },
+    "Izmir": {
+      "accuracy": 0.34285714285714286,
+      "correct": 24,
+      "total": 70
+    },
+    "Kayseri": {
+      "accuracy": 0.3977272727272727,
+      "correct": 35,
+      "total": 88
+    },
+    "Lisbon": {
+      "accuracy": 0.40425531914893614,
+      "correct": 57,
+      "total": 141
+    },
+    "London": {
+      "accuracy": 0.48484848484848486,
+      "correct": 64,
+      "total": 132
+    },
+    "Mexico City": {
+      "accuracy": 0.5753424657534246,
+      "correct": 84,
+      "total": 146
+    },
+    "Moscow": {
+      "accuracy": 0.35714285714285715,
+      "correct": 50,
+      "total": 140
+    },
+    "Mumbai": {
+      "accuracy": 0.4567901234567901,
+      "correct": 37,
+      "total": 81
+    },
+    "Nairobi": {
+      "accuracy": 0.4528301886792453,
+      "correct": 24,
+      "total": 53
+    },
+    "New York City": {
+      "accuracy": 0.44366197183098594,
+      "correct": 63,
+      "total": 142
+    },
+    "Nicosia": {
+      "accuracy": 0.5671641791044776,
+      "correct": 76,
+      "total": 134
+    },
+    "Paris": {
+      "accuracy": 0.5375,
+      "correct": 86,
+      "total": 160
+    },
+    "Reykjavik": {
+      "accuracy": 0.55625,
+      "correct": 89,
+      "total": 160
+    },
+    "Rio de Janeiro": {
+      "accuracy": 0.5148514851485149,
+      "correct": 52,
+      "total": 101
+    },
+    "Rome": {
+      "accuracy": 0.46564885496183206,
+      "correct": 61,
+      "total": 131
+    },
+    "Samsun": {
+      "accuracy": 0.4574468085106383,
+      "correct": 43,
+      "total": 94
+    },
+    "Seoul": {
+      "accuracy": 0.391304347826087,
+      "correct": 54,
+      "total": 138
+    },
+    "Singapore": {
+      "accuracy": 0.4444444444444444,
+      "correct": 56,
+      "total": 126
+    },
+    "St. Petersburg": {
+      "accuracy": 0.41304347826086957,
+      "correct": 57,
+      "total": 138
+    },
+    "Stockholm": {
+      "accuracy": 0.484375,
+      "correct": 62,
+      "total": 128
+    },
+    "Sydney": {
+      "accuracy": 0.424,
+      "correct": 53,
+      "total": 125
+    },
+    "Taipei": {
+      "accuracy": 0.49606299212598426,
+      "correct": 63,
+      "total": 127
+    },
+    "Tallinn": {
+      "accuracy": 0.4528301886792453,
+      "correct": 72,
+      "total": 159
+    },
+    "Tokyo": {
+      "accuracy": 0.4930555555555556,
+      "correct": 71,
+      "total": 144
+    },
+    "Toronto": {
+      "accuracy": 0.5308641975308642,
+      "correct": 86,
+      "total": 162
+    },
+    "Vienna": {
+      "accuracy": 0.3576158940397351,
+      "correct": 54,
+      "total": 151
+    },
+    "Zurich": {
+      "accuracy": 0.4863013698630137,
+      "correct": 71,
+      "total": 146
+    }
+  },
+  "by_city_type": {
+    "seen": {
+      "accuracy": 0.4784564393939394,
+      "correct": 2021,
+      "total": 4224
+    },
+    "unseen": {
+      "accuracy": 0.4438976377952756,
+      "correct": 451,
+      "total": 1016
+    }
+  },
+  "by_benchmark_city_type": {
+    "seen_city": {
+      "accuracy": 0.4784564393939394,
+      "correct": 2021,
+      "total": 4224
+    },
+    "unseen_city": {
+      "accuracy": 0.4438976377952756,
+      "correct": 451,
+      "total": 1016
+    }
+  },
+  "by_generation_method": {
+    "template": {
+      "accuracy": 0.4717557251908397,
+      "correct": 2472,
+      "total": 5240
+    }
+  },
+  "by_mismatch_strategy": {
+    "None": {
+      "accuracy": 0.484251968503937,
+      "correct": 1722,
+      "total": 3556
+    },
+    "cross_city": {
+      "accuracy": 0.49406175771971494,
+      "correct": 416,
+      "total": 842
+    },
+    "same_city": {
+      "accuracy": 0.39667458432304037,
+      "correct": 334,
+      "total": 842
+    }
+  },
+  "by_query_stv_angle": {
+    "None": {
+      "accuracy": 0.4913882548246524,
+      "correct": 2368,
+      "total": 4819
+    },
+    "along_bwd": {
+      "accuracy": 0.25773195876288657,
+      "correct": 25,
+      "total": 97
+    },
+    "along_fwd": {
+      "accuracy": 0.21929824561403508,
+      "correct": 25,
+      "total": 114
+    },
+    "cross_left": {
+      "accuracy": 0.2524271844660194,
+      "correct": 26,
+      "total": 103
+    },
+    "cross_right": {
+      "accuracy": 0.2616822429906542,
+      "correct": 28,
+      "total": 107
+    }
+  },
+  "interaction_topic_city_type": {
+    "topic=amenity_richness | city_type=seen": {
+      "accuracy": 0.31952662721893493,
+      "correct": 108,
+      "total": 338
+    },
+    "topic=amenity_richness | city_type=unseen": {
+      "accuracy": 0.3132530120481928,
+      "correct": 26,
+      "total": 83
+    },
+    "topic=building_height | city_type=seen": {
+      "accuracy": 0.6089743589743589,
+      "correct": 95,
+      "total": 156
+    },
+    "topic=building_height | city_type=unseen": {
+      "accuracy": 0.4411764705882353,
+      "correct": 15,
+      "total": 34
+    },
+    "topic=camera_direction | city_type=seen": {
+      "accuracy": 0.23372781065088757,
+      "correct": 79,
+      "total": 338
+    },
+    "topic=camera_direction | city_type=unseen": {
+      "accuracy": 0.30120481927710846,
+      "correct": 25,
+      "total": 83
+    },
+    "topic=green_space | city_type=seen": {
+      "accuracy": 0.8461538461538461,
+      "correct": 143,
+      "total": 169
+    },
+    "topic=green_space | city_type=unseen": {
+      "accuracy": 0.6764705882352942,
+      "correct": 23,
+      "total": 34
+    },
+    "topic=junction_type | city_type=seen": {
+      "accuracy": 0.6014760147601476,
+      "correct": 163,
+      "total": 271
+    },
+    "topic=junction_type | city_type=unseen": {
+      "accuracy": 0.4603174603174603,
+      "correct": 29,
+      "total": 63
+    },
+    "topic=land_use | city_type=seen": {
+      "accuracy": 0.5680473372781065,
+      "correct": 192,
+      "total": 338
+    },
+    "topic=land_use | city_type=unseen": {
+      "accuracy": 0.5060240963855421,
+      "correct": 42,
+      "total": 83
+    },
+    "topic=mismatch_binary_easy | city_type=seen": {
+      "accuracy": 0.6183431952662722,
+      "correct": 209,
+      "total": 338
+    },
+    "topic=mismatch_binary_easy | city_type=unseen": {
+      "accuracy": 0.4819277108433735,
+      "correct": 40,
+      "total": 83
+    },
+    "topic=mismatch_binary_hard | city_type=seen": {
+      "accuracy": 0.47041420118343197,
+      "correct": 159,
+      "total": 338
+    },
+    "topic=mismatch_binary_hard | city_type=unseen": {
+      "accuracy": 0.39759036144578314,
+      "correct": 33,
+      "total": 83
+    },
+    "topic=mismatch_mcq_easy | city_type=seen": {
+      "accuracy": 0.39644970414201186,
+      "correct": 134,
+      "total": 338
+    },
+    "topic=mismatch_mcq_easy | city_type=unseen": {
+      "accuracy": 0.39759036144578314,
+      "correct": 33,
+      "total": 83
+    },
+    "topic=mismatch_mcq_hard | city_type=seen": {
+      "accuracy": 0.34023668639053256,
+      "correct": 115,
+      "total": 338
+    },
+    "topic=mismatch_mcq_hard | city_type=unseen": {
+      "accuracy": 0.3253012048192771,
+      "correct": 27,
+      "total": 83
+    },
+    "topic=road_surface | city_type=seen": {
+      "accuracy": 0.8951612903225806,
+      "correct": 222,
+      "total": 248
+    },
+    "topic=road_surface | city_type=unseen": {
+      "accuracy": 0.9636363636363636,
+      "correct": 53,
+      "total": 55
+    },
+    "topic=road_type | city_type=seen": {
+      "accuracy": 0.5029585798816568,
+      "correct": 170,
+      "total": 338
+    },
+    "topic=road_type | city_type=unseen": {
+      "accuracy": 0.5180722891566265,
+      "correct": 43,
+      "total": 83
+    },
+    "topic=transit_density | city_type=seen": {
+      "accuracy": 0.2485207100591716,
+      "correct": 84,
+      "total": 338
+    },
+    "topic=transit_density | city_type=unseen": {
+      "accuracy": 0.40963855421686746,
+      "correct": 34,
+      "total": 83
+    },
+    "topic=urban_density | city_type=seen": {
+      "accuracy": 0.4378698224852071,
+      "correct": 148,
+      "total": 338
+    },
+    "topic=urban_density | city_type=unseen": {
+      "accuracy": 0.3373493975903614,
+      "correct": 28,
+      "total": 83
+    }
+  },
+  "interaction_difficulty_city_type": {
+    "difficulty=easy | city_type=seen": {
+      "accuracy": 0.6051948051948052,
+      "correct": 1165,
+      "total": 1925
+    },
+    "difficulty=easy | city_type=unseen": {
+      "accuracy": 0.5472527472527473,
+      "correct": 249,
+      "total": 455
+    },
+    "difficulty=hard | city_type=seen": {
+      "accuracy": 0.40532544378698226,
+      "correct": 274,
+      "total": 676
+    },
+    "difficulty=hard | city_type=unseen": {
+      "accuracy": 0.3614457831325301,
+      "correct": 60,
+      "total": 166
+    },
+    "difficulty=medium | city_type=seen": {
+      "accuracy": 0.3585951940850277,
+      "correct": 582,
+      "total": 1623
+    },
+    "difficulty=medium | city_type=unseen": {
+      "accuracy": 0.3594936708860759,
+      "correct": 142,
+      "total": 395
+    }
+  },
+  "interaction_land_use_difficulty": {
+    "land_use=commercial | difficulty=easy": {
+      "accuracy": 0.5648854961832062,
+      "correct": 74,
+      "total": 131
+    },
+    "land_use=commercial | difficulty=hard": {
+      "accuracy": 0.36363636363636365,
+      "correct": 16,
+      "total": 44
+    },
+    "land_use=commercial | difficulty=medium": {
+      "accuracy": 0.2616822429906542,
+      "correct": 28,
+      "total": 107
+    },
+    "land_use=industrial | difficulty=easy": {
+      "accuracy": 0.49056603773584906,
+      "correct": 26,
+      "total": 53
+    },
+    "land_use=industrial | difficulty=hard": {
+      "accuracy": 0.3,
+      "correct": 6,
+      "total": 20
+    },
+    "land_use=industrial | difficulty=medium": {
+      "accuracy": 0.46808510638297873,
+      "correct": 22,
+      "total": 47
+    },
+    "land_use=institutional | difficulty=easy": {
+      "accuracy": 0.5,
+      "correct": 12,
+      "total": 24
+    },
+    "land_use=institutional | difficulty=hard": {
+      "accuracy": 0.2,
+      "correct": 2,
+      "total": 10
+    },
+    "land_use=institutional | difficulty=medium": {
+      "accuracy": 0.4782608695652174,
+      "correct": 11,
+      "total": 23
+    },
+    "land_use=mixed | difficulty=easy": {
+      "accuracy": 0.581858407079646,
+      "correct": 263,
+      "total": 452
+    },
+    "land_use=mixed | difficulty=hard": {
+      "accuracy": 0.375,
+      "correct": 66,
+      "total": 176
+    },
+    "land_use=mixed | difficulty=medium": {
+      "accuracy": 0.4594594594594595,
+      "correct": 187,
+      "total": 407
+    },
+    "land_use=open_space | difficulty=easy": {
+      "accuracy": 0.4804597701149425,
+      "correct": 209,
+      "total": 435
+    },
+    "land_use=open_space | difficulty=hard": {
+      "accuracy": 0.3881578947368421,
+      "correct": 59,
+      "total": 152
+    },
+    "land_use=open_space | difficulty=medium": {
+      "accuracy": 0.2857142857142857,
+      "correct": 106,
+      "total": 371
+    },
+    "land_use=residential | difficulty=easy": {
+      "accuracy": 0.6459143968871596,
+      "correct": 830,
+      "total": 1285
+    },
+    "land_use=residential | difficulty=hard": {
+      "accuracy": 0.42045454545454547,
+      "correct": 185,
+      "total": 440
+    },
+    "land_use=residential | difficulty=medium": {
+      "accuracy": 0.34807149576669805,
+      "correct": 370,
+      "total": 1063
+    }
+  },
+  "interaction_topic_difficulty": {
+    "topic=amenity_richness | difficulty=medium": {
+      "accuracy": 0.3182897862232779,
+      "correct": 134,
+      "total": 421
+    },
+    "topic=building_height | difficulty=easy": {
+      "accuracy": 0.5789473684210527,
+      "correct": 110,
+      "total": 190
+    },
+    "topic=camera_direction | difficulty=medium": {
+      "accuracy": 0.24703087885985747,
+      "correct": 104,
+      "total": 421
+    },
+    "topic=green_space | difficulty=easy": {
+      "accuracy": 0.8177339901477833,
+      "correct": 166,
+      "total": 203
+    },
+    "topic=junction_type | difficulty=medium": {
+      "accuracy": 0.5748502994011976,
+      "correct": 192,
+      "total": 334
+    },
+    "topic=land_use | difficulty=easy": {
+      "accuracy": 0.5558194774346793,
+      "correct": 234,
+      "total": 421
+    },
+    "topic=mismatch_binary_easy | difficulty=easy": {
+      "accuracy": 0.5914489311163895,
+      "correct": 249,
+      "total": 421
+    },
+    "topic=mismatch_binary_hard | difficulty=hard": {
+      "accuracy": 0.45605700712589076,
+      "correct": 192,
+      "total": 421
+    },
+    "topic=mismatch_mcq_easy | difficulty=easy": {
+      "accuracy": 0.39667458432304037,
+      "correct": 167,
+      "total": 421
+    },
+    "topic=mismatch_mcq_hard | difficulty=hard": {
+      "accuracy": 0.33729216152019004,
+      "correct": 142,
+      "total": 421
+    },
+    "topic=road_surface | difficulty=easy": {
+      "accuracy": 0.9075907590759076,
+      "correct": 275,
+      "total": 303
+    },
+    "topic=road_type | difficulty=easy": {
+      "accuracy": 0.505938242280285,
+      "correct": 213,
+      "total": 421
+    },
+    "topic=transit_density | difficulty=medium": {
+      "accuracy": 0.28028503562945367,
+      "correct": 118,
+      "total": 421
+    },
+    "topic=urban_density | difficulty=medium": {
+      "accuracy": 0.4180522565320665,
+      "correct": 176,
+      "total": 421
+    }
+  },
+  "ablation_mode": "full"
+}

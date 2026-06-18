@@ -214,8 +214,8 @@ def build(results_dir):
             rep = data[model]["reports"].get(mode)
             if rep is None:
                 continue
-            seen = acc_of(rep, key="by_benchmark_city_type", bucket="seen")
-            unseen = acc_of(rep, key="by_benchmark_city_type", bucket="unseen")
+            seen = acc_of(rep, key="by_benchmark_city_type", bucket="seen_city")
+            unseen = acc_of(rep, key="by_benchmark_city_type", bucket="unseen_city")
             gap = f"{100 * (seen - unseen):+.1f}" if (seen is not None and unseen is not None) else "—"
             rows.append([model, mode, fmt_pct(seen), fmt_pct(unseen), gap])
             jreport["by_city_type"].setdefault(model, {})[mode] = {"seen": seen, "unseen": unseen}

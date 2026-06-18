@@ -1,0 +1,86 @@
+{
+  "model": "qwen3.5-4b-awq",
+  "model_id": "cyankiwi/Qwen3.5-4B-AWQ-BF16-INT8",
+  "thinking": "off",
+  "max_model_len": 16384,
+  "max_num_seqs": 501,
+  "modes": {
+    "full": {
+      "n": 5240,
+      "overall": {
+        "accuracy": 0.4898854961832061,
+        "correct": 2567,
+        "total": 5240
+      },
+      "by_topic": {
+        "amenity_richness": 0.35391923990498814,
+        "building_height": 0.6157894736842106,
+        "camera_direction": 0.21377672209026127,
+        "green_space": 0.41379310344827586,
+        "junction_type": 0.5,
+        "land_use": 0.5558194774346793,
+        "mismatch_binary_easy": 0.7434679334916865,
+        "mismatch_binary_hard": 0.5795724465558195,
+        "mismatch_mcq_easy": 0.4584323040380047,
+        "mismatch_mcq_hard": 0.3847980997624703,
+        "road_surface": 0.9141914191419142,
+        "road_type": 0.5700712589073634,
+        "transit_density": 0.342042755344418,
+        "urban_density": 0.36342042755344417
+      }
+    },
+    "blind": {
+      "n": 5240,
+      "overall": {
+        "accuracy": 0.3885496183206107,
+        "correct": 2036,
+        "total": 5240
+      },
+      "by_topic": {
+        "amenity_richness": 0.19002375296912113,
+        "building_height": 0.4631578947368421,
+        "camera_direction": 0.2517814726840855,
+        "green_space": 0.5369458128078818,
+        "junction_type": 0.47005988023952094,
+        "land_use": 0.3824228028503563,
+        "mismatch_binary_easy": 0.505938242280285,
+        "mismatch_binary_hard": 0.4655581947743468,
+        "mismatch_mcq_easy": 0.26128266033254155,
+        "mismatch_mcq_hard": 0.2494061757719715,
+        "road_surface": 0.8745874587458746,
+        "road_type": 0.31116389548693585,
+        "transit_density": 0.27078384798099764,
+        "urban_density": 0.47743467933491684
+      }
+    },
+    "sat_only": {
+      "n": 2105,
+      "overall": {
+        "accuracy": 0.33776722090261285,
+        "correct": 711,
+        "total": 2105
+      },
+      "by_topic": {
+        "camera_direction": 0.20665083135391923,
+        "mismatch_binary_easy": 0.5106888361045131,
+        "mismatch_binary_hard": 0.47030878859857483,
+        "mismatch_mcq_easy": 0.2589073634204275,
+        "mismatch_mcq_hard": 0.24228028503562946
+      }
+    },
+    "sv_only": {
+      "n": 1684,
+      "overall": {
+        "accuracy": 0.36995249406175773,
+        "correct": 623,
+        "total": 1684
+      },
+      "by_topic": {
+        "mismatch_binary_easy": 0.5106888361045131,
+        "mismatch_binary_hard": 0.46318289786223277,
+        "mismatch_mcq_easy": 0.2517814726840855,
+        "mismatch_mcq_hard": 0.25415676959619954
+      }
+    }
+  }
+}
