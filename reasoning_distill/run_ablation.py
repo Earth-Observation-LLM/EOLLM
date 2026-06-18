@@ -144,8 +144,29 @@ def perspective_images(record, base_dir):
     res = cu.get_images_for_question(record, base_dir=base)
     sat, sv = [], []
 
-    if mode in ("satellite_only", "satellite_marked"):
-        sat = [res["primary"]]                       # 1 sat, no sv
+    if mode == "satellite_only":
+        sat = [res["primary"]]                       # 1 raw sat, no SV exists
+
+    elif mode == "satellite_marked":
+        # Urban-attribute questions (land_use, building_height, urban_density,
+        # junction_type, green_space, amenity_richness, road_type, road_surface,
+        # transit_density). DESIGNED dual-perspective: 1 marked sat + 4 SV angles.
+        # Mirror training/data.py's satellite_marked branch EXACTLY — the SV
+        # images are labeled by viewing DIRECTION (Fwd/Bwd/Left/Right), NOT
+        # A/B/C/D, because here the A/B/C/D letters are the answer choices, so a
+        # letter label on an image would collide with the answer.
+        imgs = record["images"]
+        sat = [cu.make_sat_marked(os.path.join(base, imgs["satellite"]))]
+        angle_label = {
+            "along_fwd": "Fwd", "along_bwd": "Bwd",
+            "cross_left": "Left", "cross_right": "Right",
+        }
+        for angle in cu.STV_ANGLES:
+            sv_rel = imgs.get(f"streetview_{angle}")
+            if not sv_rel:
+                continue  # rare missing angle (London SV gaps) — skip, don't fail
+            sv.append(add_corner_label(cu.Image.open(os.path.join(base, sv_rel)),
+                                       angle_label[angle]))
 
     elif mode == "satellite_arrow":
         # 4 arrow-on-satellite option images (the A/B/C/D choices) + 1 query SV.
@@ -207,23 +228,37 @@ def build_messages(record, base_dir, mode):
     ]
 
 
-# Which ablation modes apply to each topic.
-# - satellite_marked topics (8): only full/blind — sat_only≡full, no SV exists.
-# - mismatch_* (4): all four — sat and SV are separate images, both removable.
-# - camera_direction: full/blind ONLY. Its sat_only would drop the query SV, but
-#   the question ("which arrow matches THIS street view?") is undefined without
-#   it, and sv_only would drop the 4 arrow-satellites that ARE the answer options.
-#   So neither single-perspective mode is meaningful here. (Confirmed in review.)
+# SCOPE: this ablation covers ONLY the 9 attribute-classification tasks. They are
+# DESIGNED dual-perspective (marked sat + 4 SV angles, per the fixed training
+# loader), so full=both, sat_only=marked sat, sv_only=4 SV, blind=none are all
+# meaningful — exactly the "does the model fuse the two views?" question.
+# (Before the loader fix these silently fed satellite-only — the 62.9%-of-dataset
+# bug; see project_satellite_marked_sv_bug memory.)
 BOTH_PERSPECTIVE_FULL = {  # full / sat_only / sv_only / blind
+    "land_use", "building_height", "urban_density", "junction_type",
+    "green_space", "amenity_richness", "road_type", "road_surface",
+    "transit_density",
+}
+
+# Cross-view MATCHING tasks — excluded from this ablation entirely. They are not
+# attribute classification: the task itself IS aligning two perspectives, so a
+# single-perspective ablation is ill-posed. (mismatch_* needs both images to even
+# define the question; camera_direction's sat_only drops the query SV and sv_only
+# drops the arrow-satellites that ARE the options.) Kept here so the worklist
+# skips them; their existing rows stay on disk but are no longer generated.
+EXCLUDED_CROSSVIEW = {
     "mismatch_binary_easy", "mismatch_binary_hard",
     "mismatch_mcq_easy", "mismatch_mcq_hard",
+    "camera_direction",
 }
 
 
 def modes_for_topic(topic):
+    if topic in EXCLUDED_CROSSVIEW:
+        return []  # cross-view matching — out of scope for this ablation
     if topic in BOTH_PERSPECTIVE_FULL:
         return ["full", "sat_only", "sv_only", "blind"]
-    return ["full", "blind"]  # satellite_marked topics + camera_direction
+    return ["full", "blind"]  # any other satellite_marked-style topic
 
 
 def parse_letter(text):
@@ -494,6 +529,8 @@ async def main_async(args):
             recs = [r for rs in by_t.values() for r in rs[: args.limit_per_topic]]
         for r in recs:
             for mode in modes_for_topic(r["topic"]):
+                if args.modes and mode not in args.modes:
+                    continue  # --modes restricts which passes run this invocation
                 work.append((source, r, mode))
                 mode_counts[mode] += 1
     total_planned = len(work)
@@ -610,6 +647,10 @@ def main():
                     default=["train", "validation", "benchmark"],
                     choices=list(SOURCES))
     ap.add_argument("--concurrency", type=int, default=32)
+    ap.add_argument("--modes", nargs="+", default=None,
+                    choices=["full", "sat_only", "sv_only", "blind"],
+                    help="restrict to these passes (default: all applicable per "
+                         "topic). E.g. --modes sat_only sv_only full")
     ap.add_argument("--limit-per-topic", type=int, default=0,
                     help="cap records per topic per source (smoke testing)")
     args = ap.parse_args()
