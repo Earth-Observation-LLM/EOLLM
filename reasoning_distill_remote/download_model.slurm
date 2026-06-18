@@ -20,12 +20,16 @@ conda activate "${ENV:-earth_eval}"
 
 MODEL_ID="${MODEL_ID:-cyankiwi/Qwen3.5-9B-AWQ-BF16-INT8}"
 echo "=== downloading $MODEL_ID into HF cache ($(date)) ==="
-# huggingface-cli ships with transformers/hf_hub; fall back to python if absent.
-if command -v huggingface-cli >/dev/null 2>&1; then
-  huggingface-cli download "$MODEL_ID"
-else
-  python -c "from huggingface_hub import snapshot_download; snapshot_download('$MODEL_ID')"
-fi
+# Use the python API directly — robust across CLI churn (`huggingface-cli` is
+# deprecated/no-op on this box; the `hf` CLI exists but the python call avoids
+# depending on which CLI generation is installed). Retries are built in.
+python - "$MODEL_ID" <<'PY'
+import sys
+from huggingface_hub import snapshot_download
+mid = sys.argv[1]
+path = snapshot_download(mid, max_workers=8)
+print("downloaded to:", path, flush=True)
+PY
 rc=$?
 echo "=== done rc=$rc ==="
 exit $rc
