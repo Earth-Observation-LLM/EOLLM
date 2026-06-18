@@ -92,7 +92,7 @@ for ENTRY in "${MODELS[@]}"; do
   echo "--- probing max-num-seqs (binary search) for $SHORT ---"
   SEQS=$(python probe_max_seqs.py --model-id "$MODEL_ID" --start "${START_SEQS:-128}" \
            --ceil "${CEIL_SEQS:-512}" --floor "${FLOOR_SEQS:-8}" --tol "${TOL_SEQS:-8}" \
-           --real-max-len "$CTX" --gpu-util "$GPU_UTIL" \
+           --real-max-len "$CTX" --gpu-util "$GPU_UTIL" --margin "${MARGIN:-0.98}" \
            2>>"logs/probe_${SHORT}_${SLURM_JOB_ID}.err" | tail -1)
   case "$SEQS" in (''|*[!0-9]*) SEQS="${FALLBACK_SEQS:-32}";; esac
   echo "--- chosen max-num-seqs=$SEQS for $SHORT (trace: logs/probe_${SHORT}_${SLURM_JOB_ID}.err) ---"
