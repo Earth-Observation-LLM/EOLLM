@@ -37,6 +37,9 @@ mkdir -p logs results
 echo "=== working dir: $(pwd) ==="
 
 source ~/.bashrc
+# NOTE: the env is activated PER MODEL inside the loop (models.sh may name a
+# different conda env per model, e.g. gemma needs vllm_gemma4). We activate a
+# default here only so the version banner below works.
 conda activate "${ENV:-earth_eval}"
 
 # --- config ---------------------------------------------------------------
@@ -66,10 +69,11 @@ MODES_FLAG=""; [ -n "$MODES" ] && MODES_FLAG="--modes $MODES"
 
 OVERALL_RC=0
 for ENTRY in "${MODELS[@]}"; do
-  MODEL_ID="${ENTRY%%|*}"
-  REST="${ENTRY#*|}"
-  SHORT="${REST%%|*}"
-  CTX="${REST#*|}"
+  IFS='|' read -r MODEL_ID SHORT CTX MODEL_ENV <<< "$ENTRY"
+  # The per-model env (4th field) is authoritative — gemma needs vllm_gemma4,
+  # the Qwens need earth_eval, so a single whole-job env would break one of them.
+  # FORCE_ENV is an explicit escape hatch to override every model's env.
+  RUN_ENV="${FORCE_ENV:-${MODEL_ENV:-earth_eval}}"
 
   # optional filter
   if [ -n "$MODELS_FILTER" ]; then
@@ -85,8 +89,12 @@ for ENTRY in "${MODELS[@]}"; do
 
   echo ""
   echo "########################################################"
-  echo "# model=$SHORT  id=$MODEL_ID  ctx=$CTX  modes=$MODES  limit=$LIMIT"
+  echo "# model=$SHORT  id=$MODEL_ID  ctx=$CTX  env=$RUN_ENV  modes=$MODES  limit=$LIMIT"
   echo "########################################################"
+
+  # Activate THIS model's conda env (gemma -> vllm_gemma4, Qwens -> earth_eval).
+  conda activate "$RUN_ENV" || { echo "!!! cannot activate env $RUN_ENV; skipping $SHORT"; OVERALL_RC=1; continue; }
+  python -c "import vllm,transformers;print('  env=$RUN_ENV vllm',vllm.__version__,'tf',transformers.__version__)" 2>&1 | tail -1
 
   # 1) probe the seq ceiling for THIS model at the benchmark context.
   echo "--- probing max-num-seqs (binary search) for $SHORT ---"
