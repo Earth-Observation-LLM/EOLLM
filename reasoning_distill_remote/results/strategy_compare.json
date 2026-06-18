@@ -2,77 +2,77 @@
   "strategies": {
     "current": {
       "topic_synergy": {
-        "land_use": 0.0,
-        "building_height": -20.0,
-        "urban_density": -20.0,
-        "junction_type": -20.0,
-        "green_space": 0.0,
-        "amenity_richness": 0.0,
-        "road_type": 0.0,
-        "road_surface": 0.0,
-        "transit_density": -20.0
+        "land_use": 0.23752969121139955,
+        "building_height": -3.6842105263157947,
+        "urban_density": -6.413301662707838,
+        "junction_type": 0.0,
+        "green_space": -1.477832512315267,
+        "amenity_richness": 0.7125890736342058,
+        "road_type": -9.97624703087886,
+        "road_surface": -4.950495049504951,
+        "transit_density": 1.1876484560570084
       }
     },
     "think16k": {
       "topic_synergy": {
-        "land_use": 0.0,
-        "building_height": 0.0,
-        "urban_density": 0.0,
-        "junction_type": -40.0,
-        "green_space": -20.0,
-        "amenity_richness": 0.0,
-        "road_type": -20.0,
-        "road_surface": -20.0,
-        "transit_density": -20.0
+        "land_use": 0.23752969121139955,
+        "building_height": 1.0526315789473628,
+        "urban_density": -5.225653206650833,
+        "junction_type": -1.4970059880239504,
+        "green_space": -8.374384236453203,
+        "amenity_richness": -0.9501187648456053,
+        "road_type": -5.938242280285031,
+        "road_surface": -1.6501650165016457,
+        "transit_density": -1.662707838479811
       }
     },
     "multistep": {
       "topic_synergy": {
-        "land_use": -20.0,
-        "building_height": 0.0,
-        "urban_density": 0.0,
-        "junction_type": -40.0,
-        "green_space": -40.0,
-        "amenity_richness": 0.0,
-        "road_type": -40.0,
-        "road_surface": -20.0,
-        "transit_density": -20.0
+        "land_use": -3.5629453681710217,
+        "building_height": 2.631578947368425,
+        "urban_density": -3.8004750593824213,
+        "junction_type": 0.5988023952095816,
+        "green_space": -0.49261083743841994,
+        "amenity_richness": -1.662707838479811,
+        "road_type": -9.73871733966746,
+        "road_surface": 0.33003300330032914,
+        "transit_density": -1.662707838479811
       }
     }
   },
   "overall": {
     "current": {
       "acc": {
-        "full": 46.666666666666664,
-        "sat_only": 44.44444444444444,
-        "sv_only": 48.888888888888886,
-        "blind": 42.22222222222222
+        "full": 48.58054226475279,
+        "sat_only": 44.40191387559808,
+        "sv_only": 50.87719298245614,
+        "blind": 40.89314194577352
       },
-      "synergy": -2.2222222222222214,
-      "vision_gain": 4.444444444444443,
-      "n_rows": 180
+      "synergy": -2.2966507177033435,
+      "vision_gain": 7.687400318979272,
+      "n_rows": 12540
     },
     "think16k": {
       "acc": {
-        "full": 46.666666666666664,
-        "sat_only": 51.111111111111114,
-        "sv_only": 53.333333333333336,
-        "blind": 37.77777777777778
+        "full": 49.760765550239235,
+        "sat_only": 46.1244019138756,
+        "sv_only": 51.834130781499205,
+        "blind": 40.98883572567783
       },
-      "synergy": -6.666666666666671,
-      "vision_gain": 8.888888888888886,
-      "n_rows": 180
+      "synergy": -2.07336523125997,
+      "vision_gain": 8.771929824561404,
+      "n_rows": 12540
     },
     "multistep": {
       "acc": {
-        "full": 51.111111111111114,
-        "sat_only": 55.55555555555556,
-        "sv_only": 62.22222222222222,
-        "blind": 44.44444444444444
+        "full": 51.67464114832536,
+        "sat_only": 49.377990430622006,
+        "sv_only": 53.843700159489636,
+        "blind": 43.38118022328548
       },
-      "synergy": -11.111111111111107,
-      "vision_gain": 6.666666666666671,
-      "n_rows": 180
+      "synergy": -2.169059011164279,
+      "vision_gain": 8.293460925039874,
+      "n_rows": 12540
     }
   }
 }

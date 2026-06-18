@@ -19,7 +19,7 @@
   "parse_retries": 4,
   "temperature": 0.0,
   "concurrency": 256,
-  "total": 180,
+  "total": 12540,
   "already_done": 0,
-  "started": "2026-06-18 12:33:33"
+  "started": "2026-06-18 13:06:05"
 }

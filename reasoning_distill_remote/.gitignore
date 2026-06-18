@@ -1,0 +1,5 @@
+# Per-row raw logs are large (think-traces / 4-turn transcripts, 100s of MB) and
+# fully reproducible from the run. Keep the human-readable summaries + report in git,
+# not the raw logs. Pull them back with pull_results.sh when needed.
+results/**/ablation_log.jsonl
+logs/

@@ -20,185 +20,185 @@
     "parse_retries": 4,
     "temperature": 0.0,
     "concurrency": 256,
-    "total": 180,
+    "total": 12540,
     "already_done": 0,
-    "started": "2026-06-18 12:33:33",
-    "updated": "2026-06-18 12:46:38",
-    "gens_per_min": 13.7,
+    "started": "2026-06-18 13:06:05",
+    "updated": "2026-06-18 18:28:47",
+    "gens_per_min": 38.9,
     "eta": "0.0 min",
-    "finished": "2026-06-18 12:46:38"
+    "finished": "2026-06-18 18:28:47"
   },
   "progress": {
-    "completed": 180,
+    "completed": 12540,
     "errors": 0,
     "ctx_overflow": 0,
-    "parse_retried": 10,
-    "unparsed_after_retries": 1,
-    "overall_acc": 47.22,
-    "median_latency_s": 32.3,
-    "median_completion_tok": 1039
+    "parse_retried": 1110,
+    "unparsed_after_retries": 143,
+    "overall_acc": 47.18,
+    "median_latency_s": 94.8,
+    "median_completion_tok": 1160
   },
   "accuracy_by_topic_mode": {
     "amenity_richness": {
       "full": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 36.3,
+        "n": 421
       },
       "sat_only": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 37.3,
+        "n": 421
       },
       "sv_only": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 34.9,
+        "n": 421
       },
       "blind": {
-        "acc": 0.0,
-        "n": 5
+        "acc": 20.9,
+        "n": 421
       }
     },
     "building_height": {
       "full": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 62.6,
+        "n": 190
       },
       "sat_only": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 51.6,
+        "n": 190
       },
       "sv_only": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 61.6,
+        "n": 190
       },
       "blind": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 38.4,
+        "n": 190
       }
     },
     "green_space": {
       "full": {
-        "acc": 0.0,
-        "n": 5
+        "acc": 41.4,
+        "n": 203
       },
       "sat_only": {
-        "acc": 0.0,
-        "n": 5
+        "acc": 38.4,
+        "n": 203
       },
       "sv_only": {
-        "acc": 20.0,
-        "n": 5
+        "acc": 49.8,
+        "n": 203
       },
       "blind": {
-        "acc": 20.0,
-        "n": 5
+        "acc": 59.1,
+        "n": 203
       }
     },
     "junction_type": {
       "full": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 57.5,
+        "n": 334
       },
       "sat_only": {
-        "acc": 80.0,
-        "n": 5
+        "acc": 54.8,
+        "n": 334
       },
       "sv_only": {
-        "acc": 100.0,
-        "n": 5
+        "acc": 59.0,
+        "n": 334
       },
       "blind": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 32.3,
+        "n": 334
       }
     },
     "land_use": {
       "full": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 51.8,
+        "n": 421
       },
       "sat_only": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 45.1,
+        "n": 421
       },
       "sv_only": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 51.5,
+        "n": 421
       },
       "blind": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 51.5,
+        "n": 421
       }
     },
     "road_surface": {
       "full": {
-        "acc": 80.0,
-        "n": 5
+        "acc": 83.2,
+        "n": 303
       },
       "sat_only": {
-        "acc": 80.0,
-        "n": 5
+        "acc": 75.2,
+        "n": 303
       },
       "sv_only": {
-        "acc": 100.0,
-        "n": 5
+        "acc": 84.8,
+        "n": 303
       },
       "blind": {
-        "acc": 80.0,
-        "n": 5
+        "acc": 94.4,
+        "n": 303
       }
     },
     "road_type": {
       "full": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 58.4,
+        "n": 421
       },
       "sat_only": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 50.4,
+        "n": 421
       },
       "sv_only": {
-        "acc": 60.0,
-        "n": 5
+        "acc": 64.4,
+        "n": 421
       },
       "blind": {
-        "acc": 0.0,
-        "n": 5
+        "acc": 34.4,
+        "n": 421
       }
     },
     "transit_density": {
       "full": {
-        "acc": 20.0,
-        "n": 5
+        "acc": 31.6,
+        "n": 421
       },
       "sat_only": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 33.3,
+        "n": 421
       },
       "sv_only": {
-        "acc": 20.0,
-        "n": 5
+        "acc": 31.6,
+        "n": 421
       },
       "blind": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 26.6,
+        "n": 421
       }
     },
     "urban_density": {
       "full": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 38.7,
+        "n": 421
       },
       "sat_only": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 38.0,
+        "n": 421
       },
       "sv_only": {
-        "acc": 20.0,
-        "n": 5
+        "acc": 43.9,
+        "n": 421
       },
       "blind": {
-        "acc": 40.0,
-        "n": 5
+        "acc": 32.3,
+        "n": 421
       }
     }
   },
@@ -206,272 +206,292 @@
     "benchmark": {
       "amenity_richness": {
         "full": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 36.3,
+          "n": 421
         },
         "sat_only": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 37.3,
+          "n": 421
         },
         "sv_only": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 34.9,
+          "n": 421
         },
         "blind": {
-          "acc": 0.0,
-          "n": 5
+          "acc": 20.9,
+          "n": 421
         }
       },
       "building_height": {
         "full": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 62.6,
+          "n": 190
         },
         "sat_only": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 51.6,
+          "n": 190
         },
         "sv_only": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 61.6,
+          "n": 190
         },
         "blind": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 38.4,
+          "n": 190
         }
       },
       "green_space": {
         "full": {
-          "acc": 0.0,
-          "n": 5
+          "acc": 41.4,
+          "n": 203
         },
         "sat_only": {
-          "acc": 0.0,
-          "n": 5
+          "acc": 38.4,
+          "n": 203
         },
         "sv_only": {
-          "acc": 20.0,
-          "n": 5
+          "acc": 49.8,
+          "n": 203
         },
         "blind": {
-          "acc": 20.0,
-          "n": 5
+          "acc": 59.1,
+          "n": 203
         }
       },
       "junction_type": {
         "full": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 57.5,
+          "n": 334
         },
         "sat_only": {
-          "acc": 80.0,
-          "n": 5
+          "acc": 54.8,
+          "n": 334
         },
         "sv_only": {
-          "acc": 100.0,
-          "n": 5
+          "acc": 59.0,
+          "n": 334
         },
         "blind": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 32.3,
+          "n": 334
         }
       },
       "land_use": {
         "full": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 51.8,
+          "n": 421
         },
         "sat_only": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 45.1,
+          "n": 421
         },
         "sv_only": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 51.5,
+          "n": 421
         },
         "blind": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 51.5,
+          "n": 421
         }
       },
       "road_surface": {
         "full": {
-          "acc": 80.0,
-          "n": 5
+          "acc": 83.2,
+          "n": 303
         },
         "sat_only": {
-          "acc": 80.0,
-          "n": 5
+          "acc": 75.2,
+          "n": 303
         },
         "sv_only": {
-          "acc": 100.0,
-          "n": 5
+          "acc": 84.8,
+          "n": 303
         },
         "blind": {
-          "acc": 80.0,
-          "n": 5
+          "acc": 94.4,
+          "n": 303
         }
       },
       "road_type": {
         "full": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 58.4,
+          "n": 421
         },
         "sat_only": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 50.4,
+          "n": 421
         },
         "sv_only": {
-          "acc": 60.0,
-          "n": 5
+          "acc": 64.4,
+          "n": 421
         },
         "blind": {
-          "acc": 0.0,
-          "n": 5
+          "acc": 34.4,
+          "n": 421
         }
       },
       "transit_density": {
         "full": {
-          "acc": 20.0,
-          "n": 5
+          "acc": 31.6,
+          "n": 421
         },
         "sat_only": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 33.3,
+          "n": 421
         },
         "sv_only": {
-          "acc": 20.0,
-          "n": 5
+          "acc": 31.6,
+          "n": 421
         },
         "blind": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 26.6,
+          "n": 421
         }
       },
       "urban_density": {
         "full": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 38.7,
+          "n": 421
         },
         "sat_only": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 38.0,
+          "n": 421
         },
         "sv_only": {
-          "acc": 20.0,
-          "n": 5
+          "acc": 43.9,
+          "n": 421
         },
         "blind": {
-          "acc": 40.0,
-          "n": 5
+          "acc": 32.3,
+          "n": 421
         }
       }
     }
   },
   "think_stats": {
     "full": {
-      "n": 45,
-      "median_think_tok": 1458,
-      "p90_think_tok": 5244,
-      "max_think_tok": 14151,
-      "truncated": 1,
-      "truncated_pct": 2.2
+      "n": 3135,
+      "median_think_tok": 1380,
+      "p90_think_tok": 4205,
+      "max_think_tok": 15299,
+      "truncated": 33,
+      "truncated_pct": 1.1
     },
     "sat_only": {
-      "n": 45,
-      "median_think_tok": 1337,
-      "p90_think_tok": 3369,
-      "max_think_tok": 6599,
-      "truncated": 0,
-      "truncated_pct": 0.0
+      "n": 3135,
+      "median_think_tok": 1331,
+      "p90_think_tok": 3548,
+      "max_think_tok": 17849,
+      "truncated": 23,
+      "truncated_pct": 0.7
     },
     "sv_only": {
-      "n": 45,
-      "median_think_tok": 1142,
-      "p90_think_tok": 3384,
-      "max_think_tok": 6689,
-      "truncated": 0,
-      "truncated_pct": 0.0
+      "n": 3135,
+      "median_think_tok": 1221,
+      "p90_think_tok": 3563,
+      "max_think_tok": 16101,
+      "truncated": 53,
+      "truncated_pct": 1.7
     },
     "blind": {
-      "n": 45,
-      "median_think_tok": 855,
-      "p90_think_tok": 1454,
-      "max_think_tok": 2176,
-      "truncated": 0,
-      "truncated_pct": 0.0
+      "n": 3135,
+      "median_think_tok": 1000,
+      "p90_think_tok": 4205,
+      "max_think_tok": 16098,
+      "truncated": 34,
+      "truncated_pct": 1.1
     }
   },
   "visual_dependency": {
     "road_surface": {
-      "fb_regress": 1,
-      "both_solve": 4,
-      "fb_leaked": 3,
-      "fb_visual": 1,
-      "sv_solves": 1
+      "fb_leaked": 242,
+      "both_solve": 209,
+      "fb_visual": 10,
+      "sv_solves": 48,
+      "fb_hard": 7,
+      "neither_solves": 27,
+      "fb_regress": 44,
+      "sat_solves": 19
     },
     "building_height": {
-      "fb_leaked": 1,
-      "both_solve": 3,
-      "fb_visual": 2,
-      "fb_regress": 1,
-      "neither_solves": 2,
-      "fb_hard": 1
-    },
-    "land_use": {
-      "fb_leaked": 2,
-      "both_solve": 2,
-      "fb_regress": 1,
-      "neither_solves": 1,
-      "fb_visual": 1,
-      "sv_solves": 1,
-      "fb_hard": 1,
-      "sat_solves": 1
-    },
-    "amenity_richness": {
-      "fb_hard": 2,
-      "neither_solves": 2,
-      "fb_visual": 3,
-      "sat_solves": 1,
-      "both_solve": 2
-    },
-    "transit_density": {
-      "fb_regress": 2,
-      "neither_solves": 3,
-      "fb_visual": 1,
-      "both_solve": 1,
-      "fb_hard": 2,
-      "sat_solves": 1
-    },
-    "green_space": {
-      "fb_hard": 4,
-      "sv_solves": 1,
-      "neither_solves": 4,
-      "fb_regress": 1
-    },
-    "road_type": {
-      "fb_visual": 2,
-      "both_solve": 2,
-      "fb_hard": 3,
-      "neither_solves": 2,
-      "sv_solves": 1
-    },
-    "urban_density": {
-      "fb_hard": 2,
-      "neither_solves": 3,
-      "fb_regress": 1,
-      "fb_leaked": 1,
-      "both_solve": 1,
-      "fb_visual": 1,
-      "sat_solves": 1
+      "fb_visual": 68,
+      "both_solve": 70,
+      "fb_leaked": 51,
+      "sat_solves": 28,
+      "fb_hard": 49,
+      "neither_solves": 45,
+      "sv_solves": 47,
+      "fb_regress": 22
     },
     "junction_type": {
-      "fb_hard": 1,
-      "both_solve": 4,
-      "fb_leaked": 2,
-      "fb_visual": 1,
-      "fb_regress": 1,
-      "sv_solves": 1
+      "fb_regress": 60,
+      "sv_solves": 58,
+      "fb_visual": 144,
+      "both_solve": 139,
+      "fb_hard": 82,
+      "fb_leaked": 48,
+      "neither_solves": 93,
+      "sat_solves": 44
+    },
+    "urban_density": {
+      "fb_hard": 180,
+      "neither_solves": 202,
+      "fb_visual": 105,
+      "sv_solves": 59,
+      "both_solve": 126,
+      "sat_solves": 34,
+      "fb_regress": 78,
+      "fb_leaked": 58
+    },
+    "land_use": {
+      "fb_regress": 89,
+      "neither_solves": 162,
+      "fb_leaked": 128,
+      "both_solve": 148,
+      "sv_solves": 69,
+      "fb_hard": 114,
+      "sat_solves": 42,
+      "fb_visual": 90
+    },
+    "road_type": {
+      "fb_leaked": 108,
+      "both_solve": 176,
+      "fb_visual": 138,
+      "sv_solves": 95,
+      "fb_hard": 138,
+      "neither_solves": 114,
+      "fb_regress": 37,
+      "sat_solves": 36
+    },
+    "amenity_richness": {
+      "fb_visual": 131,
+      "sat_solves": 55,
+      "fb_hard": 202,
+      "neither_solves": 219,
+      "fb_regress": 66,
+      "sv_solves": 45,
+      "both_solve": 102,
+      "fb_leaked": 22
+    },
+    "transit_density": {
+      "fb_visual": 93,
+      "both_solve": 94,
+      "fb_regress": 72,
+      "neither_solves": 242,
+      "fb_hard": 216,
+      "sat_solves": 46,
+      "sv_solves": 39,
+      "fb_leaked": 40
+    },
+    "green_space": {
+      "fb_regress": 42,
+      "sv_solves": 27,
+      "neither_solves": 98,
+      "fb_hard": 77,
+      "fb_leaked": 78,
+      "both_solve": 74,
+      "fb_visual": 6,
+      "sat_solves": 4
     }
   }
 }
