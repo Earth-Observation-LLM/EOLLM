@@ -113,16 +113,19 @@ for STRAT in $STRATEGIES; do
 
   # client concurrency = serve seq ceiling (saturate it), capped for sanity.
   CONC="$SEQS"; [ "$CONC" -gt 256 ] && CONC=256
+  # L3: serve at exactly the seq count the client will drive — no point
+  # reserving KV-cache for sequences we never issue.
+  SERVE_SEQS="$CONC"
 
   # 2) launch the server in the background at this strategy's context.
-  echo "--- launching vLLM serve (ctx=$CTX, max-num-seqs=$SEQS) ---"
+  echo "--- launching vLLM serve (ctx=$CTX, max-num-seqs=$SERVE_SEQS) ---"
   vllm serve "$MODEL_ID" \
     --served-model-name "$SERVED_NAME" \
     --port "$PORT" \
     --dtype bfloat16 \
     --max-model-len "$CTX" \
     --gpu-memory-utilization "$GPU_UTIL" \
-    --max-num-seqs "$SEQS" \
+    --max-num-seqs "$SERVE_SEQS" \
     --reasoning-parser qwen3 \
     --enable-prefix-caching \
     --enable-chunked-prefill \

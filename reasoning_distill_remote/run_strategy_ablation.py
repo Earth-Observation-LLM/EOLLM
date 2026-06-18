@@ -117,7 +117,12 @@ ANSWER_BUDGET = 256      # tokens for a forced/normal final JSON answer.
 OBSERVE_BUDGET = 600     # multistep T1: image description
 REASON_BUDGET = 512      # multistep T2: free-form reasoning
 CHECK_BUDGET = 384       # multistep T3: self-check
-COMMIT_BUDGET = 64       # multistep T4 / current: ONLY the JSON
+# M1 (zero-trust review): 64 was too tight — a model that prefaces the JSON
+# ("Based on my reasoning, {"answer":"C"}") + any restated option text can hit
+# the limit mid-JSON, yielding finish_reason=length and an unparseable fragment.
+# Under temp-0 the truncation is deterministic, so retries can't help — only a
+# roomier budget can. 256 is ample for a one-line JSON answer and cheap.
+COMMIT_BUDGET = 256      # multistep T4 / current: the final JSON answer
 PARSE_RETRIES = 4        # re-run a pass up to N times if no A/B/C/D parses out
 
 
@@ -177,12 +182,38 @@ def view_images(record, data_root, mode):
     return out
 
 
+def expected_image_count(mode):
+    """How many images a view MUST carry. full=2 (sat+sv), sat_only/sv_only=1,
+    blind=0. Used as a send-time tripwire (H1)."""
+    return {"full": 2, "sat_only": 1, "sv_only": 1, "blind": 0}[mode]
+
+
 def has_required_images(record, data_root, mode):
-    """True iff the view can be built (used to skip records with missing files
-    for the image-bearing views; blind is always buildable)."""
+    """True iff the view can be built with ALL its expected images (used to skip
+    records with missing files; blind is always buildable). Requires the FULL
+    expected count, not just >0, so `full` with a missing SV is skipped rather
+    than silently degraded to sat_only."""
     if mode == "blind":
         return True
-    return len(view_images(record, data_root, mode)) > 0
+    return len(view_images(record, data_root, mode)) == expected_image_count(mode)
+
+
+def attach_images(content, record, data_root, mode):
+    """Append the view's images to a chat `content` list, with a HARD tripwire
+    (H1): a non-blind view that resolves to the wrong image count RAISES instead
+    of silently sending a blind/degraded prompt that would still be scored as a
+    valid `full`/`sat_only`/`sv_only` answer — which would corrupt the very
+    'does the second view help?' comparison this experiment exists to make.
+    The raise is caught by the worker and logged as an `error` row."""
+    imgs = view_images(record, data_root, mode)
+    want = expected_image_count(mode)
+    if len(imgs) != want:
+        raise RuntimeError(
+            f"image count mismatch for qid={record.get('question_id')} "
+            f"mode={mode}: got {len(imgs)} expected {want}")
+    for img in imgs:
+        content.append({"type": "image_url", "image_url": {"url": pil_to_b64(img)}})
+    return content
 
 
 def options_block(record):
@@ -265,8 +296,7 @@ def single_turn_messages(record, data_root, mode, strategy):
             f"Options:\n{options_block(record)}\n\n"
             f"{_JSON_RULE}")
     content = [{"type": "text", "text": text}]
-    for img in view_images(record, data_root, mode):
-        content.append({"type": "image_url", "image_url": {"url": pil_to_b64(img)}})
+    attach_images(content, record, data_root, mode)  # H1 tripwire
     return [
         {"role": "system", "content": sys_prompt(mode, strategy)},
         {"role": "user", "content": content},
@@ -291,8 +321,7 @@ def multistep_turn1(record, data_root, mode):
     else:
         raise ValueError(f"multistep_turn1 not used for mode={mode}")
     content = [{"type": "text", "text": instr}]
-    for img in view_images(record, data_root, mode):
-        content.append({"type": "image_url", "image_url": {"url": pil_to_b64(img)}})
+    attach_images(content, record, data_root, mode)  # H1 tripwire
     return {"role": "user", "content": content}
 
 
@@ -331,25 +360,41 @@ def multistep_turn4(record):
 
 
 # ===========================================================================
-# Letter parsing — prefers the requested JSON, falls back to plain text.
-# (Verbatim logic from run_ablation.py / utils.normalize_answer ideas.)
+# Letter parsing — ONLY trust an explicit commitment, never scrape prose.
+#
+# ZERO-TRUST review (C2): the old last-standalone-A/B/C/D fallback fabricated
+# letters from echoed option labels ("A. residential B. commercial …" -> B) and
+# from rejected mid-reasoning letters ("between C and D, go with D"). Both
+# systematically mis-score. We therefore parse ONLY:
+#   1) the {"answer":"X"} JSON we explicitly ask for (last one wins),
+#   2) a reply that is JUST a letter ("C", "(C).", "C:"),
+#   3) an explicit "answer is X" / "answer: X" near the end.
+# Anything else -> None (an honest unparsed miss, which the caller retries).
+# The bare-letter catch-all is GONE — under temp-0 truncation a guessed letter
+# is worse than a miss, because it biases the head-to-head accuracy comparison.
 # ===========================================================================
 def parse_letter(text):
     import re
     if not text:
         return None
     t = text.strip()
+    # 1) JSON answer object (what every prompt requests) — take the LAST one.
     js = re.findall(r'"answer"\s*:\s*"?\(?([ABCD])\)?"?', t, re.I)
     if js:
         return js[-1].upper()
+    # 2) the whole reply is just a letter.
     m = re.fullmatch(r"\(?([ABCD])\)?[.):]?", t, re.I)
     if m:
         return m.group(1).upper()
-    m = re.search(r"answer\s*(?:is|:)?\s*\(?([ABCD])\)?\b", t, re.I)
-    if m:
-        return m.group(1).upper()
-    matches = re.findall(r"(?<![A-Za-z])([ABCD])(?![A-Za-z])", t)
-    return matches[-1].upper() if matches else None
+    # 3) explicit "answer is X" / "answer: X" — only when there is exactly ONE
+    #    such phrase, so we never pick between competing commitments.
+    ans = re.findall(r"answer\s*(?:is|:)?\s*\(?([ABCD])\)?\b", t, re.I)
+    if len(ans) == 1:
+        return ans[0].upper()
+    if len(ans) > 1 and len(set(a.upper() for a in ans)) == 1:
+        return ans[0].upper()  # repeated but consistent
+    # No unambiguous commitment -> honest miss (caller retries).
+    return None
 
 
 class ContextOverflow(Exception):
@@ -430,13 +475,20 @@ async def run_think16k(session, base_url, record, data_root, mode):
         ]
         try:
             r2 = await chat(session, base_url, followup, ANSWER_BUDGET)
-            answer_text = r2["content"] or r2["reasoning"]
+            # Score the FORCE-CLOSE turn's content only — never scrape the
+            # reasoning trace (C1): a letter from rejected mid-thinking
+            # ("between C and D… go with D") would mis-score.
+            answer_text = r2["content"]
             usage = _merge_usage(usage, r2["usage"])
         except ContextOverflow:
-            answer_text = reasoning[-400:]
+            # No room even for the follow-up → genuinely unrecoverable.
+            # Leave answer_text empty: an honest unparsed miss, which
+            # run_one_with_retries will retry rather than a guessed letter.
+            answer_text = ""
     transcript.append({"turn": "answer", "role": "assistant",
                        "reasoning": reasoning, "content": answer_text})
-    letter = parse_letter(answer_text) or parse_letter(reasoning)
+    # C1: parse ONLY the final answer text, NOT the 16k reasoning body.
+    letter = parse_letter(answer_text)
     return {
         "letter": letter, "answer_text": answer_text, "reasoning": reasoning,
         "transcript": transcript, "finish_reason": r1["finish_reason"],
@@ -456,7 +508,8 @@ async def run_current(session, base_url, record, data_root, mode):
     except ContextOverflow:
         ctx_overflow = True
         r = await chat(session, base_url, messages, COMMIT_BUDGET)
-    answer_text = r["content"] or r["reasoning"]
+    # H2: thinking is OFF, so score the answer CONTENT only — never reasoning.
+    answer_text = r["content"]
     transcript.append({"turn": "answer", "role": "assistant",
                        "reasoning": r["reasoning"], "content": r["content"]})
     letter = parse_letter(answer_text)
@@ -508,7 +561,8 @@ async def run_multistep(session, base_url, record, data_root, mode):
     # T4 commit — SCORED.
     r4 = await step(multistep_turn4(record), COMMIT_BUDGET, "commit")
 
-    answer_text = r4["content"] or r4["reasoning"]
+    # H2: thinking OFF — score the commit turn's CONTENT only.
+    answer_text = r4["content"]
     letter = parse_letter(answer_text)
     return {
         "letter": letter, "answer_text": answer_text, "reasoning": r4["reasoning"],
@@ -566,7 +620,7 @@ async def worker(name, queue, session, base_url, data_root, out_f, lock,
                 "sample_id": record.get("sample_id"),
                 "source": source, "mode": mode,
                 "topic": record["topic"], "city": record.get("city"),
-                "image_mode": record.get("image_mode", "satellite_marked"),
+                "image_mode": record.get("image_mode"),  # honest: benchmark recs carry none (null)
                 "gt": gt, "letter": res["letter"], "correct": correct,
                 "reasoning": res["reasoning"], "answer_text": res["answer_text"],
                 "transcript": res["transcript"],

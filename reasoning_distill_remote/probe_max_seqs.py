@@ -84,6 +84,10 @@ def main():
                     help="context the REAL server uses; the chosen seqs is "
                          "scaled down so KV fits at this length")
     ap.add_argument("--gpu-util", type=float, default=0.90)
+    ap.add_argument("--margin", type=float, default=0.85,
+                    help="de-rate the blessed value (probe is enforce_eager but "
+                         "the real server uses CUDA graphs + prefix cache, which "
+                         "cost extra memory the probe didn't measure)")
     args = ap.parse_args()
 
     log = []
@@ -146,9 +150,15 @@ def main():
                 hi = mid
         chosen = lo if lo else args.floor
 
+    # Safety margin (H3): the probe runs enforce_eager (no CUDA-graph capture),
+    # but the real `vllm serve` uses CUDA graphs + prefix-caching + chunked
+    # prefill, which reserve extra memory the probe never measured. De-rate the
+    # blessed value so the real server doesn't OOM during graph capture.
+    chosen = int(chosen * args.margin)
     chosen = max(args.floor, min(args.ceil, chosen))
     print(json.dumps({"trace": log, "chosen": chosen, "scale": round(scale, 2),
-                      "real_max_len": args.real_max_len}), file=sys.stderr)
+                      "margin": args.margin, "real_max_len": args.real_max_len}),
+          file=sys.stderr)
     print(chosen)  # LAST stdout line = the answer
 
 
