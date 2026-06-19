@@ -52,4 +52,74 @@ Transit density & 32.1 & 30.9 & 30.4 & 27.3 & +1.2 \\
 \end{tabular}
 \vspace{2pt}\par\tiny sat $=$ satellite only \textbf{$\cdot$} sv $=$ street-view only \textbf{$\cdot$} full$-$best1 $=$ full $-\max(\text{sat},\text{sv})$ \textbf{$\cdot$} thinking off
 \end{frame}
+\section{Cross-view tasks \textemdash{} all four views}
+\begin{frame}{Cross-view tasks \textbf{$\cdot$} full / sat / sv / blind (1/2)}
+\centering\scriptsize
+\begin{tabular}{llcccc>{\bfseries}c}
+\toprule
+task & model & full & sat & sv & blind & full$-$best1 \\
+\midrule
+\multirow{4}{*}{Mismatch binary (easy)} & Gemma-4-12B & 79.8 & 43.9 & 52.0 & 46.6 & \textcolor{good}{+27.8} \\
+ & Qwen2.5-VL-7B & 59.1 & 53.2 & 53.7 & 47.5 & \textcolor{good}{+5.4} \\
+ & Qwen3.5-4B & 74.3 & 51.1 & 51.1 & 50.6 & \textcolor{good}{+23.2} \\
+ & Qwen3.5-9B & 87.2 & 47.5 & 54.2 & 45.1 & \textcolor{good}{+33.0} \\
+\midrule
+\multirow{4}{*}{Mismatch binary (hard)} & Gemma-4-12B & 64.6 & 54.6 & 47.5 & 55.8 & \textcolor{good}{+10.0} \\
+ & Qwen2.5-VL-7B & 45.6 & 44.7 & 44.2 & 52.3 & +0.9 \\
+ & Qwen3.5-4B & 58.0 & 47.0 & 46.3 & 46.6 & \textcolor{good}{+11.0} \\
+ & Qwen3.5-9B & 72.9 & 55.1 & 44.9 & 54.4 & \textcolor{good}{+17.8} \\
+\midrule
+\multirow{4}{*}{Mismatch MCQ (easy)} & Gemma-4-12B & 43.2 & 21.9 & 27.3 & 0.7 & \textcolor{good}{+15.9} \\
+ & Qwen2.5-VL-7B & 39.7 & 24.9 & 27.3 & 24.9 & \textcolor{good}{+12.4} \\
+ & Qwen3.5-4B & 45.8 & 25.9 & 25.2 & 26.1 & \textcolor{good}{+19.9} \\
+ & Qwen3.5-9B & 51.3 & 23.5 & 23.3 & 27.1 & \textcolor{good}{+27.8} \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}\par\tiny full$-$best1 $=$ full $-\max(\text{sat},\text{sv})$ \textbf{$\cdot$} camera\_direction has no sv\_only (sv $=$ --)
+\end{frame}
+\begin{frame}{Cross-view tasks \textbf{$\cdot$} full / sat / sv / blind (2/2)}
+\centering\scriptsize
+\begin{tabular}{llcccc>{\bfseries}c}
+\toprule
+task & model & full & sat & sv & blind & full$-$best1 \\
+\midrule
+\multirow{4}{*}{Mismatch MCQ (hard)} & Gemma-4-12B & 34.7 & 25.2 & 24.0 & 0.7 & \textcolor{good}{+9.5} \\
+ & Qwen2.5-VL-7B & 33.7 & 25.9 & 24.0 & 26.4 & \textcolor{good}{+7.8} \\
+ & Qwen3.5-4B & 38.5 & 24.2 & 25.4 & 24.9 & \textcolor{good}{+13.1} \\
+ & Qwen3.5-9B & 39.4 & 21.1 & 21.6 & 24.2 & \textcolor{good}{+17.8} \\
+\midrule
+\multirow{4}{*}{Camera direction} & Gemma-4-12B & 25.2 & 22.3 & -- & 5.9 & +2.9 \\
+ & Qwen2.5-VL-7B & 24.7 & 29.2 & -- & 25.4 & \textcolor{bad}{-4.5} \\
+ & Qwen3.5-4B & 21.4 & 20.7 & -- & 25.2 & +0.7 \\
+ & Qwen3.5-9B & 23.5 & 25.7 & -- & 26.1 & \textcolor{bad}{-2.2} \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}\par\tiny full$-$best1 $=$ full $-\max(\text{sat},\text{sv})$ \textbf{$\cdot$} camera\_direction has no sv\_only (sv $=$ --)
+\end{frame}
+\section{Which tasks need both views?}
+\begin{frame}{full $-$ best single view \textbf{$\cdot$} Qwen3.5-9B \textbf{$\cdot$} by task family}
+\centering\scriptsize
+\begin{tabular}{ll>{\bfseries}cl}
+\toprule
+family & task & full$-$best1 & reading \\
+\midrule
+cross-view & Mismatch binary (easy) & \textcolor{good}{+33.0} & \textcolor{good}{needs both} \\
+cross-view & Mismatch binary (hard) & \textcolor{good}{+17.8} & \textcolor{good}{needs both} \\
+cross-view & Mismatch MCQ (easy) & \textcolor{good}{+27.8} & \textcolor{good}{needs both} \\
+cross-view & Mismatch MCQ (hard) & \textcolor{good}{+17.8} & \textcolor{good}{needs both} \\
+cross-view & Camera direction & \textcolor{bad}{-2.2} & \textcolor{bad}{near chance} \\
+\midrule
+urbanization & Land use & +0.3 & marginal \\
+urbanization & Building height & \textcolor{bad}{-3.6} & \textcolor{bad}{2nd view redundant} \\
+urbanization & Urban density & \textcolor{bad}{-6.4} & \textcolor{bad}{2nd view redundant} \\
+urbanization & Junction type & +0.0 & \textcolor{bad}{2nd view redundant} \\
+urbanization & Green space & \textcolor{bad}{-1.4} & \textcolor{bad}{2nd view redundant} \\
+urbanization & Amenity richness & +0.7 & marginal \\
+urbanization & Road type & \textcolor{bad}{-10.0} & \textcolor{bad}{2nd view redundant} \\
+urbanization & Road surface & \textcolor{bad}{-4.9} & \textcolor{bad}{2nd view redundant} \\
+urbanization & Transit density & +1.2 & marginal \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}\par\tiny cross-view from 4-model sweep (Qwen3.5-9B) \textbf{$\cdot$} urbanization from strategy run (Qwen3.5-9B, thinking off)
+\end{frame}
 \end{document}

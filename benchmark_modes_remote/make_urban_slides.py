@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 """
-Beamer deck — urbanization tasks only, two sections, minimal text (numbers carry it):
+Beamer deck — which tasks need both views, which don't. Minimal text (numbers carry it).
 
-  Section 1  4-model benchmark sweep: per urbanization task, full vs blind across
+  Section 1  URBANIZATION tasks (4-model sweep): per task, full vs blind across
              gemma-4-12b / qwen2.5-vl-7b / qwen3.5-4b / qwen3.5-9b.
              (This sweep only asked the 9 attribute tasks in full + blind.)
 
-  Section 2  Strategy run (Qwen3.5-9B): per urbanization task, full / sat / sv / blind
-             — the run that DID ask attribute tasks in all four views, so it directly
-             shows full ~ sv ~ sat (the second view is redundant).
+  Section 2  URBANIZATION tasks (Qwen3.5-9B strategy run): per task, full/sat/sv/blind.
+             The run that DID ask attribute tasks in all four views, so it directly
+             shows full ~ sv ~ sat — the second view is redundant.
+
+  Section 3  CROSS-VIEW tasks (4-model sweep, the ONLY run with them): per task,
+             full/sat/sv/blind + full-best1, across all 4 models. Here full crushes any
+             single view (mismatch) — these tasks genuinely need both. camera_direction
+             sits near chance (kept in-table, unframed).
+
+  Section 4  Contrast: full-best1 by task family — positive (need both) vs <=0 (redundant).
 
 Reads:
   benchmark_modes_remote/results/attr_fullblind_4model.json
+  benchmark_modes_remote/results/crossview_4model.json
   reasoning_distill_remote/results/attr_by_task.json   (strategy run, 'current' = thinking-off baseline)
 
 Writes:
@@ -37,6 +45,27 @@ MNICE = {
 TASKS = ["land_use", "building_height", "urban_density", "junction_type", "green_space",
          "amenity_richness", "road_type", "road_surface", "transit_density"]
 
+CV = ["mismatch_binary_easy", "mismatch_binary_hard", "mismatch_mcq_easy",
+      "mismatch_mcq_hard", "camera_direction"]
+CVNICE = {
+    "mismatch_binary_easy": "Mismatch binary (easy)",
+    "mismatch_binary_hard": "Mismatch binary (hard)",
+    "mismatch_mcq_easy": "Mismatch MCQ (easy)",
+    "mismatch_mcq_hard": "Mismatch MCQ (hard)",
+    "camera_direction": "Camera direction",
+}
+
+
+def fmt(x):
+    return "--" if x is None else f"{x:.1f}"
+
+
+def best1(a):  # full - max(sat, sv), skipping missing views
+    singles = [v for v in (a["sat_only"], a["sv_only"]) if v is not None]
+    if not singles or a["full"] is None:
+        return None
+    return round(a["full"] - max(singles), 1)
+
 
 def cgain(x):
     if x >= 5.0:
@@ -57,6 +86,7 @@ def cdelta(x):  # full - best single view (section 2 synergy)
 def main():
     d4 = json.load(open(RES / "attr_fullblind_4model.json"))
     ds = json.load(open(STRAT))
+    cv = json.load(open(RES / "crossview_4model.json"))
     M = d4["models"]
     accs = ds["acc"]["current"]  # thinking-off baseline = the comparable mode
 
@@ -126,6 +156,57 @@ def main():
     P(r"\bottomrule")
     P(r"\end{tabular}")
     P(r"\vspace{2pt}\par\tiny sat $=$ satellite only \textbf{$\cdot$} sv $=$ street-view only \textbf{$\cdot$} full$-$best1 $=$ full $-\max(\text{sat},\text{sv})$ \textbf{$\cdot$} thinking off")
+    P(r"\end{frame}")
+
+    # ---------------- Section 3: cross-view tasks (one frame per task, 4 models x 4 views)
+    P(r"\section{Cross-view tasks \textemdash{} all four views}")
+    cv_chunks = [CV[i:i + 3] for i in range(0, len(CV), 3)]
+    for ci, ch in enumerate(cv_chunks, 1):
+        P(rf"\begin{{frame}}{{Cross-view tasks \textbf{{$\cdot$}} full / sat / sv / blind ({ci}/{len(cv_chunks)})}}")
+        P(r"\centering\scriptsize")
+        P(r"\begin{tabular}{llcccc>{\bfseries}c}")
+        P(r"\toprule")
+        P(r"task & model & full & sat & sv & blind & full$-$best1 \\")
+        P(r"\midrule")
+        for t in ch:
+            for j, m in enumerate(M):
+                a = cv["acc"][m][t]
+                tcell = rf"\multirow{{4}}{{*}}{{{CVNICE[t]}}}" if j == 0 else ""
+                b1 = best1(a)
+                bcell = cdelta(b1) if b1 is not None else "--"
+                P(rf"{tcell} & {MNICE[m]} & {fmt(a['full'])} & {fmt(a['sat_only'])} & "
+                  rf"{fmt(a['sv_only'])} & {fmt(a['blind'])} & {bcell} \\")
+            P(r"\midrule")
+        o[-1] = r"\bottomrule"
+        P(r"\end{tabular}")
+        P(r"\vspace{2pt}\par\tiny full$-$best1 $=$ full $-\max(\text{sat},\text{sv})$ \textbf{$\cdot$} camera\_direction has no sv\_only (sv $=$ --)")
+        P(r"\end{frame}")
+
+    # ---------------- Section 4: the contrast — full-best1 by family (Qwen3.5-9B)
+    P(r"\section{Which tasks need both views?}")
+    P(r"\begin{frame}{full $-$ best single view \textbf{$\cdot$} Qwen3.5-9B \textbf{$\cdot$} by task family}")
+    P(r"\centering\scriptsize")
+    P(r"\begin{tabular}{ll>{\bfseries}cl}")
+    P(r"\toprule")
+    P(r"family & task & full$-$best1 & reading \\")
+    P(r"\midrule")
+    # cross-view (need both) — from 4-model sweep, qwen3.5-9b
+    qm = "qwen3.5-9b-awq"
+    for t in CV:
+        b1 = best1(cv["acc"][qm][t])
+        rd = r"\textcolor{good}{needs both}" if (b1 is not None and b1 >= 3.0) else (
+            r"\textcolor{bad}{near chance}" if t == "camera_direction" else "weak")
+        P(rf"cross-view & {CVNICE[t]} & {cdelta(b1) if b1 is not None else '--'} & {rd} \\")
+    P(r"\midrule")
+    # urbanization (redundant) — from strategy run, current
+    for t in TASKS:
+        a = accs[t]
+        b1 = round(a["full"] - max(a["sat_only"], a["sv_only"]), 1)
+        rd = r"\textcolor{bad}{2nd view redundant}" if b1 <= 0 else "marginal"
+        P(rf"urbanization & {NICE[t]} & {cdelta(b1)} & {rd} \\")
+    P(r"\bottomrule")
+    P(r"\end{tabular}")
+    P(r"\vspace{2pt}\par\tiny cross-view from 4-model sweep (Qwen3.5-9B) \textbf{$\cdot$} urbanization from strategy run (Qwen3.5-9B, thinking off)")
     P(r"\end{frame}")
 
     P(r"\end{document}")
