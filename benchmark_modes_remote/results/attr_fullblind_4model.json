@@ -1,0 +1,327 @@
+{
+  "models": [
+    "gemma-4-12b-awq",
+    "qwen2.5-vl-7b-awq",
+    "qwen3.5-4b-awq",
+    "qwen3.5-9b-awq"
+  ],
+  "tasks": [
+    "land_use",
+    "building_height",
+    "urban_density",
+    "junction_type",
+    "green_space",
+    "amenity_richness",
+    "road_type",
+    "road_surface",
+    "transit_density"
+  ],
+  "full": {
+    "gemma-4-12b-awq": {
+      "land_use": [
+        47.3,
+        421
+      ],
+      "building_height": [
+        61.6,
+        190
+      ],
+      "urban_density": [
+        37.3,
+        421
+      ],
+      "junction_type": [
+        66.5,
+        334
+      ],
+      "green_space": [
+        58.6,
+        203
+      ],
+      "amenity_richness": [
+        35.6,
+        421
+      ],
+      "road_type": [
+        65.3,
+        421
+      ],
+      "road_surface": [
+        78.2,
+        303
+      ],
+      "transit_density": [
+        28.0,
+        421
+      ]
+    },
+    "qwen2.5-vl-7b-awq": {
+      "land_use": [
+        55.6,
+        421
+      ],
+      "building_height": [
+        57.9,
+        190
+      ],
+      "urban_density": [
+        41.8,
+        421
+      ],
+      "junction_type": [
+        57.5,
+        334
+      ],
+      "green_space": [
+        81.8,
+        203
+      ],
+      "amenity_richness": [
+        31.8,
+        421
+      ],
+      "road_type": [
+        50.6,
+        421
+      ],
+      "road_surface": [
+        90.8,
+        303
+      ],
+      "transit_density": [
+        28.0,
+        421
+      ]
+    },
+    "qwen3.5-4b-awq": {
+      "land_use": [
+        55.6,
+        421
+      ],
+      "building_height": [
+        61.6,
+        190
+      ],
+      "urban_density": [
+        36.3,
+        421
+      ],
+      "junction_type": [
+        50.0,
+        334
+      ],
+      "green_space": [
+        41.4,
+        203
+      ],
+      "amenity_richness": [
+        35.4,
+        421
+      ],
+      "road_type": [
+        57.0,
+        421
+      ],
+      "road_surface": [
+        91.4,
+        303
+      ],
+      "transit_density": [
+        34.2,
+        421
+      ]
+    },
+    "qwen3.5-9b-awq": {
+      "land_use": [
+        53.2,
+        421
+      ],
+      "building_height": [
+        56.8,
+        190
+      ],
+      "urban_density": [
+        39.0,
+        421
+      ],
+      "junction_type": [
+        55.7,
+        334
+      ],
+      "green_space": [
+        36.9,
+        203
+      ],
+      "amenity_richness": [
+        36.3,
+        421
+      ],
+      "road_type": [
+        53.0,
+        421
+      ],
+      "road_surface": [
+        85.5,
+        303
+      ],
+      "transit_density": [
+        31.4,
+        421
+      ]
+    }
+  },
+  "blind": {
+    "gemma-4-12b-awq": {
+      "land_use": [
+        17.8,
+        421
+      ],
+      "building_height": [
+        32.6,
+        190
+      ],
+      "urban_density": [
+        22.6,
+        421
+      ],
+      "junction_type": [
+        7.5,
+        334
+      ],
+      "green_space": [
+        76.4,
+        203
+      ],
+      "amenity_richness": [
+        24.2,
+        421
+      ],
+      "road_type": [
+        15.0,
+        421
+      ],
+      "road_surface": [
+        26.4,
+        303
+      ],
+      "transit_density": [
+        26.8,
+        421
+      ]
+    },
+    "qwen2.5-vl-7b-awq": {
+      "land_use": [
+        54.4,
+        421
+      ],
+      "building_height": [
+        44.7,
+        190
+      ],
+      "urban_density": [
+        24.9,
+        421
+      ],
+      "junction_type": [
+        47.0,
+        334
+      ],
+      "green_space": [
+        78.8,
+        203
+      ],
+      "amenity_richness": [
+        14.3,
+        421
+      ],
+      "road_type": [
+        25.4,
+        421
+      ],
+      "road_surface": [
+        82.8,
+        303
+      ],
+      "transit_density": [
+        26.6,
+        421
+      ]
+    },
+    "qwen3.5-4b-awq": {
+      "land_use": [
+        38.2,
+        421
+      ],
+      "building_height": [
+        46.3,
+        190
+      ],
+      "urban_density": [
+        47.7,
+        421
+      ],
+      "junction_type": [
+        47.0,
+        334
+      ],
+      "green_space": [
+        53.7,
+        203
+      ],
+      "amenity_richness": [
+        19.0,
+        421
+      ],
+      "road_type": [
+        31.1,
+        421
+      ],
+      "road_surface": [
+        87.5,
+        303
+      ],
+      "transit_density": [
+        27.1,
+        421
+      ]
+    },
+    "qwen3.5-9b-awq": {
+      "land_use": [
+        38.7,
+        421
+      ],
+      "building_height": [
+        45.8,
+        190
+      ],
+      "urban_density": [
+        49.9,
+        421
+      ],
+      "junction_type": [
+        41.6,
+        334
+      ],
+      "green_space": [
+        61.6,
+        203
+      ],
+      "amenity_richness": [
+        21.1,
+        421
+      ],
+      "road_type": [
+        39.9,
+        421
+      ],
+      "road_surface": [
+        52.8,
+        303
+      ],
+      "transit_density": [
+        26.4,
+        421
+      ]
+    }
+  }
+}

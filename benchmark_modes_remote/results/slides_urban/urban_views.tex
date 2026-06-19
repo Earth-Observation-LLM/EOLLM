@@ -1,0 +1,55 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}\usepackage{xcolor}\usepackage{array}\usepackage{multirow}
+\definecolor{good}{HTML}{2E7D32}\definecolor{bad}{HTML}{C62828}\definecolor{accent}{HTML}{1565C0}
+\setbeamercolor{frametitle}{bg=accent}
+\setbeamertemplate{section page}{\centering\usebeamerfont{section title}\insertsectionhead\par}
+\title{Do urbanization tasks need both views?}
+\date{}\author{}
+\begin{document}
+\maketitle
+\section{4-model sweep \textemdash{} full vs blind}
+\begin{frame}{4-model sweep \textbf{$\cdot$} full vs blind \textbf{$\cdot$} 9 urbanization tasks}
+\centering\scriptsize
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & \multicolumn{2}{c}{Gemma-4-12B} & \multicolumn{2}{c}{Qwen2.5-VL-7B} & \multicolumn{2}{c}{Qwen3.5-4B} & \multicolumn{2}{c}{Qwen3.5-9B} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+task & full & $\Delta$bl & full & $\Delta$bl & full & $\Delta$bl & full & $\Delta$bl \\
+\midrule
+Land use & 47.3 & \textcolor{good}{+29.5} & 55.6 & +1.2 & 55.6 & \textcolor{good}{+17.4} & 53.2 & \textcolor{good}{+14.5} \\
+Building height & 61.6 & \textcolor{good}{+29.0} & 57.9 & \textcolor{good}{+13.2} & 61.6 & \textcolor{good}{+15.3} & 56.8 & \textcolor{good}{+11.0} \\
+Urban density & 37.3 & \textcolor{good}{+14.7} & 41.8 & \textcolor{good}{+16.9} & 36.3 & \textcolor{bad}{-11.4} & 39.0 & \textcolor{bad}{-10.9} \\
+Junction type & 66.5 & \textcolor{good}{+59.0} & 57.5 & \textcolor{good}{+10.5} & 50.0 & +3.0 & 55.7 & \textcolor{good}{+14.1} \\
+Green space & 58.6 & \textcolor{bad}{-17.8} & 81.8 & +3.0 & 41.4 & \textcolor{bad}{-12.3} & 36.9 & \textcolor{bad}{-24.7} \\
+Amenity richness & 35.6 & \textcolor{good}{+11.4} & 31.8 & \textcolor{good}{+17.5} & 35.4 & \textcolor{good}{+16.4} & 36.3 & \textcolor{good}{+15.2} \\
+Road type & 65.3 & \textcolor{good}{+50.3} & 50.6 & \textcolor{good}{+25.2} & 57.0 & \textcolor{good}{+25.9} & 53.0 & \textcolor{good}{+13.1} \\
+Road surface & 78.2 & \textcolor{good}{+51.8} & 90.8 & \textcolor{good}{+8.0} & 91.4 & +3.9 & 85.5 & \textcolor{good}{+32.7} \\
+Transit density & 28.0 & +1.2 & 28.0 & +1.4 & 34.2 & \textcolor{good}{+7.1} & 31.4 & \textcolor{good}{+5.0} \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}\par\tiny full $=$ both views \textbf{$\cdot$} $\Delta$bl $=$ full $-$ blind (vision gain) \textbf{$\cdot$} thinking off \textbf{$\cdot$} n$=$190--421/task
+\end{frame}
+\section{Single-model \textemdash{} all four views}
+\begin{frame}{Qwen3.5-9B \textbf{$\cdot$} full / sat / sv / blind \textbf{$\cdot$} 9 urbanization tasks}
+\centering\scriptsize
+\begin{tabular}{lccccc}
+\toprule
+task & full & sat & sv & blind & full$-$best1 \\
+\midrule
+Land use & 53.0 & 50.1 & 52.7 & 43.5 & +0.3 \\
+Building height & 61.1 & 47.9 & 64.7 & 45.8 & \textcolor{bad}{-3.6} \\
+Urban density & 38.5 & 39.2 & 44.9 & 40.4 & \textcolor{bad}{-6.4} \\
+Junction type & 62.6 & 48.8 & 62.6 & 48.5 & +0.0 \\
+Green space & 36.5 & 35.5 & 37.9 & 64.5 & \textcolor{bad}{-1.4} \\
+Amenity richness & 36.8 & 36.1 & 33.5 & 19.5 & +0.7 \\
+Road type & 47.5 & 40.1 & 57.5 & 34.9 & \textcolor{bad}{-10.0} \\
+Road surface & 82.2 & 78.9 & 87.1 & 67.7 & \textcolor{bad}{-4.9} \\
+Transit density & 32.1 & 30.9 & 30.4 & 27.3 & +1.2 \\
+\midrule
+\textbf{overall} & \textbf{48.6} & 44.4 & \textbf{50.9} & 40.9 & \textcolor{bad}{-2.3} \\
+\bottomrule
+\end{tabular}
+\vspace{2pt}\par\tiny sat $=$ satellite only \textbf{$\cdot$} sv $=$ street-view only \textbf{$\cdot$} full$-$best1 $=$ full $-\max(\text{sat},\text{sv})$ \textbf{$\cdot$} thinking off
+\end{frame}
+\end{document}
