@@ -1,0 +1,20 @@
+{
+  "current": {
+    "full": 48.6,
+    "sat_only": 44.4,
+    "sv_only": 50.9,
+    "blind": 40.9
+  },
+  "think16k": {
+    "full": 49.8,
+    "sat_only": 46.1,
+    "sv_only": 51.8,
+    "blind": 41.0
+  },
+  "multistep": {
+    "full": 51.7,
+    "sat_only": 49.4,
+    "sv_only": 53.9,
+    "blind": 43.4
+  }
+}

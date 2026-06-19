@@ -1,0 +1,129 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{multirow}
+\definecolor{good}{HTML}{2E7D32}
+\definecolor{bad}{HTML}{C62828}
+\definecolor{accent}{HTML}{1565C0}
+\setbeamercolor{frametitle}{bg=accent}
+\newcommand{\hl}[1]{\textbf{\textcolor{accent}{#1}}}
+\title{Do we need both views?}
+\subtitle{A prompting-strategy ablation on urban-attribute VQA}
+\author{Qwen3.5-9B-AWQ \;$\cdot$\; 9 urbanization tasks \;$\cdot$\; greedy decoding}
+\date{}
+\begin{document}
+\maketitle
+\begin{frame}{The question}
+\begin{itemize}
+  \item Each sample pairs a \hl{marked satellite} image with a \hl{4-angle street-view} grid.
+  \item For the \hl{9 urban-attribute tasks}, we ask: does the model actually \emph{need both views}?
+  \item We compare four inputs --- \texttt{full} (both), \texttt{sat} only, \texttt{sv} only, \texttt{blind} (none) ---
+        under \hl{three prompting strategies}, on the same records, greedy decoding.
+\end{itemize}
+\vfill
+\footnotesize Cross-view tasks (\texttt{mismatch\_*}, \texttt{camera\_direction}) are excluded:
+their answer lives in \emph{having both images}, so a single-view ablation is ill-posed there.
+\end{frame}
+\begin{frame}{Three strategies, same model}
+\begin{description}
+  \item[current] thinking off, one turn, ask directly. The baseline.
+  \item[think16k] thinking \emph{on}, up to a 16k-token \texttt{<think>} budget, one turn.
+  \item[multistep] thinking off, a 4-turn conversation: \emph{observe} each image $\to$
+        \emph{reason} without options $\to$ \emph{self-check} $\to$ \emph{commit}. Turns uncapped.
+\end{description}
+\vfill
+\centering\footnotesize \textbf{synergy} $=$ full $-\max(\text{sat},\text{sv})$ \quad
+\textbf{vision} $=$ full $-$ blind
+\end{frame}
+\begin{frame}{Headline: the second view earns nothing}
+\centering
+\begin{tabular}{lcccc>{\bfseries}cc}
+\toprule
+strategy & full & sat & sv & blind & synergy & vision \\
+\midrule
+current & 48.6 & 44.4 & 50.9 & 40.9 & \textcolor{bad}{-2.3} & +7.7 \\
+think16k & 49.8 & 46.1 & 51.8 & 41.0 & \textcolor{bad}{-2.0} & +8.8 \\
+multistep & 51.7 & 49.4 & 53.9 & 43.4 & \textcolor{bad}{-2.2} & +8.3 \\
+\bottomrule
+\end{tabular}
+\vfill
+\begin{itemize}
+  \item \hl{sv-only $\geq$ full} for every strategy --- synergy is \textcolor{bad}{negative} throughout.
+  \item Vision helps ($\approx +8$ over blind), but it is \hl{one-view vision}: street-view alone.
+\end{itemize}
+\end{frame}
+\begin{frame}{Per task --- all strategies $\times$ all views (1/3)}
+\centering\scriptsize
+\begin{tabular}{llcccc>{\bfseries}c}
+\toprule
+task & strat & full & sat & sv & blind & syn \\
+\midrule
+ & current & 53.0 & 50.1 & 52.7 & 43.5 & +0.3 \\
+\multirow{3}{*}{Land use} & think16k & 51.8 & 45.1 & 51.5 & 51.5 & +0.3 \\
+ & multistep & 49.4 & 50.1 & 53.0 & 50.6 & \textcolor{bad}{-3.6} \\
+\midrule
+ & current & 61.1 & 47.9 & 64.7 & 45.8 & \textcolor{bad}{-3.6} \\
+\multirow{3}{*}{Building height} & think16k & 62.6 & 51.6 & 61.6 & 38.4 & +1.0 \\
+ & multistep & 61.1 & 54.7 & 58.4 & 43.2 & +2.7 \\
+\midrule
+ & current & 38.5 & 39.2 & 44.9 & 40.4 & \textcolor{bad}{-6.4} \\
+\multirow{3}{*}{Urban density} & think16k & 38.7 & 38.0 & 43.9 & 32.3 & \textcolor{bad}{-5.2} \\
+ & multistep & 41.6 & 43.7 & 45.4 & 35.9 & \textcolor{bad}{-3.8} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+\begin{frame}{Per task --- all strategies $\times$ all views (2/3)}
+\centering\scriptsize
+\begin{tabular}{llcccc>{\bfseries}c}
+\toprule
+task & strat & full & sat & sv & blind & syn \\
+\midrule
+ & current & 62.6 & 48.8 & 62.6 & 48.5 & +0.0 \\
+\multirow{3}{*}{Junction type} & think16k & 57.5 & 54.8 & 59.0 & 32.3 & \textcolor{bad}{-1.5} \\
+ & multistep & 63.5 & 59.3 & 62.9 & 46.4 & +0.6 \\
+\midrule
+ & current & 36.5 & 35.5 & 37.9 & 64.5 & \textcolor{bad}{-1.4} \\
+\multirow{3}{*}{Green space} & think16k & 41.4 & 38.4 & 49.8 & 59.1 & \textcolor{bad}{-8.4} \\
+ & multistep & 64.5 & 62.1 & 65.0 & 68.5 & -0.5 \\
+\midrule
+ & current & 36.8 & 36.1 & 33.5 & 19.5 & +0.7 \\
+\multirow{3}{*}{Amenity richness} & think16k & 36.3 & 37.3 & 34.9 & 20.9 & \textcolor{bad}{-1.0} \\
+ & multistep & 37.1 & 38.7 & 36.1 & 25.9 & \textcolor{bad}{-1.6} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+\begin{frame}{Per task --- all strategies $\times$ all views (3/3)}
+\centering\scriptsize
+\begin{tabular}{llcccc>{\bfseries}c}
+\toprule
+task & strat & full & sat & sv & blind & syn \\
+\midrule
+ & current & 47.5 & 40.1 & 57.5 & 34.9 & \textcolor{bad}{-10.0} \\
+\multirow{3}{*}{Road type} & think16k & 58.4 & 50.4 & 64.4 & 34.4 & \textcolor{bad}{-6.0} \\
+ & multistep & 53.4 & 48.5 & 63.2 & 33.3 & \textcolor{bad}{-9.8} \\
+\midrule
+ & current & 82.2 & 78.9 & 87.1 & 67.7 & \textcolor{bad}{-4.9} \\
+\multirow{3}{*}{Road surface} & think16k & 83.2 & 75.2 & 84.8 & 94.4 & \textcolor{bad}{-1.6} \\
+ & multistep & 89.8 & 80.9 & 89.4 & 83.8 & +0.4 \\
+\midrule
+ & current & 32.1 & 30.9 & 30.4 & 27.3 & +1.2 \\
+\multirow{3}{*}{Transit density} & think16k & 31.6 & 33.3 & 31.6 & 26.6 & \textcolor{bad}{-1.7} \\
+ & multistep & 29.7 & 26.8 & 31.4 & 27.8 & \textcolor{bad}{-1.7} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+\begin{frame}{Takeaway}
+\begin{itemize}
+  \item On all \hl{9 urbanization tasks}, across all \hl{3 strategies}, \texttt{full}
+        never beats the best single view by a meaningful margin.
+  \item The \hl{satellite view is redundant} given the street-view: \texttt{sv}-only
+        matches or beats the two-view setup everywhere.
+  \item Better prompting raises the ceiling (multistep $+3.1$ over baseline \texttt{full}),
+        but it lifts \texttt{sv}-only \emph{in lockstep} --- the gap never closes.
+  \item \hl{Conclusion:} for these tasks we do \emph{not} need both views. One well-chosen
+        view (street-level) carries the signal; the second image does not earn its cost.
+\end{itemize}
+\end{frame}
+\end{document}

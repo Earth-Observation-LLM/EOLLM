@@ -1,0 +1,221 @@
+{
+  "strategies": [
+    "current",
+    "think16k",
+    "multistep"
+  ],
+  "views": [
+    "full",
+    "sat_only",
+    "sv_only",
+    "blind"
+  ],
+  "tasks": [
+    "land_use",
+    "building_height",
+    "urban_density",
+    "junction_type",
+    "green_space",
+    "amenity_richness",
+    "road_type",
+    "road_surface",
+    "transit_density"
+  ],
+  "acc": {
+    "current": {
+      "land_use": {
+        "full": 53.0,
+        "sat_only": 50.1,
+        "sv_only": 52.7,
+        "blind": 43.5,
+        "n": 421
+      },
+      "building_height": {
+        "full": 61.1,
+        "sat_only": 47.9,
+        "sv_only": 64.7,
+        "blind": 45.8,
+        "n": 190
+      },
+      "urban_density": {
+        "full": 38.5,
+        "sat_only": 39.2,
+        "sv_only": 44.9,
+        "blind": 40.4,
+        "n": 421
+      },
+      "junction_type": {
+        "full": 62.6,
+        "sat_only": 48.8,
+        "sv_only": 62.6,
+        "blind": 48.5,
+        "n": 334
+      },
+      "green_space": {
+        "full": 36.5,
+        "sat_only": 35.5,
+        "sv_only": 37.9,
+        "blind": 64.5,
+        "n": 203
+      },
+      "amenity_richness": {
+        "full": 36.8,
+        "sat_only": 36.1,
+        "sv_only": 33.5,
+        "blind": 19.5,
+        "n": 421
+      },
+      "road_type": {
+        "full": 47.5,
+        "sat_only": 40.1,
+        "sv_only": 57.5,
+        "blind": 34.9,
+        "n": 421
+      },
+      "road_surface": {
+        "full": 82.2,
+        "sat_only": 78.9,
+        "sv_only": 87.1,
+        "blind": 67.7,
+        "n": 303
+      },
+      "transit_density": {
+        "full": 32.1,
+        "sat_only": 30.9,
+        "sv_only": 30.4,
+        "blind": 27.3,
+        "n": 421
+      }
+    },
+    "think16k": {
+      "land_use": {
+        "full": 51.8,
+        "sat_only": 45.1,
+        "sv_only": 51.5,
+        "blind": 51.5,
+        "n": 421
+      },
+      "building_height": {
+        "full": 62.6,
+        "sat_only": 51.6,
+        "sv_only": 61.6,
+        "blind": 38.4,
+        "n": 190
+      },
+      "urban_density": {
+        "full": 38.7,
+        "sat_only": 38.0,
+        "sv_only": 43.9,
+        "blind": 32.3,
+        "n": 421
+      },
+      "junction_type": {
+        "full": 57.5,
+        "sat_only": 54.8,
+        "sv_only": 59.0,
+        "blind": 32.3,
+        "n": 334
+      },
+      "green_space": {
+        "full": 41.4,
+        "sat_only": 38.4,
+        "sv_only": 49.8,
+        "blind": 59.1,
+        "n": 203
+      },
+      "amenity_richness": {
+        "full": 36.3,
+        "sat_only": 37.3,
+        "sv_only": 34.9,
+        "blind": 20.9,
+        "n": 421
+      },
+      "road_type": {
+        "full": 58.4,
+        "sat_only": 50.4,
+        "sv_only": 64.4,
+        "blind": 34.4,
+        "n": 421
+      },
+      "road_surface": {
+        "full": 83.2,
+        "sat_only": 75.2,
+        "sv_only": 84.8,
+        "blind": 94.4,
+        "n": 303
+      },
+      "transit_density": {
+        "full": 31.6,
+        "sat_only": 33.3,
+        "sv_only": 31.6,
+        "blind": 26.6,
+        "n": 421
+      }
+    },
+    "multistep": {
+      "land_use": {
+        "full": 49.4,
+        "sat_only": 50.1,
+        "sv_only": 53.0,
+        "blind": 50.6,
+        "n": 421
+      },
+      "building_height": {
+        "full": 61.1,
+        "sat_only": 54.7,
+        "sv_only": 58.4,
+        "blind": 43.2,
+        "n": 190
+      },
+      "urban_density": {
+        "full": 41.6,
+        "sat_only": 43.7,
+        "sv_only": 45.4,
+        "blind": 35.9,
+        "n": 421
+      },
+      "junction_type": {
+        "full": 63.5,
+        "sat_only": 59.3,
+        "sv_only": 62.9,
+        "blind": 46.4,
+        "n": 334
+      },
+      "green_space": {
+        "full": 64.5,
+        "sat_only": 62.1,
+        "sv_only": 65.0,
+        "blind": 68.5,
+        "n": 203
+      },
+      "amenity_richness": {
+        "full": 37.1,
+        "sat_only": 38.7,
+        "sv_only": 36.1,
+        "blind": 25.9,
+        "n": 421
+      },
+      "road_type": {
+        "full": 53.4,
+        "sat_only": 48.5,
+        "sv_only": 63.2,
+        "blind": 33.3,
+        "n": 421
+      },
+      "road_surface": {
+        "full": 89.8,
+        "sat_only": 80.9,
+        "sv_only": 89.4,
+        "blind": 83.8,
+        "n": 303
+      },
+      "transit_density": {
+        "full": 29.7,
+        "sat_only": 26.8,
+        "sv_only": 31.4,
+        "blind": 27.8,
+        "n": 421
+      }
+    }
+  }
+}
