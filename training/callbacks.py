@@ -86,8 +86,6 @@ class EvalCallback(TrainerCallback):
         self.baseline = baseline_accuracy
         self.use_wandb = use_wandb
 
-        self._half_epoch_step = max(1, steps_per_epoch // 2)
-        self._last_quick_eval = -1
         self._last_full_eval = -1
         self._epoch_count = 0
 
@@ -131,27 +129,78 @@ class EvalCallback(TrainerCallback):
             }
         return result
 
-    def on_step_end(self, args, state, control, model=None, processing_class=None, **kwargs):
+    def on_evaluate(self, args, state, control, model=None, processing_class=None, metrics=None, **kwargs):
+        """Called by Trainer after every built-in eval (fires every `eval_steps`).
+
+        We piggy-back our accuracy eval here so `eval_accuracy` lands in the
+        `metrics` dict that HF Trainer passes to `_determine_best_metric` and
+        `EarlyStoppingCallback`. Mutating `metrics` in place is the supported
+        contract for injecting custom metrics from a callback.
+        """
+        if metrics is None:
+            metrics = {}
+
         step = state.global_step
-        epoch_progress = step / self.steps_per_epoch
+        epoch_progress = step / self.steps_per_epoch if self.steps_per_epoch else 0
         current_epoch = int(epoch_progress)
 
-        # Quick eval every half epoch
-        half_epoch_num = int(epoch_progress * 2)
-        if half_epoch_num > self._last_quick_eval:
-            self._last_quick_eval = half_epoch_num
-            self._run_quick_eval(model, processing_class, step, epoch_progress)
+        # Epoch boundary → full eval (entire val set, writes verdict)
+        is_epoch_boundary = (
+            current_epoch > self._last_full_eval
+            and step >= self.steps_per_epoch
+        )
 
-        # Full eval every epoch boundary
-        if current_epoch > self._last_full_eval and step >= self.steps_per_epoch:
-            self._last_full_eval = current_epoch
-            self._epoch_count = current_epoch
-            self._run_full_eval(model, processing_class, step, current_epoch, state=state)
+        # try/finally ensures FastVisionModel.for_training(model) runs even if
+        # eval throws — otherwise the model stays in inference mode and the
+        # next training step silently breaks (NaN loss or crash).
+        from unsloth import FastVisionModel
+        import gc
+        import torch
+        accuracy = None
+        try:
+            if is_epoch_boundary:
+                self._last_full_eval = current_epoch
+                self._epoch_count = current_epoch
+                accuracy = self._run_full_eval(model, processing_class, step, current_epoch, state=state)
+            else:
+                accuracy = self._run_quick_eval(model, processing_class, step, epoch_progress)
+        except Exception as e:
+            # An eval failure must NOT crash training. Log and carry on; HF
+            # still needs `eval_accuracy` in metrics (see below) so early
+            # stopping / best-model tracking can function.
+            print(f"[eval] ERROR during eval at step {step}: {type(e).__name__}: {e}")
+        finally:
+            FastVisionModel.for_training(model)
+            # Eval runs `FastVisionModel.for_inference(model)` and many
+            # single-sample greedy generates, which retain KV-cache segments
+            # in the PyTorch allocator. Without this, a full-val eval (6984
+            # samples) can leak 1-3 GB of cached segments into the next
+            # training step — at bs=16 on a 32 GB card with ~2.9 GB headroom
+            # at peak, that's the difference between running and OOM'ing on
+            # the post-eval training step. Mirror the same cleanup pattern
+            # used after the baseline eval in train.py.
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        # Inject eval_accuracy into the metrics dict the Trainer holds, so
+        # metric_for_best_model="eval_accuracy" + EarlyStoppingCallback can
+        # find it. If eval failed, fall back to the last-known accuracy (or
+        # 0.0) so HF never KeyErrors — losing ranking signal on one failed
+        # eval is better than killing a 30-hour run.
+        if accuracy is not None:
+            metrics["eval_accuracy"] = accuracy["overall"]
+        else:
+            last_known = (
+                self.full_history[-1]["overall"] if self.full_history else
+                self.quick_history[-1]["overall"] if self.quick_history else
+                0.0
+            )
+            metrics["eval_accuracy"] = last_known
 
     def _run_quick_eval(self, model, tokenizer, step, epoch_progress):
         """100 random val samples — fast per-topic accuracy snapshot."""
         from evaluation import compute_topic_accuracy
-        from unsloth import FastVisionModel
 
         print(f"\n[eval] Quick eval at step {step} (epoch {epoch_progress:.2f})...")
         t0 = time.time()
@@ -168,17 +217,11 @@ class EvalCallback(TrainerCallback):
         if self.use_wandb:
             self._log_wandb_accuracy(accuracy, step, prefix="quick")
 
-        FastVisionModel.for_training(model)
+        return accuracy
 
     def _run_full_eval(self, model, tokenizer, step, epoch, state=None):
-        """Full val set — comprehensive accuracy + epoch verdict.
-
-        If `state` (TrainerState) is passed, appends {'eval_accuracy': ...} to
-        state.log_history so HF EarlyStoppingCallback (which watches
-        `metric_for_best_model`) can see it.
-        """
+        """Full val set — comprehensive accuracy + epoch verdict."""
         from evaluation import compute_topic_accuracy
-        from unsloth import FastVisionModel
 
         print(f"\n[eval] FULL eval at step {step} (epoch {epoch})...")
         t0 = time.time()
@@ -198,15 +241,6 @@ class EvalCallback(TrainerCallback):
         for topic, info in sorted(accuracy["per_topic"].items()):
             print(f"  {topic}: {info['acc']:.0%} ({info['correct']}/{info['n']})")
 
-        # Expose eval_accuracy to HF Trainer so EarlyStoppingCallback can watch
-        # it via metric_for_best_model="eval_accuracy".
-        if state is not None:
-            state.log_history.append({
-                "step": step,
-                "epoch": epoch,
-                "eval_accuracy": accuracy["overall"],
-            })
-
         # Write epoch verdict
         verdict_path = self.run_dir / f"epoch_{epoch}_verdict.md"
         self._write_verdict(accuracy, epoch, step, elapsed, verdict_path)
@@ -215,7 +249,7 @@ class EvalCallback(TrainerCallback):
             self._log_wandb_accuracy(accuracy, step, prefix="full")
             self._upload_verdict(verdict_path, epoch)
 
-        FastVisionModel.for_training(model)
+        return accuracy
 
     def _log_wandb_accuracy(self, accuracy: dict, step: int, prefix: str):
         """Log accuracy metrics to W&B."""

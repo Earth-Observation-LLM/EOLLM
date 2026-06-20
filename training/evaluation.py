@@ -54,16 +54,31 @@ def _prepare_inference_inputs(rec: dict, base_dir: str, max_edge: int, tokenizer
     images = [p["image"] for p in user_msg["content"] if p["type"] == "image"]
 
     inf_messages = [
-        {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
+        # System content as a plain STRING (not list-of-parts) to match training
+        # (data.py convert_record). Qwen renders both identically, but Gemma's
+        # template appends a trailing space to list-of-parts items — a train/eval
+        # mismatch that only surfaces for Gemma. String form matches both.
+        {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": [
             p if p["type"] == "text" else {"type": "image"}
             for p in user_msg["content"]
         ]},
     ]
 
-    text = tokenizer.apply_chat_template(inf_messages, add_generation_prompt=True, tokenize=False)
-    img_input = images[0] if len(images) == 1 else images
-    inputs = tokenizer(img_input, text, add_special_tokens=False, return_tensors="pt").to("cuda")
+    # enable_thinking=False: Qwen3.5's template otherwise opens a <think> block at
+    # the assistant turn, so the model reasons for many tokens BEFORE emitting the
+    # answer letter. With a small max_new_tokens that reasoning gets truncated and
+    # no letter is ever produced -> parse_letter returns None -> ~0% accuracy. The
+    # model is TRAINED to answer with a bare letter, so suppress thinking at eval to
+    # match the training target. (Diagnosed: think-on/16tok=0%, think-off/16tok=75%.)
+    text = tokenizer.apply_chat_template(
+        inf_messages, add_generation_prompt=True, tokenize=False, enable_thinking=False
+    )
+    if not images:
+        inputs = tokenizer(text=text, add_special_tokens=False, return_tensors="pt").to("cuda")
+    else:
+        img_input = images[0] if len(images) == 1 else images
+        inputs = tokenizer(img_input, text, add_special_tokens=False, return_tensors="pt").to("cuda")
     return inputs
 
 

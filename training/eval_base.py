@@ -31,12 +31,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from config import SEED, SPLIT, SYSTEM_PROMPT, find_dataset_dir, detect_profile, SCRIPT_DIR
+from config import (
+    SEED, SPLIT, SYSTEM_PROMPT, find_dataset_dir, detect_profile, SCRIPT_DIR,
+    BASE_MODEL as CFG_BASE_MODEL, MODEL_FAMILY, CHAT_TEMPLATE,
+)
 from data import load_jsonl, convert_record
 
 
-BATCH_SIZE = 32
-MAX_NEW_TOKENS = 16  # letter + punctuation is enough; don't waste GPU on rambling
+# EVAL_BS overrides the batch size — a big base (e.g. 9B) on a small card needs a
+# smaller eval batch than the profile's training-tuned default.
+BATCH_SIZE = int(os.environ.get("EVAL_BS", "32"))
+# 32 tokens (was 16): with enable_thinking=False the model emits a bare letter, so
+# 16 is enough, but 32 is cheap insurance against any short prefix.
+MAX_NEW_TOKENS = int(os.environ.get("EVAL_MAX_NEW_TOKENS", "32"))
 NUM_WORKERS = 8
 LETTER_RE_STRICT = re.compile(r"\b([ABCD])\b")
 # Fallback: letter with non-word char on BOTH sides (or string boundaries).
@@ -88,13 +95,21 @@ class PreppedSamples(Dataset):
         user_msg = converted["messages"][1]
         images = [p["image"] for p in user_msg["content"] if p["type"] == "image"]
         inf_messages = [
-            {"role": "system", "content": [{"type": "text", "text": SYSTEM_PROMPT}]},
+            # String (not list-of-parts) to match training (data.py) — avoids a
+            # Gemma-only trailing-space train/eval mismatch. See evaluation.py.
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": [
                 p if p["type"] == "text" else {"type": "image"}
                 for p in user_msg["content"]
             ]},
         ]
-        text = self.tokenizer.apply_chat_template(inf_messages, add_generation_prompt=True, tokenize=False)
+        # enable_thinking=False: suppress Qwen3.5's <think> block so the model emits
+        # the bare answer letter it was trained to produce, instead of reasoning that
+        # gets truncated before any letter appears. See evaluation.py for the full
+        # diagnosis (think-on/16tok=0% vs think-off/16tok=75%).
+        text = self.tokenizer.apply_chat_template(
+            inf_messages, add_generation_prompt=True, tokenize=False, enable_thinking=False
+        )
         return {
             "text": text,
             "images": images,
@@ -149,12 +164,24 @@ def eval_batched(model, tokenizer, records, base_dir, max_edge):
         texts = [item["text"] for item in batch]
         images_list = [item["images"] for item in batch]
 
-        inputs = tokenizer(
-            images_list, texts,
-            add_special_tokens=False,
-            return_tensors="pt",
-            padding=True,
-        ).to("cuda")
+        if all(len(imgs) == 0 for imgs in images_list):
+            # Text-only batch: skip image processor entirely. Required for
+            # TEXT_ONLY=1 runs where convert_record emits no image parts.
+            inputs = tokenizer(
+                text=texts,
+                add_special_tokens=False,
+                return_tensors="pt",
+                padding=True,
+                padding_side="left",
+            ).to("cuda")
+        else:
+            inputs = tokenizer(
+                images_list, texts,
+                add_special_tokens=False,
+                return_tensors="pt",
+                padding=True,
+                padding_side="left",
+            ).to("cuda")
 
         with torch.no_grad():
             output_ids = model.generate(
@@ -165,6 +192,11 @@ def eval_batched(model, tokenizer, records, base_dir, max_edge):
                 pad_token_id=pad_id,
             )
 
+        # LEFT-padded (padding_side="left" passed to the processor call above), so
+        # every row's real prompt ends at the same max width and the generated
+        # tokens for every row start at input_len. Without left-padding the
+        # processor right-pads and this uniform slice skips short rows' answers
+        # (the batched-decode bug; the in-training callback avoids it via batch=1).
         input_len = inputs["input_ids"].shape[1]
         for i, item in enumerate(batch):
             gen_tokens = output_ids[i][input_len:]
@@ -218,12 +250,20 @@ def main():
     split_dir = dataset_dir / SPLIT
     val_records = load_jsonl(str(split_dir / "validation.jsonl"))
     print(f"Val records: {len(val_records)}")
+    # IMAGE_MAX_EDGE env overrides the profile default so eval matches the edge the
+    # adapter was TRAINED at (512 for the multi-model sweep, not the profile's 768).
+    _edge_env = os.environ.get("IMAGE_MAX_EDGE")
+    if _edge_env:
+        CFG = {**CFG, "image_max_edge": int(_edge_env)}
     print(f"Profile: {profile_name}, image_max_edge={CFG['image_max_edge']}, "
           f"bs={BATCH_SIZE}, workers={NUM_WORKERS}, max_new_tokens={MAX_NEW_TOKENS}")
 
-    local_model_path = str(SCRIPT_DIR.parent / "models" / "Qwen3.5-4B")
-    model_name = local_model_path if Path(local_model_path).exists() else "unsloth/Qwen3.5-4B"
-    print(f"Model: {model_name}")
+    # BASE_MODEL is the single source of truth (set by the launcher per model:
+    # unsloth/Qwen3.5-27B, unsloth/gemma-4-31B-it, …). Falls back to the local
+    # 4B copy / hub id only if BASE_MODEL itself resolved to that. This is the
+    # SAME base config.py resolves, so eval and training never diverge.
+    model_name = CFG_BASE_MODEL
+    print(f"Model: {model_name}  (family={MODEL_FAMILY})")
     if adapter_path:
         print(f"Adapter: {adapter_path}")
 
@@ -236,6 +276,12 @@ def main():
         use_gradient_checkpointing="unsloth",
         max_seq_length=8192,
     )
+
+    # Gemma needs its chat template applied (matches training). No-op for Qwen.
+    if CHAT_TEMPLATE is not None:
+        from unsloth import get_chat_template
+        tokenizer = get_chat_template(tokenizer, CHAT_TEMPLATE)
+        print(f"Applied chat template: {CHAT_TEMPLATE}")
 
     if adapter_path:
         from peft import PeftModel
