@@ -1,0 +1,54 @@
+# benchmark_suite — the single control surface.
+#
+# Define the dataset, defaults, and a list of models. For each model you choose a
+# SOURCE (a base hf_id, optionally + a lora_path) and optionally turn on
+# ATTENTION WATCH. The backend is resolved automatically (see run.py) but can be
+# forced with `backend:`.
+#
+# Backend resolution rule (all-rounder):
+#   attention: true              -> transformers + eager   (ONLY way to get attention)
+#   lora_path set                -> transformers           (vLLM cannot serve LoRA)
+#   otherwise (raw weights)      -> vllm if available else transformers
+# Forcing `backend: vllm` together with `attention: true` is a hard error
+# (vLLM physically cannot expose attention).
+
+dataset:
+  path: dataset_content/EODATA_compressed_final/benchmark/benchmark_with_answers.jsonl
+  image_root: dataset_content/EODATA_compressed_final/benchmark
+  limit_per_topic: 0          # >0 caps records per topic per model (smoke testing)
+
+defaults:
+  modes: [full, sat_only, sv_only, blind]   # auto-pruned to each topic's applicable set
+  enable_thinking: false
+  image_max_edge: 768
+  max_new_tokens: 8
+  seed: 3407
+  # ATTENTION WATCH knobs (only used when a model sets attention: true)
+  attention:
+    layers: all               # all | last_25pct | a [start,end] index range
+    max_pixels: 262144        # ~512x512 cap keeps the L^2 attention matrix on a 32GB card
+    store_per_layer: true     # save per-layer shares so the viewer can scrub layers
+
+models:
+  # --- a trained LoRA (transformers; can also do attention) -----------------
+  - key: qwen35_4b_pc_lora
+    display: "Qwen3.5-4B + PC-base LoRA (per-city, ckpt-2022)"
+    hf_id: models/Qwen3.5-4B
+    lora_path: training/runs/20260422_074420_rtx_pro_6000_96gb/checkpoints/checkpoint-2022
+    family: qwen
+    attention: true           # forces transformers+eager; runs locally on the 5090
+
+  # --- the raw base (no adapter) -------------------------------------------
+  - key: qwen35_4b_base
+    display: "Qwen3.5-4B base (untrained)"
+    hf_id: models/Qwen3.5-4B
+    family: qwen
+    attention: false          # raw -> vllm if installed, else transformers
+
+  # --- a remote AWQ model (vLLM only; lab-ws) ------------------------------
+  - key: qwen35_9b_awq
+    display: "Qwen3.5-9B AWQ (remote lab-ws)"
+    hf_id: cyankiwi/Qwen3.5-9B-AWQ-BF16-INT8
+    family: qwen
+    backend: vllm             # explicit: only runs where vLLM + the model exist
+    attention: false
