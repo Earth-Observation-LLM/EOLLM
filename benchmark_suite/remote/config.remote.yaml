@@ -1,0 +1,48 @@
+# config.remote.yaml — lab-ws (vLLM, AWQ models). Used by remote/submit.slurm.
+#
+# Paths are remote (lab-ws) paths, NOT local. The dataset lives under the
+# existing EarthMLLMEval data dir on lab-ws; AWQ models are pulled from HF hub
+# into the node cache. Every model here is vLLM (raw/AWQ) — attention is NOT
+# available on this backend (run.py enforces that).
+
+dataset:
+  path: /home/ain480/evaluation/EarthMLLMEval/data/benchmark_with_answers.jsonl
+  image_root: /home/ain480/evaluation/EarthMLLMEval/data
+  limit_per_topic: 0
+
+defaults:
+  modes: [full, sat_only, sv_only, blind]
+  enable_thinking: false
+  image_max_edge: 1120
+  max_model_len: 16384
+  max_num_seqs: 64
+  seed: 3407
+
+models:
+  - key: qwen3.5-4b-awq
+    display: "Qwen3.5-4B AWQ"
+    hf_id: cyankiwi/Qwen3.5-4B-AWQ-BF16-INT8
+    family: qwen
+    backend: vllm
+    attention: false
+
+  - key: qwen3.5-9b-awq
+    display: "Qwen3.5-9B AWQ"
+    hf_id: cyankiwi/Qwen3.5-9B-AWQ-BF16-INT8
+    family: qwen
+    backend: vllm
+    attention: false
+
+  - key: gemma-4-12b-awq
+    display: "Gemma-4-12B AWQ"
+    hf_id: cyankiwi/gemma-4-12B-it-AWQ-INT4
+    family: gemma
+    backend: vllm
+    attention: false
+
+  - key: qwen2.5-vl-7b-awq
+    display: "Qwen2.5-VL-7B AWQ"
+    hf_id: Qwen/Qwen2.5-VL-7B-Instruct-AWQ
+    family: qwen
+    backend: vllm
+    attention: false

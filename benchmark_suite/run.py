@@ -229,6 +229,10 @@ def write_model_outputs(out_dir: Path, model_cfg, backend_name, rows_by_mode,
 
 def run_model(model_cfg, defaults, records, image_root, out_root):
     key = model_cfg["key"]
+    out_dir = out_root / key
+    if (out_dir / "summary.json").exists() and not os.environ.get("FORCE"):
+        print(f"\n=== {key} === SKIP (results/{key}/summary.json exists; FORCE=1 to rerun)", flush=True)
+        return
     backend_name = resolve_backend(model_cfg)
     requested_modes = model_cfg.get("modes", defaults.get("modes"))
     image_max_edge = model_cfg.get("image_max_edge", defaults.get("image_max_edge", 768))
@@ -251,7 +255,6 @@ def run_model(model_cfg, defaults, records, image_root, out_root):
     for item, row in zip(work, rows):
         rows_by_mode[row.mode].append(row_to_record(item, row))
 
-    out_dir = out_root / key
     write_model_outputs(out_dir, model_cfg, backend_name, rows_by_mode,
                         meta_extra={"n_items": len(work), "elapsed_s": round(elapsed, 1),
                                     "image_max_edge": image_max_edge})
@@ -283,8 +286,13 @@ def main():
     defaults = cfg.get("defaults", {})
     ds = cfg["dataset"]
     repo = SUITE.parent
-    data_path = repo / ds["path"]
-    image_root = repo / ds["image_root"]
+
+    def _resolve(p):
+        p = Path(p)
+        return p if p.is_absolute() else (repo / p)
+
+    data_path = _resolve(ds["path"])
+    image_root = _resolve(ds["image_root"])
     limit = args.limit_per_topic if args.limit_per_topic is not None else ds.get("limit_per_topic", 0)
     out_root = Path(args.outdir) if args.outdir else (SUITE / "results")
 
