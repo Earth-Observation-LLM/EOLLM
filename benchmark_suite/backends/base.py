@@ -10,9 +10,34 @@ differs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Optional
 
 from PIL import Image
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+
+
+def resolve_model_id(hf_id: str) -> str:
+    """Resolve a model id to either a local path or a pass-through hub id.
+
+    A `hf_id` may be:
+      - an absolute local path            -> used as-is
+      - a repo-relative path that EXISTS  -> made absolute (e.g. models/Qwen3.5-4B)
+      - anything else                     -> treated as a HF hub id, UNCHANGED
+                                             (e.g. cyankiwi/Qwen3.5-4B-AWQ-4bit)
+
+    The last case is the bug guard: blindly prefixing the repo root onto a hub
+    id like "cyankiwi/..." produced a bogus path and an OSError. We only localize
+    when the path actually resolves on disk.
+    """
+    p = Path(hf_id)
+    if p.is_absolute():
+        return hf_id
+    local = _REPO_ROOT / hf_id
+    if local.exists():
+        return str(local)
+    return hf_id  # hub id — leave it alone
 
 
 @dataclass

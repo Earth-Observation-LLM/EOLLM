@@ -62,11 +62,9 @@ class HFBackend(Backend):
 
     def _load(self):
         from unsloth import FastVisionModel
-        hf_id = str(Path(self.cfg["hf_id"]))
-        # Resolve relative paths against the repo root.
+        from backends.base import resolve_model_id
         repo = Path(__file__).resolve().parent.parent.parent
-        if not Path(hf_id).is_absolute():
-            hf_id = str(repo / hf_id)
+        hf_id = resolve_model_id(self.cfg["hf_id"])
         print(f"  [hf] loading {hf_id}", flush=True)
         model, processor = FastVisionModel.from_pretrained(
             hf_id, load_in_4bit=False, load_in_8bit=False, dtype=torch.bfloat16,

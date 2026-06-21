@@ -81,9 +81,9 @@ class AttentionBackend(Backend):
         # only path that materializes per-layer attentions. LoRA still works via
         # PeftModel on top of the plain HF model.
         from transformers import AutoModelForImageTextToText, AutoProcessor
+        from backends.base import resolve_model_id
         repo = Path(__file__).resolve().parent.parent.parent
-        hf_id = self.cfg["hf_id"]
-        hf_id = hf_id if Path(hf_id).is_absolute() else str(repo / hf_id)
+        hf_id = resolve_model_id(self.cfg["hf_id"])
         print(f"  [attn] loading {hf_id} (plain HF, eager, max_pixels={self.max_pixels})", flush=True)
         processor = AutoProcessor.from_pretrained(hf_id, trust_remote_code=True)
         model = AutoModelForImageTextToText.from_pretrained(
