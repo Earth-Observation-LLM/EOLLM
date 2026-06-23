@@ -1,0 +1,38 @@
+# config.geochat.yaml — GeoChat & SkySenseGPT on lab-ws (native original-LLaVA).
+#
+# These are LLaVA-1.5-7B forks (Vicuna-1.5 + CLIP-ViT-L/14 interpolated to 504px),
+# original-LLaVA format, SINGLE-image, SATELLITE-ONLY. run.py routes family
+# geochat/skysensegpt to the llava_native backend and AUTOMATICALLY confines them
+# to the 9 Family-1 overhead topics + the sat_only mode (the single marked-sat
+# tile). The mode/topic restriction is enforced in code, not here — listing other
+# modes in defaults has no effect for these families.
+#
+# Dataset = the training dataset_content clone (where composite_utils.py lives, so
+# images.py renders the marked-sat tile byte-identically to training). Run from
+# the dedicated `geochat` conda env (transformers==4.31 + Blackwell torch);
+# vLLM/AutoProcessor cannot load these checkpoints.
+
+dataset:
+  path: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark/benchmark_with_answers.jsonl
+  image_root: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark
+  limit_per_topic: 0          # >0 = smoke cap per topic
+
+defaults:
+  modes: [sat_only]           # informational; llava_native families force sat_only
+  image_max_edge: 768         # suite-side resize before the 504 CLIP preprocess
+  max_new_tokens: 8           # answer is one letter
+  batch_size: 64              # one 504px image/item on a 96GB card — ample headroom
+  seed: 3407
+
+models:
+  - key: geochat_7b
+    display: "GeoChat-7B (LLaVA-1.5, 504px, satellite-only)"
+    hf_id: MBZUAI/geochat-7B
+    family: geochat
+    attention: false
+
+  - key: skysensegpt_7b
+    display: "SkySenseGPT-7B (LLaVA-1.5, 504px, satellite-only)"
+    hf_id: ll-13/SkySenseGPT-7B-clip-lora
+    family: skysensegpt
+    attention: false

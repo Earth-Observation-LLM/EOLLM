@@ -53,6 +53,13 @@ def _vllm_available() -> bool:
         return False
 
 
+# Original-LLaVA families (GeoChat / SkySenseGPT): 504px, single-image,
+# satellite-only forks served by the geochat package. They have no HF chat
+# template and aren't vLLM/AutoProcessor loadable, so they always route to the
+# native LLaVA backend regardless of vLLM availability.
+LLAVA_NATIVE_FAMILIES = {"geochat", "skysensegpt"}
+
+
 def resolve_backend(model_cfg: dict) -> str:
     """Decide which backend to use for a model, honoring an explicit override.
 
@@ -61,8 +68,14 @@ def resolve_backend(model_cfg: dict) -> str:
     attention = bool(model_cfg.get("attention", False))
     lora = bool(model_cfg.get("lora_path"))
     forced = model_cfg.get("backend")
+    family = model_cfg.get("family")
 
     if forced:
+        if forced == "vllm" and family in LLAVA_NATIVE_FAMILIES:
+            raise ValueError(
+                f"[{model_cfg['key']}] family {family!r} is original-LLaVA format "
+                f"(504px, custom GeoChatLlamaForCausalLM) — vLLM cannot load it. "
+                f"Use backend: llava_native (the default for this family).")
         if forced == "vllm" and attention:
             raise ValueError(
                 f"[{model_cfg['key']}] backend: vllm with attention: true is "
@@ -76,6 +89,8 @@ def resolve_backend(model_cfg: dict) -> str:
             )
         return forced
 
+    if family in LLAVA_NATIVE_FAMILIES:
+        return "llava_native"      # 504px original-LLaVA; geochat package loader
     if attention:
         return "transformers"      # only path that can capture attention
     if lora:
@@ -101,16 +116,21 @@ def load_records(data_path: Path, limit_per_topic: int) -> list[dict]:
     return recs
 
 
-def build_worklist(records, image_root, requested_modes, image_max_edge):
+def build_worklist(records, image_root, requested_modes, image_max_edge,
+                   only_topics=None):
     """One WorkItem per (record, applicable mode). Images built once per item.
 
     A record whose images fail to build (missing files etc.) is skipped with a
-    warning rather than crashing the run.
+    warning rather than crashing the run. `only_topics` (a set) restricts the run
+    to those topics — used to confine satellite-only models (GeoChat /
+    SkySenseGPT) to the 9 Family-1 overhead topics.
     """
     work: list[WorkItem] = []
     skipped = 0
     for idx, rec in enumerate(records):
         topic = rec.get("topic", "")
+        if only_topics is not None and topic not in only_topics:
+            continue
         rec_modes = suite_modes.resolve_modes(topic, requested_modes)
         try:
             full_imgs = suite_images.build_images(rec, image_root, image_max_edge)
@@ -243,12 +263,24 @@ def run_model(model_cfg, defaults, records, image_root, out_root, out_key, ds_me
     requested_modes = model_cfg.get("modes", defaults.get("modes"))
     image_max_edge = model_cfg.get("image_max_edge", defaults.get("image_max_edge", 768))
 
+    # Satellite-only single-image models (GeoChat / SkySenseGPT) are confined to
+    # the 9 Family-1 overhead topics and the sat_only mode (the single marked-sat
+    # tile): they have one <image> slot, never trained on street-view, and the
+    # other topics/modes would feed them multiple or street-level images. This is
+    # enforced here, not left to config, so these models can never be accidentally
+    # fed an out-of-distribution item.
+    only_topics = None
+    if model_cfg.get("family") in LLAVA_NATIVE_FAMILIES:
+        only_topics = suite_modes.URBAN_ATTRIBUTE_TOPICS
+        requested_modes = ["sat_only"]
+
     print(f"\n=== {out_key} === backend={backend_name} "
           f"attention={bool(model_cfg.get('attention'))} "
           f"lora={'yes' if model_cfg.get('lora_path') else 'no'} "
           f"dataset={ds_meta.get('tag')} ({len(records)} recs)", flush=True)
 
-    work = build_worklist(records, image_root, requested_modes, image_max_edge)
+    work = build_worklist(records, image_root, requested_modes, image_max_edge,
+                          only_topics=only_topics)
     print(f"  worklist: {len(work)} (record,mode) items; "
           f"per-mode {dict(Counter(w.mode for w in work))}", flush=True)
 
@@ -279,6 +311,9 @@ def make_backend(name, model_cfg, defaults):
     if name == "vllm":
         from backends.vllm_backend import VLLMBackend
         return VLLMBackend(model_cfg, defaults)
+    if name == "llava_native":
+        from backends.llava_native_backend import LlavaNativeBackend
+        return LlavaNativeBackend(model_cfg, defaults)
     raise ValueError(f"unknown backend {name!r}")
 
 
