@@ -20,8 +20,9 @@ and on the \textbf{shared benchmark}. Four image modes: \textbf{blind} (no image
   Tests in-distribution generalisation. ($n=6{,}984$)
 \item \textbf{seen/unseen val} --- \emph{entirely held-out cities the model has \textbf{never seen at all}.}
   The hard test: geographic generalisation to brand-new cities. ($n=8{,}831$)
-\item \textbf{benchmark} --- a disjoint set of cities \emph{and} locations not in \emph{either}
-  training set; the common held-out yardstick for both models. ($n=5{,}240$)
+\item \textbf{benchmark} --- a stratified \textbf{10\% of locations from \emph{every} city}
+  (\texttt{BENCHMARK\_RATIO=0.10}, location-level), extracted \emph{before} either split, so it is
+  identical and held-out for both models. ($n=5{,}240$)
 \end{itemize}
 \textbf{Fusion} $=$ full $-\max(\text{sv},\text{sat})$. All: thinking off, greedy, edge 512 (matches training). Bold sv/sat $=$ better single view.
 \end{frame}
@@ -38,8 +39,9 @@ What these tables actually show:
   the second view doesn't confuse the model.
 \item Where one view is uninformative, full correctly tracks the \textbf{informative} one
   (bolded sv/sat per row).
-\item Tasks that \emph{do} require combining views (mismatch\_*) live in the appendix and fuse
-  strongly (+40--70) --- the mechanism works when the task demands it.
+\item The \textbf{mismatch\_*} tasks (appendix) are \textbf{literally unanswerable from one view}:
+  the other view \emph{is the answer choices}. There, fusion is +40--70 --- the mechanism works
+  whenever the task actually forces it.
 \end{itemize}
 \end{frame}
 
@@ -147,14 +149,6 @@ Transit density & 26.4 & 44.9 & \textbf{45.8} & 49.4 & \textcolor{good}{+3.6} \\
 \textbf{OVERALL (all topics)} & \textbf{48.3} & \textbf{58.3} & \textbf{54.9} & \textbf{75.9} & \\
 \bottomrule
 \end{tabular}
-\end{frame}
-
-\begin{frame}{Caveat: green\_space is leaked}
-\small
-\textbf{green\_space} scores \textbf{100\% even in \texttt{blind} mode} (no images) across all runs.
-The gold is always the ``no parks / densely built'' option text regardless of A/B/C/D position ---
-the model answers from a \textbf{text prior}, not vision. It carries \textbf{zero vision signal} and is
-excluded from the fusion means above. (Worth regenerating with balanced golds.)
 \end{frame}
 
 \begin{frame}{Appendix --- ALL 14 tasks (full \& fusion, every run)}
