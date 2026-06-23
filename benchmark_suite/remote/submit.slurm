@@ -41,6 +41,13 @@ CONFIG="${CONFIG:-remote/config.remote.yaml}"
 PROBE_GPU_UTIL="${PROBE_GPU_UTIL:-0.98}"
 REAL_MAX_LEN="${REAL_MAX_LEN:-16384}"
 
+# images.py imports the dataset's composite_utils.py (authoritative pixel ops).
+# It lives in the dataset checkout, NOT under the suite, so point DATASET_DIR at
+# it. On lab-ws the dataset is under training/, not evaluation/.
+export DATASET_DIR="${DATASET_DIR:-/home/ain480/training/dataset_content/EODATA_compressed_final}"
+echo "=== DATASET_DIR=$DATASET_DIR ==="
+[ -f "$DATASET_DIR/composite_utils.py" ] || { echo "!! composite_utils.py not found under DATASET_DIR"; exit 1; }
+
 # --- probe the max batch size (skipped during smoke / when PROBE_MODEL unset) ---
 if [ -n "${PROBE_MODEL:-}" ] && [ -z "${LIMIT:-}" ]; then
   echo "=== probing max_num_seqs for $PROBE_MODEL (gpu_util=$PROBE_GPU_UTIL, real_max_len=$REAL_MAX_LEN) ==="
