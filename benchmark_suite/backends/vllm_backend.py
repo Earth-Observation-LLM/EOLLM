@@ -53,16 +53,31 @@ class VLLMBackend(Backend):
         self._load()
 
     def _load(self):
+        import os
         from vllm import LLM, SamplingParams
         from transformers import AutoProcessor
-        hf_id = self.cfg["hf_id"]
-        print(f"  [vllm] loading {hf_id}", flush=True)
+        from backends.base import resolve_model_id
+        hf_id = resolve_model_id(self.cfg["hf_id"])
+        # gpu memory: per-model config > env (SUITE_GPU_MEM_UTIL, set by the
+        # SLURM probe) > defaults > 0.98 (max batch at ~2% headroom).
+        env_gpu = os.environ.get("SUITE_GPU_MEM_UTIL")
+        gpu_mem = float(self.cfg.get(
+            "gpu_mem_util",
+            env_gpu if env_gpu else self.defaults.get("gpu_mem_util", 0.98)))
+        # max_num_seqs: an env override (SUITE_MAX_NUM_SEQS, set by the SLURM
+        # probe that binary-searches the card's ceiling) wins over config so the
+        # real run saturates the GPU without re-probing per model in-process.
+        env_seqs = os.environ.get("SUITE_MAX_NUM_SEQS")
+        max_num_seqs = int(env_seqs) if env_seqs else int(
+            self.cfg.get("max_num_seqs", self.defaults.get("max_num_seqs", 64)))
+        print(f"  [vllm] loading {hf_id} (gpu_mem_util={gpu_mem}, "
+              f"max_num_seqs={max_num_seqs}{' from env' if env_seqs else ''})", flush=True)
         self.llm = LLM(
             model=hf_id,
             dtype="bfloat16",
             max_model_len=int(self.cfg.get("max_model_len", self.defaults.get("max_model_len", 16384))),
-            gpu_memory_utilization=float(self.cfg.get("gpu_mem_util", 0.90)),
-            max_num_seqs=int(self.cfg.get("max_num_seqs", self.defaults.get("max_num_seqs", 64))),
+            gpu_memory_utilization=gpu_mem,
+            max_num_seqs=max_num_seqs,
             limit_mm_per_prompt={"image": 6},
             trust_remote_code=True,
         )

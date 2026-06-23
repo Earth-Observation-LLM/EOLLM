@@ -227,19 +227,26 @@ def write_model_outputs(out_dir: Path, model_cfg, backend_name, rows_by_mode,
 # Per-model run
 # ---------------------------------------------------------------------------
 
-def run_model(model_cfg, defaults, records, image_root, out_root):
+def run_model(model_cfg, defaults, records, image_root, out_root, out_key, ds_meta):
+    """Run one model against one already-loaded dataset.
+
+    `out_key` is the output subdir name (e.g. "<key>__<dataset_tag>"); a model
+    evaluated on several datasets produces one subdir per (model, dataset) so
+    results never collide. `ds_meta` is recorded in meta.json for provenance.
+    """
     key = model_cfg["key"]
-    out_dir = out_root / key
+    out_dir = out_root / out_key
     if (out_dir / "summary.json").exists() and not os.environ.get("FORCE"):
-        print(f"\n=== {key} === SKIP (results/{key}/summary.json exists; FORCE=1 to rerun)", flush=True)
+        print(f"\n=== {out_key} === SKIP (results/{out_key}/summary.json exists; FORCE=1 to rerun)", flush=True)
         return
     backend_name = resolve_backend(model_cfg)
     requested_modes = model_cfg.get("modes", defaults.get("modes"))
     image_max_edge = model_cfg.get("image_max_edge", defaults.get("image_max_edge", 768))
 
-    print(f"\n=== {key} === backend={backend_name} "
+    print(f"\n=== {out_key} === backend={backend_name} "
           f"attention={bool(model_cfg.get('attention'))} "
-          f"lora={'yes' if model_cfg.get('lora_path') else 'no'}", flush=True)
+          f"lora={'yes' if model_cfg.get('lora_path') else 'no'} "
+          f"dataset={ds_meta.get('tag')} ({len(records)} recs)", flush=True)
 
     work = build_worklist(records, image_root, requested_modes, image_max_edge)
     print(f"  worklist: {len(work)} (record,mode) items; "
@@ -257,7 +264,8 @@ def run_model(model_cfg, defaults, records, image_root, out_root):
 
     write_model_outputs(out_dir, model_cfg, backend_name, rows_by_mode,
                         meta_extra={"n_items": len(work), "elapsed_s": round(elapsed, 1),
-                                    "image_max_edge": image_max_edge})
+                                    "image_max_edge": image_max_edge,
+                                    "out_key": out_key, "dataset": ds_meta})
     print(f"  done in {elapsed/60:.1f} min -> {out_dir}", flush=True)
 
 
@@ -284,21 +292,44 @@ def main():
 
     cfg = yaml.safe_load(open(args.config))
     defaults = cfg.get("defaults", {})
-    ds = cfg["dataset"]
+    global_ds = cfg.get("dataset")
     repo = SUITE.parent
 
     def _resolve(p):
         p = Path(p)
         return p if p.is_absolute() else (repo / p)
 
-    data_path = _resolve(ds["path"])
-    image_root = _resolve(ds["image_root"])
-    limit = args.limit_per_topic if args.limit_per_topic is not None else ds.get("limit_per_topic", 0)
+    limit_override = args.limit_per_topic
     out_root = Path(args.outdir) if args.outdir else (SUITE / "results")
 
-    records = load_records(data_path, limit)
-    print(f"loaded {len(records)} records from {data_path}"
-          + (f" (limit_per_topic={limit})" if limit else ""), flush=True)
+    # A dataset block may be specified globally (cfg["dataset"]) and/or per model
+    # (model_cfg["dataset"], which may be a single block or a LIST of blocks).
+    # Each (model, dataset) pair is one run, written to results/<key>__<tag>/.
+    # Records for a given (path, limit) are loaded once and cached across models.
+    _rec_cache: dict = {}
+
+    def _dataset_blocks_for(model_cfg):
+        own = model_cfg.get("dataset", global_ds)
+        if own is None:
+            raise ValueError(
+                f"[{model_cfg['key']}] no dataset: define one globally or per-model.")
+        return own if isinstance(own, list) else [own]
+
+    def _load_cached(ds_block):
+        data_path = _resolve(ds_block["path"])
+        image_root = _resolve(ds_block["image_root"])
+        limit = (limit_override if limit_override is not None
+                 else ds_block.get("limit_per_topic", 0))
+        cache_key = (str(data_path), limit)
+        if cache_key not in _rec_cache:
+            recs = load_records(data_path, limit)
+            _rec_cache[cache_key] = recs
+            print(f"loaded {len(recs)} records from {data_path}"
+                  + (f" (limit_per_topic={limit})" if limit else ""), flush=True)
+        tag = ds_block.get("tag") or data_path.stem
+        ds_meta = {"tag": tag, "path": str(data_path),
+                   "image_root": str(image_root), "limit_per_topic": limit}
+        return _rec_cache[cache_key], image_root, tag, ds_meta
 
     model_list = cfg["models"]
     if args.models:
@@ -310,12 +341,19 @@ def main():
             return
 
     for model_cfg in model_list:
-        try:
-            run_model(model_cfg, defaults, records, image_root, out_root)
-        except Exception as e:
-            print(f"!! {model_cfg['key']} FAILED: {type(e).__name__}: {e}", flush=True)
-            import traceback
-            traceback.print_exc()
+        for ds_block in _dataset_blocks_for(model_cfg):
+            try:
+                records, image_root, tag, ds_meta = _load_cached(ds_block)
+                # Single-dataset models keep their bare key as the output dir; a
+                # model with multiple datasets gets <key>__<tag> to avoid collision.
+                blocks = _dataset_blocks_for(model_cfg)
+                out_key = model_cfg["key"] if len(blocks) == 1 else f"{model_cfg['key']}__{tag}"
+                run_model(model_cfg, defaults, records, image_root, out_root, out_key, ds_meta)
+            except Exception as e:
+                print(f"!! {model_cfg['key']} [{ds_block.get('tag','?')}] FAILED: "
+                      f"{type(e).__name__}: {e}", flush=True)
+                import traceback
+                traceback.print_exc()
 
 
 if __name__ == "__main__":

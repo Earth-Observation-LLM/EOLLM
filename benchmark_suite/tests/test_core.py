@@ -17,13 +17,14 @@ import metrics
 
 
 def test_modes():
-    assert modes.modes_for_topic("mismatch_mcq_hard") == ["full", "sat_only", "sv_only", "blind"]
-    assert modes.modes_for_topic("camera_direction") == ["full", "sat_only", "blind"]
+    # canonical order: blind -> sv_only -> sat_only -> full (full last)
+    assert modes.modes_for_topic("mismatch_mcq_hard") == ["blind", "sv_only", "sat_only", "full"]
+    assert modes.modes_for_topic("camera_direction") == ["blind", "sat_only", "full"]
     assert "sv_only" not in modes.modes_for_topic("camera_direction")
-    assert modes.modes_for_topic("land_use") == ["full", "sat_only", "sv_only", "blind"]
-    assert modes.modes_for_topic("some_single_perspective_topic") == ["full", "blind"]
+    assert modes.modes_for_topic("land_use") == ["blind", "sv_only", "sat_only", "full"]
+    assert modes.modes_for_topic("some_single_perspective_topic") == ["blind", "full"]
     # resolve_modes intersects with a request, preserving canonical order
-    assert modes.resolve_modes("land_use", ["blind", "full"]) == ["full", "blind"]
+    assert modes.resolve_modes("land_use", ["blind", "full"]) == ["blind", "full"]
 
     imgs = [
         {"role": "satellite_marked", "image": None},

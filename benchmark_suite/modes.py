@@ -26,7 +26,12 @@ from __future__ import annotations
 
 from images import is_satellite_role, is_streetview_role
 
-ALL_MODES = ["full", "sat_only", "sv_only", "blind"]
+# Canonical execution/report order: most-degraded -> least (blind, then drop-one
+# views, then full). `full` lands LAST so it reads as the payoff after the
+# ablations. This ordering is the single source of truth — modes_for_topic()
+# filters this list per topic, so applicability and order never drift. Order does
+# NOT affect correctness (each mode is scored independently); only sequencing.
+ALL_MODES = ["blind", "sv_only", "sat_only", "full"]
 
 MISMATCH_TOPICS = {
     "mismatch_binary_easy", "mismatch_binary_hard",
@@ -42,13 +47,14 @@ URBAN_ATTRIBUTE_TOPICS = {
 
 
 def modes_for_topic(topic: str) -> list[str]:
-    if topic in MISMATCH_TOPICS:
-        return ["full", "sat_only", "sv_only", "blind"]
-    if topic == "camera_direction":
-        return ["full", "sat_only", "blind"]  # no sv_only (option imgs are answer)
-    if topic in URBAN_ATTRIBUTE_TOPICS:
-        return ["full", "sat_only", "sv_only", "blind"]
-    return ["full", "blind"]  # single-perspective fallback
+    """Applicable modes for a topic, in canonical ALL_MODES order."""
+    if topic in MISMATCH_TOPICS or topic in URBAN_ATTRIBUTE_TOPICS:
+        applicable = {"blind", "sv_only", "sat_only", "full"}
+    elif topic == "camera_direction":
+        applicable = {"blind", "sat_only", "full"}  # no sv_only (option imgs are answer)
+    else:
+        applicable = {"blind", "full"}  # single-perspective fallback
+    return [m for m in ALL_MODES if m in applicable]
 
 
 def filter_images_for_mode(images: list[dict], mode: str) -> list[dict]:
