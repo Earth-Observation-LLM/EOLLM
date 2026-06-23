@@ -38,7 +38,7 @@ conda activate "${ENV:-earth_eval}"
 python -c "import vllm, transformers; print('vllm', vllm.__version__, '| transformers', transformers.__version__)"
 
 CONFIG="${CONFIG:-remote/config.remote.yaml}"
-PROBE_GPU_UTIL="${PROBE_GPU_UTIL:-0.98}"
+PROBE_GPU_UTIL="${PROBE_GPU_UTIL:-0.90}"
 REAL_MAX_LEN="${REAL_MAX_LEN:-16384}"
 
 # images.py imports the dataset's composite_utils.py (authoritative pixel ops).

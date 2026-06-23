@@ -24,7 +24,11 @@ defaults:
   image_max_edge: 512
   max_model_len: 16384
   max_num_seqs: 64           # fallback only; SLURM probe exports SUITE_MAX_NUM_SEQS
-  gpu_mem_util: 0.98         # 2% headroom; SUITE_GPU_MEM_UTIL env can override
+  # 0.90: vLLM needs headroom for the ACTIVATION spike of the benchmark's large
+  # streetview_mega composite images, not just the KV pool. 0.98 OOM'd on those
+  # (smoke job 259). The probe finds max batch at this fraction. Env override:
+  # SUITE_GPU_MEM_UTIL.
+  gpu_mem_util: 0.90
   seed: 3407
 
 models:
