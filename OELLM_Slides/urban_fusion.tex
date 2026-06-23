@@ -1,0 +1,166 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}\usepackage{xcolor}\usepackage{array}\usepackage{colortbl}
+\definecolor{good}{HTML}{2E7D32}\definecolor{bad}{HTML}{C62828}\definecolor{accent}{HTML}{1565C0}
+\setbeamercolor{frametitle}{bg=accent}
+\setbeamerfont{frametitle}{size=\large}
+\title{Do the urban-attribute tasks fuse both views?}
+\subtitle{Qwen3.5-9B (per-city \& seen/unseen) --- 4-way image ablation}
+\date{}\author{}
+\begin{document}
+\maketitle
+
+\begin{frame}{Setup}
+\small
+Two LoRA-trained \textbf{Qwen3.5-9B} models (merged bf16, epoch-4), each run on the held-out
+\textbf{benchmark} and its \textbf{own validation split}. Four image modes:
+\textbf{blind} (no images), \textbf{sv} (street-view only), \textbf{sat} (marked satellite only),
+\textbf{full} (both).\\[4pt]
+\textbf{Fusion} $=$ full $-\max(\text{sv},\text{sat})$: accuracy gained from \emph{both} views vs.\ the
+better single view. \textcolor{good}{Positive} $\Rightarrow$ genuine fusion; $\approx 0 \Rightarrow$ leans on one view.\\[4pt]
+\emph{per-city} $=$ cities seen in training; \emph{seen/unseen} $=$ held-out cities.
+All: thinking off, greedy, image edge 512 (matches training). Bold sv/sat $=$ better single view.
+\end{frame}
+
+\begin{frame}{Headline: 9 urban-attribute tasks on the BENCHMARK}
+\centering\footnotesize
+\begin{tabular}{lcccc}
+\toprule
+task & per-city full & per-city fus & seen/uns full & seen/uns fus \\
+\midrule
+Land use & 75.3 & -0.2 & 73.9 & \textcolor{good}{+1.4} \\
+Building height & 66.8 & -0.5 & 66.8 & +0.5 \\
+Urban density & 65.1 & \textcolor{good}{+2.4} & 74.6 & \textcolor{good}{+3.1} \\
+Junction type & 75.1 & \textcolor{good}{+1.8} & 76.3 & \textcolor{good}{+2.4} \\
+Green space & 100.0 & +0.0 & 98.0 & \textcolor{bad}{-1.5} \\
+Amenity richness & 58.7 & \textcolor{good}{+2.1} & 55.6 & +0.0 \\
+Road type & 76.5 & -1.0 & 76.7 & +0.0 \\
+Road surface & 95.7 & +0.7 & 95.0 & -0.3 \\
+Transit density & 50.1 & \textcolor{good}{+4.5} & 49.4 & \textcolor{good}{+3.6} \\
+\bottomrule
+\end{tabular}\\[6pt]
+\footnotesize Mean fusion over 9 tasks --- per-city \textbf{+1.1}, seen/unseen \textbf{+1.0}
+(excl.\ leaked green-space: +1.2 / +1.3).
+\end{frame}
+
+\begin{frame}{Verdict (the 9 tasks)}
+\textbf{Fusion is $\approx 0$ on the urban attributes.} \texttt{full} $\approx$ the better single view ---
+the model does \textbf{not} meaningfully combine satellite + street-view; it rides whichever single
+view is stronger per task.\\[6pt]
+Most ``fusion-like'': \textbf{transit\_density} (+3.6 to +4.5) and \textbf{urban\_density} (+2.4 to +3.1) --- modest.\\[6pt]
+\textcolor{bad}{Caveat:} \textbf{green\_space} is leaked --- 100\% even in \textbf{blind} mode (answered from option
+text, no vision). Excluded from the fusion mean above.
+\end{frame}
+
+\begin{frame}{per-city --- benchmark (all 4 modes)}
+\centering\footnotesize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & blind & sv & sat & full & full$-$best1 \\
+\midrule
+Land use & 68.6 & 75.1 & \textbf{75.5} & 75.3 & -0.2 \\
+Building height & 45.3 & 66.3 & \textbf{67.4} & 66.8 & -0.5 \\
+Urban density & 54.6 & \textbf{62.7} & 61.8 & 65.1 & \textcolor{good}{+2.4} \\
+Junction type & 61.4 & 68.6 & \textbf{73.4} & 75.1 & \textcolor{good}{+1.8} \\
+Green space & 100.0 & \textbf{100.0} & 100.0 & 100.0 & +0.0 \\
+Amenity richness & 26.4 & \textbf{56.5} & 53.4 & 58.7 & \textcolor{good}{+2.1} \\
+Road type & 68.6 & \textbf{77.4} & 72.4 & 76.5 & -1.0 \\
+Road surface & 95.7 & 93.4 & \textbf{95.0} & 95.7 & +0.7 \\
+Transit density & 28.3 & \textbf{45.6} & 43.7 & 50.1 & \textcolor{good}{+4.5} \\
+\midrule
+\textbf{OVERALL (all topics)} & \textbf{48.5} & \textbf{57.7} & \textbf{54.9} & \textbf{75.9} & \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{seen/unseen --- benchmark (all 4 modes)}
+\centering\footnotesize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & blind & sv & sat & full & full$-$best1 \\
+\midrule
+Land use & 63.4 & \textbf{72.4} & 72.0 & 73.9 & \textcolor{good}{+1.4} \\
+Building height & 50.5 & \textbf{66.3} & 63.7 & 66.8 & +0.5 \\
+Urban density & 53.2 & 64.8 & \textbf{71.5} & 74.6 & \textcolor{good}{+3.1} \\
+Junction type & 62.0 & 71.3 & \textbf{74.0} & 76.3 & \textcolor{good}{+2.4} \\
+Green space & 100.0 & \textbf{99.5} & 99.0 & 98.0 & \textcolor{bad}{-1.5} \\
+Amenity richness & 25.7 & \textbf{55.6} & 53.0 & 55.6 & +0.0 \\
+Road type & 68.6 & \textbf{76.7} & 69.6 & 76.7 & +0.0 \\
+Road surface & 95.7 & \textbf{95.4} & 95.0 & 95.0 & -0.3 \\
+Transit density & 26.4 & 44.9 & \textbf{45.8} & 49.4 & \textcolor{good}{+3.6} \\
+\midrule
+\textbf{OVERALL (all topics)} & \textbf{48.3} & \textbf{58.3} & \textbf{54.9} & \textbf{75.9} & \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{per-city --- own validation split}
+\centering\footnotesize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & blind & sv & sat & full & full$-$best1 \\
+\midrule
+Land use & 68.6 & \textbf{76.6} & 74.5 & 75.2 & \textcolor{bad}{-1.4} \\
+Building height & 41.0 & 64.8 & \textbf{67.0} & 66.3 & -0.8 \\
+Urban density & 55.1 & \textbf{62.0} & 54.7 & 59.4 & \textcolor{bad}{-2.7} \\
+Junction type & 58.0 & 68.3 & \textbf{74.1} & 74.6 & +0.4 \\
+Green space & 100.0 & \textbf{100.0} & 100.0 & 100.0 & +0.0 \\
+Amenity richness & 30.3 & \textbf{57.6} & 54.7 & 62.4 & \textcolor{good}{+4.8} \\
+Road type & 66.3 & \textbf{76.5} & 71.3 & 75.2 & \textcolor{bad}{-1.2} \\
+Road surface & 94.2 & \textbf{94.0} & 93.7 & 94.2 & +0.3 \\
+Transit density & 28.5 & 46.9 & \textbf{47.6} & 50.6 & \textcolor{good}{+3.0} \\
+\midrule
+\textbf{OVERALL (all topics)} & \textbf{48.6} & \textbf{58.4} & \textbf{54.3} & \textbf{75.5} & \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{seen/unseen --- own validation split}
+\centering\footnotesize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & blind & sv & sat & full & full$-$best1 \\
+\midrule
+Land use & 65.9 & \textbf{69.3} & 68.2 & 69.1 & -0.1 \\
+Building height & 40.4 & \textbf{59.2} & 55.1 & 58.8 & -0.4 \\
+Urban density & 70.1 & \textbf{66.8} & 66.4 & 70.0 & \textcolor{good}{+3.1} \\
+Junction type & 68.9 & 71.4 & \textbf{72.0} & 73.5 & \textcolor{good}{+1.5} \\
+Green space & 100.0 & \textbf{99.1} & 98.7 & 96.0 & \textcolor{bad}{-3.1} \\
+Amenity richness & 26.1 & \textbf{54.1} & 48.7 & 54.0 & -0.1 \\
+Road type & 65.8 & \textbf{72.0} & 70.1 & 70.0 & \textcolor{bad}{-2.0} \\
+Road surface & 98.8 & \textbf{98.1} & 97.2 & 98.1 & +0.0 \\
+Transit density & 27.2 & 42.9 & \textbf{44.2} & 45.2 & +0.9 \\
+\midrule
+\textbf{OVERALL (all topics)} & \textbf{48.6} & \textbf{55.7} & \textbf{52.4} & \textbf{73.1} & \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Appendix --- ALL 14 tasks (full \& fusion, every run)}
+\centering\scriptsize
+\begin{tabular}{lcccccccc}
+\toprule
+task & pc$\cdot$bench & fus & su$\cdot$bench & fus & pc$\cdot$val & fus & su$\cdot$val & fus \\
+\midrule
+Land use & 75.3 & -0.2 & 73.9 & \textcolor{good}{+1.4} & 75.2 & \textcolor{bad}{-1.4} & 69.1 & -0.1 \\
+Building height & 66.8 & -0.5 & 66.8 & +0.5 & 66.3 & -0.8 & 58.8 & -0.4 \\
+Urban density & 65.1 & \textcolor{good}{+2.4} & 74.6 & \textcolor{good}{+3.1} & 59.4 & \textcolor{bad}{-2.7} & 70.0 & \textcolor{good}{+3.1} \\
+Junction type & 75.1 & \textcolor{good}{+1.8} & 76.3 & \textcolor{good}{+2.4} & 74.6 & +0.4 & 73.5 & \textcolor{good}{+1.5} \\
+Green space & 100.0 & +0.0 & 98.0 & \textcolor{bad}{-1.5} & 100.0 & +0.0 & 96.0 & \textcolor{bad}{-3.1} \\
+Amenity richness & 58.7 & \textcolor{good}{+2.1} & 55.6 & +0.0 & 62.4 & \textcolor{good}{+4.8} & 54.0 & -0.1 \\
+Road type & 76.5 & -1.0 & 76.7 & +0.0 & 75.2 & \textcolor{bad}{-1.2} & 70.0 & \textcolor{bad}{-2.0} \\
+Road surface & 95.7 & +0.7 & 95.0 & -0.3 & 94.2 & +0.3 & 98.1 & +0.0 \\
+Transit density & 50.1 & \textcolor{good}{+4.5} & 49.4 & \textcolor{good}{+3.6} & 50.6 & \textcolor{good}{+3.0} & 45.2 & +0.9 \\
+\midrule
+Camera direction & 42.3 & \textcolor{good}{+17.3} & 43.7 & \textcolor{good}{+20.9} & 46.5 & \textcolor{good}{+21.4} & 44.7 & \textcolor{good}{+20.8} \\
+Mismatch bin (easy) & 97.4 & \textcolor{good}{+44.7} & 98.8 & \textcolor{good}{+46.1} & 95.2 & \textcolor{good}{+48.1} & 96.6 & \textcolor{good}{+47.1} \\
+Mismatch bin (hard) & 90.7 & \textcolor{good}{+44.9} & 87.9 & \textcolor{good}{+43.7} & 90.4 & \textcolor{good}{+39.2} & 87.8 & \textcolor{good}{+37.6} \\
+Mismatch MCQ (easy) & 96.2 & \textcolor{good}{+69.8} & 92.6 & \textcolor{good}{+67.9} & 95.4 & \textcolor{good}{+69.2} & 95.0 & \textcolor{good}{+70.8} \\
+Mismatch MCQ (hard) & 86.0 & \textcolor{good}{+62.7} & 84.8 & \textcolor{good}{+55.1} & 84.3 & \textcolor{good}{+57.2} & 82.7 & \textcolor{good}{+57.6} \\
+\bottomrule
+\end{tabular}\\[4pt]
+\scriptsize pc=per-city, su=seen/unseen. \textbf{mismatch\_*} tasks fuse strongly (+40--70) but \emph{require}
+both views by construction --- not urban-attribute fusion.
+\end{frame}
+
+\end{document}
