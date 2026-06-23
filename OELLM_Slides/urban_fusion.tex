@@ -151,6 +151,46 @@ Transit density & 26.4 & 44.9 & \textbf{45.8} & 49.4 & \textcolor{good}{+3.6} \\
 \end{tabular}
 \end{frame}
 
+\begin{frame}{External RS-VLM baselines --- GeoChat \& SkySenseGPT (zero-shot)}
+\small
+Two off-the-shelf remote-sensing VLMs (LLaVA-1.5-7B forks, CLIP-ViT-L/14 @ 504px)
+evaluated on the \textbf{shared benchmark}, \textbf{satellite-only}, \textbf{zero-shot}.
+They are \textbf{single-image, overhead-only} --- so they see \emph{only} the marked
+satellite tile (our \texttt{sat} mode), never street-view, on all 9 Family-1 tasks
+($n=3{,}135$).\\[4pt]
+\begin{itemize}
+\item They \textbf{never trained on the red-dot marker} nor on our attribute taxonomies
+  --- this is a pure out-of-distribution transfer probe.
+\item Fair column to compare against is \textbf{our trained \texttt{sat}} on the same
+  benchmark (single satellite view, like-for-like input).
+\end{itemize}
+All: greedy, \texttt{max\_new\_tokens}=8, 0\% unparseable. SkySenseGPT $>$ GeoChat overall.
+\end{frame}
+
+\begin{frame}{Zero-shot RS-VLMs vs.\ our trained \texttt{sat} (benchmark, sat-only)}
+\centering\footnotesize
+\begin{tabular}{lcc>{\bfseries}c>{\bfseries}c}
+\toprule
+task & GeoChat & SkySenseGPT & pc\,sat & su\,sat \\
+\midrule
+Land use & 48.7 & \textbf{53.4} & 75.5 & 72.0 \\
+Building height & 30.5 & \textbf{34.7} & 67.4 & 63.7 \\
+Urban density & 13.5 & \textbf{14.5} & 61.8 & 71.5 \\
+Junction type & 8.4 & \textbf{30.8} & 73.4 & 74.0 \\
+Green space & 50.7 & \textbf{53.7} & 100.0 & 99.0 \\
+Amenity richness & \textbf{13.5} & 12.6 & 53.4 & 53.0 \\
+Road type & 10.7 & \textbf{18.1} & 72.4 & 69.6 \\
+Road surface & 75.6 & \textbf{80.2} & 95.0 & 95.0 \\
+Transit density & 21.4 & \textbf{26.1} & 43.7 & 45.8 \\
+\midrule
+\textbf{OVERALL (9 tasks)} & \textbf{27.8} & \textbf{33.4} & \textbf{54.9} & \textbf{54.9} \\
+\bottomrule
+\end{tabular}\\[6pt]
+\footnotesize pc\,sat / su\,sat $=$ our per-city / seen-unseen Qwen3.5-9B, \texttt{sat} mode, same benchmark.
+Zero-shot RS models trail our trained \texttt{sat} by \textbf{$\sim$21--27 pts overall}; closest on
+\textbf{road surface} (texture, view-agnostic), near chance on count/context tasks (urban density, amenity richness, junction type).
+\end{frame}
+
 \begin{frame}{Appendix --- ALL 14 tasks (full \& fusion, every run)}
 \centering\scriptsize
 \begin{tabular}{lcccccccc}
