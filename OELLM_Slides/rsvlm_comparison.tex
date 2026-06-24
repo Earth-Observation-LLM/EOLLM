@@ -1,0 +1,175 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}\usepackage{xcolor}\usepackage{array}\usepackage{colortbl}
+\definecolor{good}{HTML}{2E7D32}\definecolor{bad}{HTML}{C62828}\definecolor{accent}{HTML}{1565C0}
+\definecolor{ours}{HTML}{0D47A1}
+\setbeamercolor{frametitle}{bg=accent}
+\setbeamerfont{frametitle}{size=\large}
+\newcommand{\best}[1]{\textbf{#1}}
+\title{Zero-shot RS-VLMs vs.\ our trained model}
+\subtitle{Family-1 overhead urban-attribute benchmark --- satellite-only, $n=3{,}135$}
+\date{}\author{}
+\begin{document}
+\maketitle
+
+% ---------------------------------------------------------------------------
+\begin{frame}{What this compares}
+\small
+Four off-the-shelf \textbf{remote-sensing VLMs}, evaluated \textbf{zero-shot} on the
+\textbf{shared benchmark}, \textbf{satellite-only}, against \textbf{our fine-tuned
+Qwen3.5-9B}.
+\begin{itemize}
+\item All five see the \textbf{same single marked satellite tile} (our \texttt{sat} mode),
+  the \textbf{same 9 Family-1 tasks}, the \textbf{same 3{,}135 questions} --- like-for-like input.
+\item The four externals are \textbf{single-image, overhead-only} and \textbf{never trained}
+  on EOLLM, on our 4-way MCQ format, or on the red-dot marker our tiles carry
+  $\Rightarrow$ pure out-of-distribution transfer.
+\item Fair comparison column $=$ \textbf{our trained \texttt{sat}} (single satellite view,
+  identical input modality).
+\end{itemize}
+\vspace{4pt}
+\footnotesize All: greedy, \texttt{max\_new\_tokens}=8, single GPU (RTX PRO 6000 Blackwell), batched.
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{The four external models}
+\centering\scriptsize
+\begin{tabular}{lll}
+\toprule
+Model & LLM / vision & Image preprocessing \\
+\midrule
+GeoChat-7B & Vicuna-7B / CLIP-ViT-L & 504px single crop \\
+SkySenseGPT-7B & Vicuna-7B / CLIP-ViT-L & 504px single crop \\
+LHRS-Bot-Nova & Llama-3-8B / SigLIP-384 + perceiver & 384px single \\
+EarthDial-4B-RGB & Phi-3-Mini / InternViT-300M & InternVL $\le6\times448$px + thumb \\
+\midrule
+\textcolor{ours}{\textbf{Ours: Qwen3.5-9B (LoRA)}} & \textcolor{ours}{Qwen3.5-9B / native ViT} & \textcolor{ours}{trained on EOLLM (\texttt{sat} mode)} \\
+\bottomrule
+\end{tabular}\\[8pt]
+\footnotesize LHRS-Bot \& EarthDial loaded via their native repos (custom perceiver /
+\texttt{trust\_remote\_code} InternVL); GeoChat/SkySenseGPT via the original-LLaVA loader.
+No flash-attention (Blackwell sm\_120): SDPA / eager fallback.
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Overall Family-1 accuracy (sat-only, $n=3{,}135$)}
+\centering\footnotesize
+\begin{tabular}{lc}
+\toprule
+Model & Overall acc \\
+\midrule
+GeoChat-7B            & 27.8 \\
+LHRS-Bot-Nova         & 32.9 \\
+SkySenseGPT-7B        & 33.4 \\
+EarthDial-4B-RGB      & \best{41.3}\ \ (best external) \\
+\midrule
+\textcolor{ours}{\textbf{Ours --- trained \texttt{sat} (per-city)}}   & \textcolor{ours}{\textbf{54.9}} \\
+\textcolor{ours}{\textbf{Ours --- trained \texttt{sat} (seen/unseen)}} & \textcolor{ours}{\textbf{54.9}} \\
+\bottomrule
+\end{tabular}\\[8pt]
+\small Best zero-shot RS model (EarthDial) trails our trained \texttt{sat} by
+\textbf{\textcolor{good}{13.6 pts}}; GeoChat by \textbf{27.1 pts}. Same single satellite
+view for all.
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Per-task: all four externals vs.\ our trained \texttt{sat}}
+\centering\scriptsize
+\begin{tabular}{lcccc>{\columncolor{ours!12}}c>{\columncolor{ours!12}}c}
+\toprule
+task & GeoChat & SkySense & LHRS & EarthDial & \textbf{pc sat} & \textbf{su sat} \\
+\midrule
+Land use         & 48.7 & 53.4 & 46.3 & 47.5 & \textbf{75.5} & \textbf{72.0} \\
+Building height  & 30.5 & 34.7 & 28.9 & 32.6 & \textbf{67.4} & \textbf{63.7} \\
+Urban density    & 13.5 & 14.5 & 17.8 & \best{30.4} & \textbf{61.8} & \textbf{71.5} \\
+Road type        & 10.7 & 18.1 & 26.1 & \best{46.1} & \textbf{72.4} & \textbf{69.6} \\
+Road surface     & 75.6 & \best{80.2} & 58.7 & 58.4 & \textbf{95.0} & \textbf{95.0} \\
+Junction type    &  8.4 & 30.8 & 35.3 & \best{52.7} & \textbf{73.4} & \textbf{74.0} \\
+Green space      & 50.7 & 53.7 & 39.9 & \best{62.6} & \textbf{100.0} & \textbf{99.0} \\
+Amenity richness & 13.5 & 12.6 & 17.8 & \best{25.4} & \textbf{53.4} & \textbf{53.0} \\
+Transit density  & 21.4 & 26.1 & \best{34.2} & 29.7 & \textbf{43.7} & \textbf{45.8} \\
+\midrule
+\textbf{OVERALL (9)} & \textbf{27.8} & \textbf{33.4} & \textbf{32.9} & \best{\textbf{41.3}} & \textbf{54.9} & \textbf{54.9} \\
+\bottomrule
+\end{tabular}\\[6pt]
+\footnotesize Bold among externals $=$ best external per row; \textbf{blue} $=$ our trained
+Qwen3.5-9B \texttt{sat} (per-city / seen-unseen), same benchmark. Our trained model wins
+\textbf{every task}.
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{The gap: best zero-shot vs.\ our trained \texttt{sat}}
+\centering\footnotesize
+\begin{tabular}{lccc}
+\toprule
+task & best zero-shot & our trained \texttt{sat} & \textbf{gap} \\
+\midrule
+Transit density  & 34.2 & 43.7 & \textcolor{good}{+9.5} \\
+Road surface     & 80.2 & 95.0 & \textcolor{good}{+14.8} \\
+Junction type    & 52.7 & 73.4 & \textcolor{good}{+20.7} \\
+Land use         & 53.4 & 75.5 & \textcolor{good}{+22.1} \\
+Road type        & 46.1 & 72.4 & \textcolor{good}{+26.3} \\
+Amenity richness & 25.4 & 53.4 & \textcolor{good}{+28.0} \\
+Urban density    & 30.4 & 61.8 & \textcolor{good}{+31.4} \\
+Building height  & 34.7 & 67.4 & \textcolor{good}{+32.7} \\
+Green space      & 62.6 & 100.0 & \textcolor{good}{+37.4} \\
+\midrule
+\textbf{OVERALL} & \textbf{41.3} & \textbf{54.9} & \textcolor{good}{\textbf{+13.6}} \\
+\bottomrule
+\end{tabular}\\[6pt]
+\footnotesize Smallest gap where a generic cue carries (road-surface texture, transit);
+largest where EOLLM-specific taxonomy grounding matters (green space, building height,
+urban density). Fine-tuning buys a large, consistent margin on the same satellite view.
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Reading the externals}
+\small
+\begin{itemize}
+\item \textbf{EarthDial-4B-RGB is the strongest zero-shot RS-VLM} (41.3) --- and the
+  smallest (4B) and fastest. Its edge is \textbf{layout/structure} (road type, junction
+  type, green space, urban density), where high-res InternVL tiling resolves geometry the
+  504px single-crop LLaVA models miss.
+\item \textbf{SkySenseGPT $>$ GeoChat} throughout; both LLaVA models keep \textbf{road
+  surface} (pure texture, view-agnostic) but collapse toward chance on count/context tasks.
+\item All externals are at/near 0.25 chance on \textbf{amenity richness} --- counting
+  services from one overhead tile is genuinely hard.
+\end{itemize}
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{\large Caveat --- don't over-read LHRS / EarthDial}
+\small
+\textbf{LHRS-Bot-Nova} and \textbf{EarthDial} share \textbf{OSM provenance} with our labels:
+\begin{itemize}
+\item LHRS-Bot pretrained on $\sim$1M \textbf{OSM-aligned} RS image--text pairs (thousands of cities).
+\item EarthDial's instruction QA is itself \textbf{OSM-derived}.
+\end{itemize}
+Our Family-1 labels are OSM-grounded, so their scores may reflect \textbf{shared OSM priors}
+(and possible image overlap), not pure visual skill --- treat as an \textbf{upper bound}.
+GeoChat/SkySenseGPT do \emph{not} share this provenance.\\[6pt]
+\textbf{Bottom line:} even granting that upper bound, the best external (EarthDial 41.3)
+still trails our trained \texttt{sat} (54.9) by \textbf{13.6 pts} on the identical single
+satellite view --- and our model wins all 9 tasks.
+\end{frame}
+
+% ---------------------------------------------------------------------------
+\begin{frame}{Run stats (reproducibility)}
+\centering\footnotesize
+\begin{tabular}{lccccc}
+\toprule
+Model & $n$ & unparseable & runtime & throughput & peak VRAM \\
+\midrule
+GeoChat-7B       & 3135 & 0 (0.00\%) & 8.7 min & 6.0 Q/s & 40.2 GiB \\
+SkySenseGPT-7B   & 3135 & 0 (0.00\%) & 8.7 min & 6.0 Q/s & 40.2 GiB \\
+LHRS-Bot-Nova    & 3135 & 0 (0.00\%) & 2.4 min & 21.5 Q/s & 22.0 GiB \\
+EarthDial-4B-RGB & 3135 & 1 (0.03\%) & 1.9 min & 27.5 Q/s & 13.6 GiB \\
+\bottomrule
+\end{tabular}\\[8pt]
+\footnotesize All via the shared \texttt{benchmark\_suite} (byte-identical prompt + marked-sat
+tile). No topics skipped; single marked-sat tile per item. Unparseable counted as wrong.
+LHRS base LLM via the public \texttt{NousResearch/Meta-Llama-3-8B-Instruct} mirror
+(byte-identical to the gated Meta repo).
+\end{frame}
+
+\end{document}
