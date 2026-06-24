@@ -1,0 +1,35 @@
+# config.earthdial.yaml — EarthDial_4B_RGB on lab-ws (native InternVL loader).
+#
+# EarthDial_4B_RGB = InternViT-300M + Phi-3-Mini (InternVL2-4B recipe), loaded
+# via earthdial.model.internvl_chat.InternVLChatModel (trust_remote_code, bf16).
+# Satellite/aerial-only, SINGLE-image (dynamic InternVL tiling: up to 6 448px
+# sub-tiles + thumbnail). run.py routes family `earthdial` to earthdial_native
+# and confines it to the 9 Family-1 overhead topics + sat_only (the single
+# marked-sat tile), enforced in code.
+#
+# Dataset = the training dataset_content clone (byte-identical marked-sat tile to
+# the GeoChat/SkySenseGPT/LHRS runs; identical 3135-item set). Run from the
+# dedicated `earthdial` conda env (transformers==4.37.2 + Blackwell torch cu128,
+# NO flash_attn: InternViT degrades to eager, Phi-3 doesn't force FA2).
+
+dataset:
+  path: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark/benchmark_with_answers.jsonl
+  image_root: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark
+  limit_per_topic: 0
+
+defaults:
+  modes: [sat_only]           # informational; earthdial forces sat_only
+  image_max_edge: 768
+  max_new_tokens: 8
+  batch_size: 8               # 448px x up-to-6 tiles + thumbnail; tune under OOM
+  seed: 3407
+
+models:
+  - key: earthdial_4b_rgb
+    display: "EarthDial-4B-RGB (InternViT-300M + Phi-3-Mini, satellite-only)"
+    hf_id: akshaydudhane/EarthDial_4B_RGB
+    family: earthdial
+    repo_dir: /home/ain480/models_src/EarthDial   # has src/earthdial package
+    max_tiles: 6
+    use_thumbnail: true
+    attention: false

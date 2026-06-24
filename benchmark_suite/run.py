@@ -59,6 +59,16 @@ def _vllm_available() -> bool:
 # native LLaVA backend regardless of vLLM availability.
 LLAVA_NATIVE_FAMILIES = {"geochat", "skysensegpt"}
 
+# Other remote-sensing VLMs served by their OWN repo loader (not vLLM/HF Auto):
+#   lhrs       -> LHRS-Bot-Nova (Llama-3-8B + SigLIP-384 + MoE perceiver)
+#   earthdial  -> EarthDial_4B_RGB (InternVL2: InternViT-300M + Phi-3-Mini)
+# Like the LLaVA families they are satellite/aerial-only and single-image, so
+# they share the same confinement (9 Family-1 overhead topics + sat_only mode).
+NATIVE_RS_FAMILY_BACKEND = {"lhrs": "lhrs_native", "earthdial": "earthdial_native"}
+
+# All single-image satellite-only families confined to Family-1 + sat_only.
+SAT_ONLY_FAMILIES = LLAVA_NATIVE_FAMILIES | set(NATIVE_RS_FAMILY_BACKEND)
+
 
 def resolve_backend(model_cfg: dict) -> str:
     """Decide which backend to use for a model, honoring an explicit override.
@@ -76,6 +86,11 @@ def resolve_backend(model_cfg: dict) -> str:
                 f"[{model_cfg['key']}] family {family!r} is original-LLaVA format "
                 f"(504px, custom GeoChatLlamaForCausalLM) — vLLM cannot load it. "
                 f"Use backend: llava_native (the default for this family).")
+        if forced == "vllm" and family in NATIVE_RS_FAMILY_BACKEND:
+            raise ValueError(
+                f"[{model_cfg['key']}] family {family!r} uses a custom repo loader "
+                f"(MoE perceiver / trust_remote_code InternVL) — vLLM cannot load "
+                f"it. Use backend: {NATIVE_RS_FAMILY_BACKEND[family]} (the default).")
         if forced == "vllm" and attention:
             raise ValueError(
                 f"[{model_cfg['key']}] backend: vllm with attention: true is "
@@ -91,6 +106,8 @@ def resolve_backend(model_cfg: dict) -> str:
 
     if family in LLAVA_NATIVE_FAMILIES:
         return "llava_native"      # 504px original-LLaVA; geochat package loader
+    if family in NATIVE_RS_FAMILY_BACKEND:
+        return NATIVE_RS_FAMILY_BACKEND[family]   # LHRS / EarthDial own loaders
     if attention:
         return "transformers"      # only path that can capture attention
     if lora:
@@ -270,7 +287,7 @@ def run_model(model_cfg, defaults, records, image_root, out_root, out_key, ds_me
     # enforced here, not left to config, so these models can never be accidentally
     # fed an out-of-distribution item.
     only_topics = None
-    if model_cfg.get("family") in LLAVA_NATIVE_FAMILIES:
+    if model_cfg.get("family") in SAT_ONLY_FAMILIES:
         only_topics = suite_modes.URBAN_ATTRIBUTE_TOPICS
         requested_modes = ["sat_only"]
 
@@ -314,6 +331,12 @@ def make_backend(name, model_cfg, defaults):
     if name == "llava_native":
         from backends.llava_native_backend import LlavaNativeBackend
         return LlavaNativeBackend(model_cfg, defaults)
+    if name == "lhrs_native":
+        from backends.lhrs_native_backend import LhrsNativeBackend
+        return LhrsNativeBackend(model_cfg, defaults)
+    if name == "earthdial_native":
+        from backends.earthdial_native_backend import EarthDialNativeBackend
+        return EarthDialNativeBackend(model_cfg, defaults)
     raise ValueError(f"unknown backend {name!r}")
 
 

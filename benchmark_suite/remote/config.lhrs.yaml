@@ -1,0 +1,38 @@
+# config.lhrs.yaml — LHRS-Bot-Nova on lab-ws (native lhrs-package loader).
+#
+# LHRS-Bot-Nova = Meta-Llama-3-8B-Instruct + SigLIP-so400m-patch14-384 + a
+# 272-query MoE perceiver bridge. Satellite/aerial-only, SINGLE-image. run.py
+# routes family `lhrs` to the lhrs_native backend and AUTOMATICALLY confines it
+# to the 9 Family-1 overhead topics + the sat_only mode (the single marked-sat
+# tile). The mode/topic restriction is enforced in code, not here.
+#
+# Dataset = the training dataset_content clone (so images.py renders the
+# marked-sat tile byte-identically to training, identical 3135-item set to the
+# GeoChat/SkySenseGPT run). Run from the dedicated `lhrs` conda env
+# (transformers==4.42.4 + peft==0.12.0 + Blackwell torch cu128, NO flash_attn:
+# text_modal.py patched to attn_implementation="sdpa").
+
+dataset:
+  path: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark/benchmark_with_answers.jsonl
+  image_root: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark
+  limit_per_topic: 0          # >0 = smoke cap per topic
+
+defaults:
+  modes: [sat_only]           # informational; lhrs forces sat_only
+  image_max_edge: 768         # suite-side resize before the 384 SigLIP preprocess
+  max_new_tokens: 8           # answer is one letter
+  batch_size: 8               # 384px SigLIP + 8B Llama-3; tune under OOM
+  seed: 3407
+
+models:
+  - key: lhrs_bot_nova
+    display: "LHRS-Bot-Nova (Llama-3-8B + SigLIP-384 + MoE perceiver, satellite-only)"
+    hf_id: LHRS/LHRS-Bot-Nova
+    family: lhrs
+    repo_dir: /home/ain480/models_src/LHRS-Bot   # has lhrs package + Config/
+    # Base LLM override: the eval yaml's meta-llama/Meta-Llama-3-8B-Instruct is
+    # gated and the lab-ws token lacks download grant. NousResearch's mirror is
+    # public and byte-identical (verified arch/hidden/layers/vocab) — the exact
+    # weights LHRS-Bot's perceiver+LoRA were trained against, just ungated.
+    llm_path: NousResearch/Meta-Llama-3-8B-Instruct
+    attention: false
