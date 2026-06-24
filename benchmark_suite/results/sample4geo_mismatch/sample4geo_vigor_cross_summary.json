@@ -1,0 +1,36 @@
+{
+  "tag": "vigor_cross",
+  "ckpt": "/home/ain480/models_src/Sample4Geo/pretrained/pretrained/vigor_cross/convnext_base.fb_in22k_ft_in1k_384/weights_e40_0.6109.pth",
+  "threshold": 0.1938,
+  "runtime_s": 78.3896496295929,
+  "peak_vram_gib": 0.7350244522094727,
+  "aggregation": "stitch_4angles_fwd_right_bwd_left->384x768",
+  "n_total": 1684,
+  "per_topic": {
+    "mismatch_binary_easy": {
+      "n": 421,
+      "correct": 272,
+      "acc": 0.6460807600950119
+    },
+    "mismatch_binary_hard": {
+      "n": 421,
+      "correct": 272,
+      "acc": 0.6460807600950119
+    },
+    "mismatch_mcq_easy": {
+      "n": 421,
+      "correct": 112,
+      "acc": 0.2660332541567696
+    },
+    "mismatch_mcq_hard": {
+      "n": 421,
+      "correct": 130,
+      "acc": 0.3087885985748218
+    }
+  },
+  "overall": {
+    "n": 1684,
+    "correct": 786,
+    "acc": 0.4667458432304038
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "tag": "cvusa",
+  "ckpt": "/home/ain480/models_src/Sample4Geo/pretrained/pretrained/cvusa/convnext_base.fb_in22k_ft_in1k_384/weights_e40_98.6830.pth",
+  "threshold": 0.2278,
+  "runtime_s": 83.28806066513062,
+  "peak_vram_gib": 0.7350244522094727,
+  "aggregation": "stitch_4angles_fwd_right_bwd_left->384x768",
+  "n_total": 1684,
+  "per_topic": {
+    "mismatch_binary_easy": {
+      "n": 421,
+      "correct": 269,
+      "acc": 0.6389548693586699
+    },
+    "mismatch_binary_hard": {
+      "n": 421,
+      "correct": 262,
+      "acc": 0.6223277909738717
+    },
+    "mismatch_mcq_easy": {
+      "n": 421,
+      "correct": 106,
+      "acc": 0.2517814726840855
+    },
+    "mismatch_mcq_hard": {
+      "n": 421,
+      "correct": 110,
+      "acc": 0.26128266033254155
+    }
+  },
+  "overall": {
+    "n": 1684,
+    "correct": 747,
+    "acc": 0.44358669833729214
+  }
+}
