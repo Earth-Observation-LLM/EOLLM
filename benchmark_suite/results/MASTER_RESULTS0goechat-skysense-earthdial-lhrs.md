@@ -159,6 +159,14 @@ DATASET_DIR=.../EODATA_compressed_final PYTORCH_CUDA_ALLOC_CONF=expandable_segme
 
 **Topics (labeled split, 421 questions each, n = 1684 total):**
 `mismatch_binary_easy`, `mismatch_binary_hard`, `mismatch_mcq_easy`, `mismatch_mcq_hard`.
+A 5th cross-view topic, **`camera_direction`, is deliberately excluded** — it is an
+*orientation* task (4 candidates = the same tile with different red arrows; no location
+signal, and the candidate tiles aren't materialized as files), which a retrieval
+embedding model cannot express. Full reasoning in §6 of the detail report.
+
+**Complete detail report:** `MISMATCH_SAMPLE4GEO_REPORT.md` (same directory) — per-topic
+TPR/TNR, similarity-separation stats, per-strategy MCQ margins, full methodology, and the
+camera_direction exclusion rationale.
 
 ## 3.1 Per-topic accuracy
 
@@ -176,14 +184,21 @@ real-world *urban* panorama↔aerial pairs, the closest domain to EOLLM street�
 ## 3.2 Reading the result
 
 - **Binary (real signal).** True-match street↔sat cosines are measurably higher than
-  mismatched ones (VIGOR: TPR≈0.58, TNR≈0.71; CVUSA skews toward predicting "match":
-  TPR≈0.68, TNR≈0.58). Both clearly beat the 0.50 coin-flip → Sample4Geo *transfers*:
+  mismatched ones — VIGOR match 0.211 vs mismatch 0.162 (sep +0.049), CVUSA 0.274 vs
+  0.223 (sep +0.051). Error profile: VIGOR is TNR-leaning (TPR 0.58 / TNR 0.71, good at
+  rejecting), CVUSA is TPR-leaning (TPR 0.68 / TNR 0.58, over-predicts "match" because
+  its cosines sit higher). Both clearly beat the 0.50 coin-flip → Sample4Geo *transfers*:
   it assigns higher similarity to genuinely co-located street/satellite pairs even on
-  cities and a marker overlay it never trained on.
+  cities and a marker overlay it never trained on. The ~0.05 separation vs ~0.08 spread
+  (overlapping distributions) is why accuracy lands at ~0.64, not near-perfect.
 - **MCQ (near chance).** Picking the correct 1-of-4 street set by argmax similarity is
-  only ~0.27–0.31 (chance 0.25). Discriminating the *right* nearby urban scene from 3
-  plausible distractors — across a 90°-perspective→panorama domain gap and a
-  street↔overhead view gap — is much harder than the binary yes/no.
+  only ~0.27–0.31 (chance 0.25), with tiny top1−top2 similarity margins (~0.04–0.06) →
+  the model barely separates its pick from the runner-up. Discriminating the *right*
+  nearby urban scene from 3 plausible distractors — across a 90°-perspective→panorama
+  domain gap and a street↔overhead view gap — is much harder than the binary yes/no.
+  Counter-intuitively `hard` (same_city distractors) ≥ `easy` (cross_city): same-city
+  wrong options share real co-located structure the embedding can rank on, whereas
+  cross-city distractors are visually random and collapse the ranking to noise.
 - **easy vs hard.** Differ only by negative-sampling strategy (`same_city` vs
   `cross_city`); the gap is small because cross-view cosine barely depends on whether a
   distractor is from the same city, for a model that never learned these cities.
