@@ -90,7 +90,6 @@ class Collector:
         self.g_cfg = cfg.get("generation", {})
         self.max_new_tokens = int(self.g_cfg.get("max_new_tokens", 8))
         self.base_seed = int(self.g_cfg.get("base_seed", 3407))
-        self.reproduce_tries = int(self.a_cfg.get("sampled_reproduce_tries", 3))
         self.max_pixels = int(self.a_cfg.get("max_pixels", 1048576))
         self.layers_spec = self.a_cfg.get("layers", "all")
         self.store_per_layer = bool(self.a_cfg.get("store_per_layer", True))
@@ -173,6 +172,10 @@ class Collector:
 
     @torch.no_grad()
     def _generate(self, inputs, temp: float, seed: int | None):
+        """Generate the answer; return BOTH the decoded text and the exact
+        generated ids. The ids (not a re-tokenization of the text) are what the
+        attention forward must append — decode->re-encode is not identity and
+        would shift the choice token the attention is read at."""
         do_sample = temp > 0.0
         if do_sample and seed is not None:
             torch.manual_seed(seed)
@@ -184,10 +187,10 @@ class Collector:
             kwargs.update(do_sample=False)
         gen = self.model.generate(**inputs, **kwargs)
         prompt_len = inputs["input_ids"].shape[1]
-        ans_ids = gen.sequences[0, prompt_len:]
+        ans_ids = gen.sequences[0, prompt_len:]          # exact generated ids
         tok = self._tok()
         raw = tok.decode(ans_ids, skip_special_tokens=True).strip()
-        return raw
+        return raw, ans_ids
 
     def solve(self, item) -> dict | None:
         """Walk the ladder; return the winning attempt dict or None if unsolved."""
@@ -204,13 +207,18 @@ class Collector:
                 inputs = self._make_inputs(item, v.steer)
                 for s in range(samples):
                     seed = self.base_seed + attempt_idx if temp > 0 else None
-                    raw = self._generate(inputs, temp, seed)
+                    raw, ans_ids = self._generate(inputs, temp, seed)
                     parsed = suite_parsing.parse_answer(raw, options=item["record"]["options"])
                     attempt_idx += 1
                     if parsed.letter is not None and gold is not None and parsed.letter == gold:
+                        # Keep the winning inputs + exact generated ids so the
+                        # attention forward reuses THEM (no regeneration, no
+                        # re-tokenization) — the attention is then read over the
+                        # very tokens that were generated.
                         return {"temp": temp, "variant": vname, "steer": v.steer,
                                 "seed": seed, "raw": raw, "letter": parsed.letter,
-                                "n_attempts": attempt_idx, "greedy": temp == 0.0}
+                                "n_attempts": attempt_idx, "greedy": temp == 0.0,
+                                "inputs": inputs, "ans_ids": ans_ids}
         return None
 
     # -- phase B: attention on the winning attempt -------------------------
@@ -244,23 +252,20 @@ class Collector:
         return idx or list(range(n_returned))
 
     @torch.no_grad()
-    def _attention_forward(self, item, steer, target_letter, temp, seed):
-        """Reproduce the winning generation, then one eager forward over
-        [prompt + answer] -> per-image attention. Returns (block, ok_letter)."""
-        inputs = self._make_inputs(item, steer)
-        raw = self._generate(inputs, temp, seed)
-        parsed = suite_parsing.parse_answer(raw, options=item["record"]["options"])
-        if parsed.letter != target_letter:
-            return None, parsed.letter  # did not reproduce gold this draw
-
+    def _attention_forward(self, item, win):
+        """One eager forward over [winning prompt + the EXACT generated answer ids]
+        -> per-image attention. No regeneration and no re-tokenization: it reuses
+        `win["inputs"]` and `win["ans_ids"]` captured at solve time, so the
+        attention is read over the very tokens that produced the gold letter.
+        Deterministic regardless of the winning temperature (the sampling already
+        happened; this is a forced teacher-forcing forward over the kept ids)."""
         tok = self._tok()
+        inputs = win["inputs"]
+        target_letter = win["letter"]
         prompt_len = inputs["input_ids"].shape[1]
-        # Re-tokenize the produced answer to append for the forward.
-        ans_ids = self.processor(text=[raw], add_special_tokens=False,
-                                 return_tensors="pt").input_ids.to(self.model.device)
-        keep = [t for t in ans_ids[0].tolist() if t not in (self.pad_id, self.eos_id)]
+        keep = [t for t in win["ans_ids"].tolist() if t not in (self.pad_id, self.eos_id)]
         if not keep:
-            return None, parsed.letter
+            return None
 
         ans_t = torch.tensor(keep, device=self.model.device).unsqueeze(0)
         full_ids = torch.cat([inputs["input_ids"], ans_t], dim=1)
@@ -285,9 +290,10 @@ class Collector:
         L = full_ids.shape[1]
         spans = self._detect_spans(full_ids[0], self.vstart, self.vend)
         spans_ok = (len(spans) == len(item["images"]))
-        ans_len = len(keep)
         q_start = prompt_len - 1
-        q_rows = list(range(q_start, min(L - 1, L)))
+        # answer token i is produced at query position prompt_len-1+i; the last
+        # answer token has no "next" to predict, so rows prompt_len-1 .. L-2.
+        q_rows = list(range(q_start, L - 1))
         choice_local = self._find_choice_index(keep, tok, target_letter)
         choice_row = q_start + choice_local if choice_local is not None else q_rows[0]
 
@@ -295,7 +301,7 @@ class Collector:
         per_layer = self._compute_per_layer(attentions, layer_idx, q_rows, choice_row, spans)
         block = self._assemble(per_layer, item["roles"], len(item["images"]),
                                target_letter, choice_local, spans_ok, layer_idx)
-        return block, parsed.letter
+        return block
 
     @staticmethod
     def _find_choice_index(answer_ids, tok, letter):
@@ -339,6 +345,7 @@ class Collector:
         block = {
             "n_images": n_images, "choice_letter": letter,
             "choice_token_index": choice_local,
+            "layers_used": ("all" if self.layers_spec == "all" else self.layers_spec),
             "n_layers_used": len(layer_idx),
             "image_attention_total_avg_pct": round(100 * sum(avg_raw), 4),
             "spans_match_images": spans_ok,
@@ -366,30 +373,37 @@ class Collector:
 
         win = self.solve(item)
         if win is None:
-            return {**base, "status": "unsolved", "attention": None}
+            return {**base, "status": "unsolved", "attention": None,
+                    "headline_eligible": False}
 
-        out = {**base, "prediction": win["letter"],
+        # The win carries the EXACT inputs + generated ids that produced gold, so
+        # the attention forward is over those very tokens — deterministic whether
+        # the win was greedy or sampled (the sampling already happened). The old
+        # "reproduce the seed" dance is gone: there is nothing to reproduce.
+        block = self._attention_forward(item, win)
+        if block is None:
+            status = "solved_no_attention"   # empty answer / no usable tokens
+            attn = None
+        elif win["greedy"]:
+            status = "solved_greedy"
+            attn = block
+        else:
+            status = "solved_sampled"
+            attn = block
+
+        # Headline-eligibility (per the validity review): the headline survival
+        # curve uses only NEUTRAL-prompt, GREEDY wins with a usable attention map.
+        # Steered wins and sampled wins are recorded and shown, but as clearly
+        # labeled secondary curves — a steered attention map is partly an artifact
+        # of the instruction, and a sampled win is off-distribution from greedy.
+        headline_eligible = (status == "solved_greedy"
+                             and win["variant"] == "neutral"
+                             and block.get("spans_match_images", False))
+
+        return {**base, "prediction": win["letter"], "status": status,
+                "headline_eligible": headline_eligible,
                 "winning": {k: win[k] for k in ("temp", "variant", "seed", "n_attempts", "greedy")},
-                "raw_response": win["raw"]}
-
-        # Attention. Greedy win -> seed None, single deterministic forward.
-        # Sampled win -> up to reproduce_tries draws with the SAVED seed family.
-        if win["greedy"]:
-            block, got = self._attention_forward(item, win["steer"], gold, 0.0, None)
-            if block is not None:
-                return {**out, "status": "solved_greedy", "attention": block}
-            return {**out, "status": "solved_unstable", "attention": None,
-                    "note": f"greedy forward did not reproduce gold (got {got})"}
-
-        # sampled
-        for t in range(self.reproduce_tries):
-            seed = (win["seed"] if win["seed"] is not None else self.base_seed) + 1000 * t
-            block, got = self._attention_forward(item, win["steer"], gold, win["temp"], seed)
-            if block is not None:
-                return {**out, "status": "solved_sampled", "attention": block,
-                        "attention_seed": seed}
-        return {**out, "status": "solved_unstable", "attention": None,
-                "note": f"sampled win not reproduced in {self.reproduce_tries} tries"}
+                "raw_response": win["raw"], "attention": attn}
 
     def close(self):
         import gc

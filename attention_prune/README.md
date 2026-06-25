@@ -38,6 +38,61 @@ selected for being solvable, so quoting a raw accuracy on them would be circular
 The survival curve is the legitimate, publishable result: it measures redundancy
 of the 360° view, conditioned on the question being answerable.
 
+## Two controls Phase 2 MUST include (or the result doesn't hold up)
+
+Two independent reviews flagged the same fatal gaps. Both fixes are nearly free
+(extra greedy passes only) and are non-negotiable for the headline:
+
+1. **Negative control — top-k vs bottom-k vs random-k vs k=0.** Survival of the
+   *top*-attended subset alone is unfalsifiable: a high number is equally
+   consistent with "any k images work." So at each k, evaluate the
+   **bottom-k least-attended** and a **random-k** (fixed seed) subset on the same
+   questions. The headline is the **gap** (top-k − random/bottom-k), with CIs. If
+   the gap is ~0, attention isn't selecting anything and the honest claim shrinks
+   to "the 360° view is redundant" (still real, weaker). The **k=0** arm doubles
+   as a leakage detector: a question that "survives" with zero images must be
+   dropped from the headline.
+
+2. **Class-prior leakage guard (`blind_baseline.py`).** Several urban topics are
+   answerable from the TEXT/option prior alone — a zero-pixel constant predictor
+   scores (measured on this benchmark):
+
+   | topic | blind acc | headline-safe? |
+   |---|---|---|
+   | road_surface | **0.957** | ❌ |
+   | junction_type | 0.614 | ❌ |
+   | road_type | 0.603 | ❌ |
+   | urban_density | 0.546 | ❌ |
+   | land_use | 0.523 | ❌ |
+   | building_height | 0.474 | ❌ |
+   | amenity_richness | 0.373 | ✅ |
+   | transit_density | 0.297 | ✅ |
+
+   On a leaky topic, attention over images is meaningless and pruning "survives"
+   trivially. **Only `amenity_richness` and `transit_density` carry the headline**
+   (blind < 0.45, threshold tunable). The other six are reported with their blind
+   baseline shown beside the survival curve, never pooled into the headline.
+   Run `python blind_baseline.py` to regenerate this table.
+
+### Headline eligibility (recorded per question by `solve.py`)
+
+`headline_eligible = True` only when the win was **neutral-prompt + greedy** with
+a usable attention map. Steered wins are excluded because a steered attention map
+is partly an artifact of the instruction ("look at the junction"), not the model's
+endogenous attention; sampled wins are off-distribution from greedy. Both are
+recorded and shown as clearly-labeled secondary curves.
+
+### Stated limitations
+
+- **Solver ≠ deploy model.** Attention/pruning are measured on raw 27B; the
+  conclusion is model-specific. Cheap transfer test: run Phase-2 greedy passes on
+  a smaller deployed model using the 27B-chosen top-k subsets.
+- **First-correct freeze** biases the solved pool toward easy/steered solutions,
+  so survival is a ceiling over an easy-skewed subpopulation (the neutral-greedy
+  split exposes most of this).
+- Report **Wilson/bootstrap CIs** on every survival rate and on the gap; footnote
+  post-exclusion solved-N per topic·k cell (`building_height` n=190 is the floor).
+
 ## Why a non-quantized model in transformers + eager
 
 Attention weights are obtainable **only** through `transformers` with

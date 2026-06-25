@@ -47,10 +47,10 @@ attention:
   layers: all                 # all | last_25pct | [start, end]
   max_pixels: 1048576         # 96GB headroom -> bigger images than the 5090 cap
   store_per_layer: true       # viewer scrubs layers
-  # For a sampled (temp>0) win, re-sample with the saved seed up to N times to
-  # reproduce the correct letter before reading attention. If none reproduce ->
-  # solved_unstable (excluded from pruning).
-  sampled_reproduce_tries: 3
+  # NOTE: the attention forward reuses the EXACT generated ids from the winning
+  # solve attempt, so it is deterministic for both greedy and sampled wins — there
+  # is no seed to "reproduce". A sampled win is recorded as solved_sampled and is
+  # NOT headline-eligible (headline = neutral + greedy only; see solve.process).
 
 generation:
   max_new_tokens: 8           # single-letter answer; small budget
