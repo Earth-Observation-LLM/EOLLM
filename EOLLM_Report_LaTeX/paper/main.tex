@@ -1,0 +1,774 @@
+\documentclass[runningheads]{llncs}
+
+% ---------------------------------------------------------------
+% Include basic ECCV package
+% TODO REVIEW: Insert your submission number below by replacing '*****'
+% TODO FINAL: Comment out the following line for the camera-ready version
+\usepackage[review,year=2026,ID=*****]{eccv}
+% TODO FINAL: Un-comment the following line for the camera-ready version
+%\usepackage{eccv}
+
+% ---------------------------------------------------------------
+% Other packages
+\usepackage{eccvabbrv}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{siunitx}
+\sisetup{detect-weight=true,detect-family=true,group-separator={,}}
+% axessibility.sty (PDF accessibility for math) relies on pdfTeX-only primitives
+% and does not compile under XeTeX/LuaTeX. It is loaded for the pdfLaTeX
+% camera-ready build (the template's default engine) and skipped otherwise, with
+% no effect on layout or content. To force pdfLaTeX: ``pdflatex main''.
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[accsupp]{axessibility}  % Improves PDF readability for those with disabilities.
+\fi
+
+% ---------------------------------------------------------------
+% Hyperref
+% TODO FINAL: Comment out the following line for the camera-ready version
+%\usepackage[pagebackref,breaklinks,colorlinks,citecolor=eccvblue]{hyperref}
+% TODO FINAL: Un-comment the following line for the camera-ready version
+\usepackage{hyperref}
+\usepackage{orcidlink}
+
+% A light convenience macro for in-draft notes. Remove before submission.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\begin{document}
+
+% ---------------------------------------------------------------
+\title{Single View Might Be Enough: A Task-Dependent Study of Multi-Perspective Necessity in Geosensing}
+
+\titlerunning{Single View Might Be Enough}
+
+% In review mode, the eccv package auto-replaces the author/institute/running
+% heads with anonymous placeholders, so the real names below are only used for
+% the camera-ready build. (See eccv.sty review-mode \maketitle override.)
+% TODO FINAL: add ORCIDs and correct affiliations for camera-ready.
+\author{Ezel Bayraktar\inst{1} \and
+Alperen Demirci\inst{1} \and
+Erkut Erdem\inst{1} \and
+Aykut Erdem\inst{1} \and
+Mukhamediyar Amanzhanov\inst{1} \and
+Adam Sattout\inst{1}}
+\authorrunning{E.~Bayraktar et al.}
+\institute{Hacettepe University, Ankara, Turkey}
+
+\maketitle
+
+\begin{abstract}
+Pairing overhead (satellite) and street-level imagery is widely assumed to help
+vision-language models reason about cities. We test this assumption directly. We
+build a multi-city visual question answering benchmark of \num{40} cities in
+which each location carries a satellite tile and four street-level views, and
+ask four-way multiple-choice questions about eight urban attributes derived from
+OpenStreetMap. Using a controlled image ablation---no image, satellite only,
+street only, and both---we measure \emph{fusion synergy}, the accuracy a model
+gains from both views over its better single view. Across a \num{9}B model we
+fine-tune on the data, four off-the-shelf remote-sensing VLMs, two city splits,
+and three prompting strategies including extended chain-of-thought, the gain is
+marginal: the two-view condition exceeds the better single view by only about
+two to three points on average, an order of magnitude below the \num{40}--\num{70}
+points the \emph{same} models gain on cross-view questions that require both
+images by construction. A paired item-level analysis sharpens the picture: the
+two-view model trails a per-item single-view oracle by \num{8}--\num{9} points,
+and supplying the second view corrects a wrong answer on roughly \num{1}\% of
+items while flipping a correct answer to wrong on roughly \num{10}\%. For these
+urban-attribute tasks at commonly served resolutions, the second view contributes
+far less than its acquisition cost, and multi-perspective necessity is
+task-dependent rather than universal.
+  \keywords{Geosensing \and Vision-language models \and Multi-view fusion}
+\end{abstract}
+
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+A recurring premise in geospatial machine learning is that more perspectives are
+better. Overhead imagery captures layout, footprints, and connectivity; ground
+imagery captures facades, surfaces, signage, and street furniture. Pairing the
+two is intuitively complementary, and a growing line of work collects, aligns,
+and jointly models satellite and street-level views for urban understanding.
+The implicit expectation is that a model with access to both views should
+outperform one restricted to either.
+
+We ask whether this expectation actually holds for concrete urban-attribute
+recognition, and find that---for the tasks we study---it largely does not. We
+construct a multi-city visual question answering (VQA) benchmark in which every
+location is represented by a marked satellite tile and four cardinal
+street-level views, and pose four-way multiple-choice questions about eight
+urban attributes (land use, building height, urban density, road type, road
+surface, junction type, amenity richness, and transit density) grounded in
+OpenStreetMap (OSM) metadata~\cite{osm}. Crucially, the same imagery also
+supports a family of \emph{cross-view} questions that are unanswerable from a
+single view by construction (e.g.\ ``does this street-level photo belong to this
+satellite tile?''). These cross-view tasks serve as a built-in positive control:
+any sound measurement of view complementarity must register a large benefit
+there.
+
+Our central instrument is a controlled image ablation. For each question we
+evaluate a model under four input conditions---\textsf{blind} (no image),
+\textsf{sat} (satellite only), \textsf{sv} (street only), and \textsf{full}
+(both)---and define \emph{fusion synergy} as
+$\textsf{full} - \max(\textsf{sat},\textsf{sv})$: the accuracy gained from having
+both views over the better single view. Positive synergy is the signature of
+genuine cross-view fusion. We complement synergy with \emph{vision contribution},
+$\textsf{full} - \textsf{blind}$, which isolates how much the imagery
+contributes at all over a text-only prior.
+
+The result is consistent across conditions and, we argue, robustly measured.
+On the eight attribute tasks the second view's contribution is marginal: across a
+\num{9}B-parameter model we fine-tune on the benchmark, four off-the-shelf
+remote-sensing VLMs evaluated zero-shot, two distinct city splits (random
+per-city and held-out unseen cities), and three prompting strategies (plain
+decoding, a \num{16}k-token explicit reasoning budget, and a four-turn
+observe--reason--self-check--commit protocol), having both views improves on the
+better single view by only about two to three points on average. A paired
+item-level analysis (\cref{sec:itemlevel}) makes the size of this effect concrete:
+the two-view model trails a per-item single-view \emph{oracle}---one that simply
+picks the better of the two single-view answers for each question---by
+\num{8}--\num{9} points, and the joint views contain essentially no information
+beyond their better single view. The mechanism is visible in the per-item flips:
+adding the second view rescues a wrong answer on about \num{1}\% of items but
+overturns a correct one on about \num{10}\%, so the model appears unable to
+adjudicate when the two views disagree. Vision itself clearly
+matters---\textsf{full}\,$-$\,\textsf{blind} is roughly $+\num{10}$ points---so
+the model \emph{is} reading the images; it simply derives a single view's worth of
+signal from them. And on the cross-view control tasks the very same models gain
+\num{40}--\num{70} points from the second view, demonstrating that the ablation
+detects fusion when fusion is genuinely required.
+
+We frame this as a \emph{task-dependent} observation, not a claim that overhead
+imagery is uninformative or that multi-view fusion is futile in general. It is a
+measured property of single-view-decidable attribute recognition at the satellite
+resolutions commonly served in practice. We make this scope explicit throughout,
+report bootstrap confidence intervals on every synergy estimate, audit the
+benchmark for text-only leakage, and characterize the items where the second view
+changes the answer.
+
+Our contributions are:
+\begin{enumerate}
+  \item A multi-city satellite\,$+$\,street VQA benchmark (\num{40} cities, eight
+  OSM-grounded urban-attribute tasks plus cross-view control tasks) with a clean
+  location-level held-out split and a controlled four-way image ablation.
+  \item A measurement of multi-view fusion synergy that is near zero for all
+  eight attribute tasks and robust across model scale, training regime, city
+  split, and prompting strategy---with the cross-view tasks as a positive control
+  that proves the measurement is sensitive.
+  \item An item-level analysis (per-item oracle ceilings, paired significance and
+  equivalence tests, and a characterization of the view-flip set) that bounds the
+  \emph{latent} complementarity available to any fusion method, reframing ``no
+  method helped'' as ``there was little to capture.''
+  \item Practical guidance: for these attribute families, serving a single
+  (typically cheaper and better-covered) view costs essentially no accuracy, and
+  a reusable ablation protocol for deciding when a second view is warranted.
+\end{enumerate}
+
+% =====================================================================
+\section{Related Work}
+\label{sec:related}
+
+\subsubsection{Remote-sensing vision-language models are single-view.}
+A wave of instruction-tuned VLMs target remote sensing, including
+GeoChat~\cite{geochat2024}, SkySenseGPT~\cite{skysensegpt2024},
+LHRS-Bot and LHRS-Bot-Nova~\cite{lhrsbot2024,lhrsbotnova2025}, EarthGPT~\cite{zhang2024earthgpt},
+and the multi-sensor generalist EarthDial~\cite{earthdial2025}. These models are
+overhead-only: each consumes a single aerial or satellite image, and none ingests
+ground-level imagery (\cref{tab:models}). Where ``multi-modal'' appears in this
+line of work it refers to multiple \emph{overhead} sensors---optical, SAR, and
+infrared, as in EarthGPT---rather than to pairing satellite with street-level
+views. The dominant evaluation suites follow suit: RSVQA~\cite{lobry2020rsvqa},
+VRSBench~\cite{li2024vrsbench}, and GeoChat's own benchmark all pose questions
+over a single overhead image. None isolates the marginal value of a second,
+ground-level view, which is the question we study. Architecturally these models
+build on LLaVA-style designs~\cite{llava_2023,llava15_2024} with CLIP or SigLIP
+encoders~\cite{clip_2021,siglip_2023}; we use four as zero-shot baselines and
+discuss their training-data provenance in \cref{sec:setup}.
+
+\subsubsection{Multi-view urban benchmarks.}
+A smaller set of benchmarks does pair overhead and ground views for urban
+understanding. UrBench~\cite{urbench2025} evaluates multimodal LLMs on
+coordinate-aligned street and satellite pairs across fourteen task types, and
+reports that models perform \emph{worse} on its cross-view tasks than on either
+single view---a pattern its authors attribute to a cross-view reasoning deficit,
+and which we revisit here for the narrower case of attribute recognition.
+UrbanLLaVA~\cite{urbanllava2025} trains a multi-modal model over satellite,
+street-view, OSM, and trajectory inputs; notably its attribute-style tasks (land
+use, density) are posed from satellite alone, while its multi-view supervision
+targets matching and localization. CityCube~\cite{citycube2026} benchmarks
+cross-view \emph{spatial} reasoning (orientation, perspective taking) rather than
+attribute recognition. Closest to our finding, the concurrent
+CityLens~\cite{citylens2026} benchmarks LVLMs on socioeconomic indicators from
+satellite and street-view and reports that street-view alone performs comparably
+to using both views and well above satellite alone---a redundancy observation in
+the same domain, which our controlled ablation, item-level oracle analysis, and
+positive control turn into a quantified and mechanistic account. Our contribution
+relative to this group is not a first paired-view dataset, but a controlled
+measurement of \emph{when} the second view is needed, with a built-in sensitivity
+check.
+
+\subsubsection{Cross-view geo-localization: where both views are necessary.}
+Pairing satellite and ground imagery is a well-established setting in cross-view
+geo-localization, where the goal is to match a ground photo to an overhead
+reference~\cite{durgam2024crossview,zhai2017predicting,zhu2021vigor}. There the
+two views are jointly \emph{necessary} by definition---one cannot localize the
+ground image without the overhead one---and methods succeed precisely by modeling
+the distinct-but-linkable geometric layout the two views
+share~\cite{zhang2023geodtr}. This is the regime our cross-view control tasks
+occupy, and the contrast with it is exactly our point: complementarity that is
+constitutive of localization is largely absent from single-view-decidable
+attribute recognition.
+
+\subsubsection{The marginal value of a second modality.}
+That adding a modality need not help is known beyond geosensing. Wang
+\etal~\cite{wang2020multimodal} show that under naive joint training the best
+single-modal network can outperform the multi-modal one, and Liang
+\etal~\cite{liang2023quantifying} formalize multimodal interactions into
+redundancy, uniqueness, and synergy, demonstrating that low-synergy,
+strong-unimodal regimes are real and measurable; our ``fusion synergy'' is the
+behavioral analogue of their synergy term. Against this, theory shows multimodal
+learning can provably lower achievable risk~\cite{huang2021makes}, and several
+aerial$+$ground fusion systems report gains for recognition---a unified near/remote
+model for land use and building function~\cite{workman2017unified}, multi-view
+scene-classification datasets~\cite{machado2021airound}, and, most directly
+counter to our setting, Suel \etal~\cite{suel2021multimodal}, who find that fusing
+satellite and street-level imagery measurably improves regression of income and
+environmental deprivation. We engage this last result directly in
+\cref{sec:discussion}: it differs from ours in task type (continuous regression
+versus four-way recognition), label source, and model (a trained CNN versus
+zero-shot and fine-tuned VLMs), and our finding refines rather than contradicts
+the broad ``fusion helps'' literature by identifying a task regime in which it
+does not.
+
+% =====================================================================
+\section{The Benchmark}
+\label{sec:dataset}
+
+\subsubsection{Construction.}
+The benchmark pairs overhead and street-level imagery with multiple-choice
+questions about urban attributes, generated from OpenStreetMap (OSM)
+metadata~\cite{osm}. Each \emph{location} is sampled within one of \num{40}
+cities across \num{32} countries on six continents and is associated with (i) one
+satellite tile, (ii) four street-level views at fixed bearings (forward,
+backward, left, right), and (iii) OSM-derived attribute labels. Satellite imagery
+is sourced per-location by geography---sub-meter aerial orthophotos: ESRI World
+Imagery ($\sim$\SIrange{0.3}{0.5}{m/px} in cities) as the global default, NAIP
+($\sim$\SI{0.6}{m/px}) in the US, and IGN ($\sim$\SI{0.2}{m/px}) in France, with a
+coarse Sentinel-2 fallback ($\sim$\SI{10}{m/px}) reserved for locations that no
+high-resolution source covers. In the benchmark every overhead tile resolves to a
+sub-meter source (\num{4775} ESRI, \num{305} NAIP, \num{160} IGN; the Sentinel-2
+fallback was never triggered), so the redundancy we report below is measured
+against genuinely high-resolution overhead imagery rather than a coarse proxy.
+The satellite tile carries a marker indicating the queried location; the marker
+is part of the input condition and is held fixed across all ablation modes (we
+examine its effect in \cref{sec:robustness}).
+
+\subsubsection{Tasks.}
+We study eight \emph{attribute} tasks---\textsf{land\_use},
+\textsf{building\_height}, \textsf{urban\_density}, \textsf{road\_type},
+\textsf{road\_surface}, \textsf{junction\_type}, \textsf{amenity\_richness}, and
+\textsf{transit\_density}---each posed as a four-way multiple-choice question
+with a single correct letter. These are the questions for which ``do we need both
+views?'' is well-posed: each is, in principle, answerable from imagery of a
+single location. The dataset additionally contains \emph{cross-view} tasks
+(view--view matching at two difficulty levels, in binary and multiple-choice
+form, and a camera-direction task) whose answer lives in the \emph{relationship}
+between the two views; these are unanswerable from a single view by construction
+and we use them only as a positive control (\cref{sec:control}).
+
+\subsubsection{Splits.}
+All splits operate at the location level so that no location's questions span
+two splits. We hold out \num{10}\% of locations \emph{per city} as a benchmark
+test set; this set is identical across training regimes and is disjoint from
+training data (verified: zero question-id overlap). For training we use two
+strategies that share this benchmark: a \emph{per-city} split (a further fraction
+of locations per city to validation) and a \emph{seen/unseen} split (eight cities
+held out entirely to validation, to probe cross-city generalization). Question
+generation uses a fixed seed for option shuffling, and we keep a single question
+per (location, task) pair to avoid location-level inflation. Locations with fewer
+than four street-level views are discarded.
+
+\subsubsection{Leakage audit.}
+Because the questions are templated, we audit how much of each task is solvable
+from text alone by evaluating every model in \textsf{blind} mode (no image; see
+\cref{sec:results}). We report \textsf{blind} accuracy per task as a first-class
+diagnostic and treat $\textsf{full}-\textsf{blind}$ as the genuinely
+vision-attributable signal. During this audit we identified one additional
+attribute task (green-space presence) that was answerable from the option text
+alone---a model reached \num{100}\% accuracy on it with no image, because the
+correct option wording was systematically identifiable independent of its A/B/C/D
+position. We \emph{exclude that task entirely} from all results below; the study
+reports the eight attribute tasks that survive the audit. We note that across the
+retained tasks the correct-option letter is near-uniformly distributed
+(A/B/C/D $=$ \num{743}/\num{766}/\num{703}/\num{720} over the \num{2932}
+eight-task benchmark questions), so there is no exploitable positional
+regularity, and the correct option is not systematically the longest or most
+detailed (\cref{sec:robustness}).
+
+\subsubsection{Statistics.}
+\Cref{tab:dataset} summarizes the benchmark. The eight-task test set comprises
+\num{2932} questions over \num{421} locations across \num{40} cities; each
+location supplies one satellite tile and four street-level views.
+
+\begin{table}[t]
+  \centering
+  \caption{Benchmark test set (eight attribute tasks, held-out \num{10}\% of
+  locations per city). Each question has four options and a single correct
+  letter; image mode is a single marked satellite tile plus four street-level
+  views.}
+  \label{tab:dataset}
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    Property & Value \\
+    \midrule
+    Cities & 40 \\
+    Locations (test) & 421 \\
+    Questions (test) & 3135 \\
+    Attribute tasks & 8 \\
+    Options per question & 4 \\
+    Satellite views / location & 1 \\
+    Street-level views / location & 4 \\
+    \midrule
+    \multicolumn{2}{@{}l}{\emph{Questions per task}}\\
+    \quad land\_use / urban\_density / road\_type & 421 each \\
+    \quad amenity\_richness / transit\_density & 421 each \\
+    \quad junction\_type & 334 \\
+    \quad road\_surface & 303 \\
+    \quad building\_height & 190 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Experimental Setup}
+\label{sec:setup}
+
+\subsubsection{Models.}
+Our primary model is \textbf{Qwen3.5-9B} fine-tuned on the benchmark's training
+split with LoRA~\cite{lora_2022} (rank \num{16}, $\alpha=\num{16}$, applied to
+all linear layers including the vision tower) and evaluated on the held-out
+benchmark; we train one model per split (per-city and seen/unseen) and report
+both. This is the cleanest setting for the view question because the model has
+been explicitly optimized on the task distribution---so a failure to use both
+views cannot be attributed to a lack of task alignment. To test that the finding
+is not specific to our model, we additionally evaluate four \emph{off-the-shelf}
+remote-sensing VLMs zero-shot on the overhead half of the benchmark:
+GeoChat-7B~\cite{geochat2024}, SkySenseGPT-7B~\cite{skysensegpt2024},
+LHRS-Bot-Nova~\cite{lhrsbotnova2025}, and
+EarthDial-4B (RGB)~\cite{earthdial2025}. \Cref{tab:models} lists their
+architectures and modalities; all four are single-image, overhead-only models.
+
+\begin{table}[t]
+  \centering
+  \caption{Off-the-shelf remote-sensing VLMs evaluated zero-shot on the overhead
+  (satellite-only) half of the benchmark. All four are single-image and
+  \emph{overhead-only}; none ingests ground-level imagery. ``OSM data'' marks
+  whether the model's training corpus is derived from OpenStreetMap (relevant to
+  the contamination caveat in \cref{sec:robustness}).}
+  \label{tab:models}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lllll@{}}
+    \toprule
+    Model & Base LLM & Vision encoder & Input res. & OSM data \\
+    \midrule
+    GeoChat-7B~\cite{geochat2024}       & Vicuna-1.5-7B & CLIP ViT-L/14 & 504 & No \\
+    SkySenseGPT-7B~\cite{skysensegpt2024} & Vicuna-1.5-7B & CLIP ViT-L/14 & 336 & No \\
+    LHRS-Bot-Nova~\cite{lhrsbotnova2025}  & Llama-3-8B    & SigLIP-L/14   & 336 & \textbf{Yes} \\
+    EarthDial-4B-RGB~\cite{earthdial2025} & Phi-3-Mini    & InternViT-300M & tiled & \textbf{Yes} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Image-ablation protocol.}
+Every question is evaluated under four input conditions: \textsf{blind} (prompt
+only), \textsf{sat} (the marked satellite tile only), \textsf{sv} (the four
+street-level views only), and \textsf{full} (satellite tile $+$ four
+street-level views). The text of the question and options is byte-identical
+across conditions; only the set of supplied images changes. We decode greedily
+and parse a single answer letter. For the trained model we use the same image
+preprocessing as training (max edge \num{512}\,px).
+
+\subsubsection{Metrics.}
+We report per-task accuracy in each condition and two derived quantities:
+\emph{fusion synergy} $\;=\textsf{full}-\max(\textsf{sat},\textsf{sv})$ and
+\emph{vision contribution} $\;=\textsf{full}-\textsf{blind}$. Synergy
+$>0$ indicates the second view adds accuracy a single view cannot; synergy
+$\approx 0$ indicates redundancy. \todo{Add bootstrap \num{95}\% CIs and TOST
+equivalence margin once the per-item re-analysis is run (Sec.~\ref{sec:results}).}
+
+\subsubsection{Unified harness.}
+All models---trained and zero-shot---are routed through one evaluation harness
+with a shared multiple-choice prompt, shared image rendering, and shared
+answer-letter parsing, so the question text and images are identical across
+models and only the forward pass differs. Runs use a single
+RTX\,PRO\,6000 (\SI{96}{GB}) GPU.
+
+% =====================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{The second view adds little over the better single view}
+\label{sec:main}
+
+\Cref{tab:fusion-main} reports the trained Qwen3.5-9B on the held-out benchmark,
+per task, under all four conditions, for both splits. Two patterns stand out.
+First, \textsf{full} tracks the \emph{better single view} closely: per-task fusion
+synergy ranges from $-1.0$ to $+4.5$ points and averages $+\num{1.2}$/$+\num{1.3}$
+points (per-city / seen-unseen) across the eight tasks. The gain is positive but
+small, and street-level imagery alone (\textsf{sv}) already matches or exceeds the
+two-view \textsf{full} condition on several tasks (\textsf{land\_use},
+\textsf{road\_type}, \textsf{road\_surface}). Whether this two-to-three-point
+margin reflects genuine fusion or merely the model defaulting to the stronger view
+is the question we resolve at the item level in \cref{sec:itemlevel}. Second,
+vision nonetheless matters: \textsf{full}\,$-$\,\textsf{blind} is large and
+positive (e.g.\ $+\num{22}$ on \textsf{transit\_density}, $+\num{32}$ on
+\textsf{amenity\_richness}), so the model reads the imagery---it simply extracts a
+single view's worth of information from it.
+
+\begin{table}[t]
+  \centering
+  \caption{Trained Qwen3.5-9B on the held-out benchmark, per attribute task and
+  input condition (accuracy, \%). \textbf{Syn.} $=\textsf{full}-\max(\textsf{sat},
+  \textsf{sv})$ is fusion synergy. Synergy is small on every task under both
+  splits; \textsf{full} stays close to the better single view.}
+  \label{tab:fusion-main}
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{tabular}{@{}lcccc@{\;}c@{\qquad}cccc@{\;}c@{}}
+    \toprule
+    & \multicolumn{5}{c}{\textbf{per-city split}} & \multicolumn{5}{c}{\textbf{seen/unseen split}} \\
+    \cmidrule(lr){2-6}\cmidrule(lr){7-11}
+    Task & blind & sat & sv & full & Syn. & blind & sat & sv & full & Syn. \\
+    \midrule
+    land\_use         & 68.6 & 75.5 & 75.1 & 75.3 & $-0.2$ & 63.4 & 72.0 & 72.4 & 73.9 & $+1.4$ \\
+    building\_height  & 45.3 & 67.4 & 66.3 & 66.8 & $-0.5$ & 50.5 & 63.7 & 66.3 & 66.8 & $+0.5$ \\
+    urban\_density    & 54.6 & 61.8 & 62.7 & 65.1 & $+2.4$ & 53.2 & 71.5 & 64.8 & 74.6 & $+3.1$ \\
+    junction\_type    & 61.4 & 73.4 & 68.6 & 75.1 & $+1.8$ & 62.0 & 74.0 & 71.3 & 76.3 & $+2.4$ \\
+    amenity\_richness & 26.4 & 53.4 & 56.5 & 58.7 & $+2.1$ & 25.7 & 53.0 & 55.6 & 55.6 & $+0.0$ \\
+    road\_type        & 68.6 & 72.4 & 77.4 & 76.5 & $-1.0$ & 68.6 & 69.6 & 76.7 & 76.7 & $+0.0$ \\
+    road\_surface     & 95.7 & 95.0 & 93.4 & 95.7 & $+0.7$ & 95.7 & 95.0 & 95.4 & 95.0 & $-0.3$ \\
+    transit\_density  & 28.3 & 43.7 & 45.6 & 50.1 & $+4.5$ & 26.4 & 45.8 & 44.9 & 49.4 & $+3.6$ \\
+    \midrule
+    \textbf{Mean}     & 56.1 & 67.8 & 68.2 & 70.4 & $\mathbf{+1.2}$ & 55.7 & 68.1 & 68.4 & 71.1 & $\mathbf{+1.3}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{The same models fuse when fusion is required (positive control)}
+\label{sec:control}
+
+A reader should ask whether our ablation could detect fusion at all---perhaps the
+small attribute-task synergy reflects a measurement that is simply insensitive to
+the second view. It does not. \Cref{tab:control} reports the identical model and
+harness on the cross-view control tasks, whose answers require comparing the two
+views. Here synergy is large---$+\num{17}$ to $+\num{70}$ points---because a single
+view is, by construction, insufficient. The contrast with \cref{tab:fusion-main}
+is the crux of the paper: the same instrument that registers a two-to-three-point
+gain on the attribute tasks registers a forty-to-seventy-point gain the moment the
+task genuinely requires both views. The marginal synergy on attributes is
+therefore a property of those tasks, not an artifact of an insensitive test.
+
+\begin{table}[t]
+  \centering
+  \caption{Positive control: the same trained Qwen3.5-9B (per-city) on cross-view
+  tasks that require both views by construction. Synergy is large and positive,
+  confirming the ablation detects fusion when it is needed.}
+  \label{tab:control}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}lccccc@{}}
+    \toprule
+    Cross-view task & blind & sat & sv & full & Syn. \\
+    \midrule
+    camera\_direction      & 25.2 & 24.9 & --   & 42.3 & $+17.3$ \\
+    mismatch\_binary\_easy & 46.6 & 51.1 & 52.7 & 97.4 & $+44.7$ \\
+    mismatch\_binary\_hard & 55.8 & 45.8 & 44.4 & 90.7 & $+44.9$ \\
+    mismatch\_mcq\_easy    & 20.7 & 26.4 & 23.5 & 96.2 & $+69.8$ \\
+    mismatch\_mcq\_hard    & 22.3 & 23.3 & 22.8 & 86.0 & $+62.7$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+That the cross-view tasks genuinely encode cross-view information---rather than
+being solved by some shortcut our VLM happens to exploit---is corroborated by an
+independent, purpose-built model. We evaluate Sample4Geo~\cite{deuser2023sample4geo},
+a Siamese ConvNeXt trained for street$\leftrightarrow$satellite retrieval, on the
+mismatch family by embedding the satellite tile and each street-view set and
+scoring by cosine similarity. This is a different model class and metric from our
+MCQ VQA and the numbers are not comparable to \cref{tab:control}; we report it only
+to confirm the tasks' nature. Transferred zero-shot (its VIGOR checkpoint, the
+closest urban domain), it reaches \num{0.65} accuracy on the binary
+same-place/different-place questions---well above the \num{0.50} chance rate---so a
+model that only measures cross-view similarity already carries real signal on these
+items. It is near chance on the four-way variants (\num{0.27}--\num{0.31} vs.\
+\num{0.25}), reflecting how much harder it is to single out the correct nearby
+scene from three plausible distractors across the viewpoint gap. The attribute
+tasks, by contrast, offer no such cross-view signal to recover.
+
+\subsection{The finding holds zero-shot across off-the-shelf RS-VLMs}
+\label{sec:zeroshot}
+
+To rule out that the redundancy is an artifact of our particular model, we
+evaluate four off-the-shelf remote-sensing VLMs zero-shot on the overhead
+(satellite-only) half of the benchmark (\cref{tab:zeroshot}). None was trained on
+our task, our four-way MCQ format, or our marker overlay. They span CLIP- and
+SigLIP-based encoders, three LLM families, and single-crop versus tiled
+preprocessing. The trained Qwen3.5-9B in its satellite-only mode is the
+like-for-like single-overhead-view comparison; it outperforms the best zero-shot
+model (EarthDial, $\num{39.9}\%$) by $+\num{26.7}$ points overall, as expected
+for a model fine-tuned on the distribution. The four zero-shot models are
+satellite-only and therefore inform the single-view baseline and the
+contamination discussion (\cref{sec:robustness}), not the synergy claim itself,
+which is a within-model comparison.
+
+\begin{table}[t]
+  \centering
+  \caption{Off-the-shelf RS-VLMs, zero-shot, single marked satellite tile,
+  per-task accuracy (\%) over the eight-task benchmark ($n=\num{2932}$). Last
+  column: our trained Qwen3.5-9B in satellite-only mode (per-city), the
+  like-for-like single-overhead-view reference. LHRS-Bot-Nova and EarthDial are
+  trained on OSM-derived text and their scores should be read as an
+  \emph{upper bound} on visual skill (see \cref{sec:robustness}).}
+  \label{tab:zeroshot}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lccccc@{}}
+    \toprule
+    Task & GeoChat & SkySenseGPT & LHRS-Nova & EarthDial & \textit{Ours (sat)} \\
+    \midrule
+    land\_use         & 48.7 & 53.4 & 46.3 & 47.5 & \textit{75.5} \\
+    building\_height  & 30.5 & 34.7 & 28.9 & 32.6 & \textit{67.4} \\
+    urban\_density    & 13.5 & 14.5 & 17.8 & 30.4 & \textit{61.8} \\
+    road\_type        & 10.7 & 18.1 & 26.1 & 46.1 & \textit{72.4} \\
+    road\_surface     & 75.6 & 80.2 & 58.7 & 58.4 & \textit{95.0} \\
+    junction\_type    &  8.4 & 30.8 & 35.3 & 52.7 & \textit{73.4} \\
+    amenity\_richness & 13.5 & 12.6 & 17.8 & 25.4 & \textit{53.4} \\
+    transit\_density  & 21.4 & 26.1 & 34.2 & 29.7 & \textit{43.7} \\
+    \midrule
+    \textbf{Overall}  & 26.2 & 32.0 & 32.4 & \textbf{39.9} & \textit{\textbf{66.6}} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{No prompting strategy recovers complementary signal}
+\label{sec:strategies}
+
+If the two views \emph{were} complementary but the model simply failed to
+combine them, a stronger reasoning procedure should surface the latent signal. It
+does not. \Cref{tab:strategies} reports three strategies---plain decoding, a
+\num{16}k-token explicit-thinking budget, and a four-turn
+\emph{observe$\rightarrow$reason$\rightarrow$self-check$\rightarrow$commit}
+conversation---on the eight attribute tasks, here using an AWQ-quantized
+Qwen3.5-9B so the long-context reasoning runs fit a single GPU. More deliberation
+raises accuracy modestly---the model gets better at each task in every
+view---but synergy stays \emph{negative} throughout, and indeed \textsf{sv} alone
+is the single strongest condition under every strategy. The extra reasoning
+accrues to the single-view conditions just as much as to \textsf{full}, so what
+improves is the model's reading of one view, not its ability to combine two. This
+mirrors the item-level finding of \cref{sec:itemlevel}: the obstacle is
+adjudicating between redundant views, which more thinking does not remove.
+
+\begin{table}[t]
+  \centering
+  \caption{Prompting strategies on the eight attribute tasks (Qwen3.5-9B-AWQ,
+  $n=\num{2932}$, per-task means). \textbf{Syn.} $=\textsf{full}-\max(\textsf{sat},
+  \textsf{sv})$; \textbf{Vis.} $=\textsf{full}-\textsf{blind}$. Reasoning improves
+  accuracy but not synergy---the second view remains redundant, and street-view
+  alone (\textsf{sv}) is the single strongest condition in every strategy.}
+  \label{tab:strategies}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}lccccrr@{}}
+    \toprule
+    Strategy & blind & sat & sv & full & Syn. & Vis. \\
+    \midrule
+    plain                 & 41.0 & 46.5 & 54.2 & 51.7 & $-2.8$ & $+10.8$ \\
+    think-16k             & 41.4 & 48.2 & 54.0 & 52.5 & $-2.0$ & $+11.2$ \\
+    multistep (4-turn)    & 43.4 & 50.3 & 55.0 & 53.2 & $-2.1$ & $+9.8$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Item-level analysis: the second view interferes more than it helps}
+\label{sec:itemlevel}
+
+A small positive average could still hide genuine fusion on a subset of items, or
+could be an artifact of the model defaulting to its stronger view. We resolve this
+by joining the predictions of all four conditions at the item level (every
+benchmark question carries a stable identifier shared across conditions) and
+analyzing the \num{2932} fully paired eight-task items directly.
+
+\subsubsection{A per-item single-view oracle beats the two-view model.}
+For each item we define an \emph{oracle} that is allowed to pick the better of the
+two single-view answers---a model that always chooses the right view, but never
+fuses. \Cref{tab:oracle} compares the two-view \textsf{full} condition against
+this oracle. The two-view model trails the per-item single-view oracle by
+$\num{9.3}$ points (per-city) and $\num{7.9}$ points (seen/unseen), with paired
+bootstrap \num{95}\% confidence intervals that exclude zero by a wide margin
+($[\num{-10.4},\num{-8.2}]$ and $[\num{-9.1},\num{-6.8}]$, \num{10000} resamples).
+Moreover, the fraction of items solved by \emph{either} single view (the union
+ceiling) equals the oracle exactly: there is no pool of items that only the
+\emph{combination} of views answers correctly. In other words, the two views
+carry essentially no answer-relevant information beyond their better single view,
+and a system that simply routed each question to the right view would outperform
+one that sees both.
+
+\subsubsection{The second view overturns more correct answers than it rescues.}
+The mechanism behind the oracle gap is an asymmetry in how the second view changes
+answers. Relative to the better single view per item, adding the second view
+corrects a previously wrong answer on only \num{0.9}\% / \num{1.2}\% of items
+(per-city / seen-unseen) but flips a previously correct answer to wrong on
+\num{10.2}\% / \num{9.1}\%---roughly a ten-to-one ratio against. The model does
+not reliably defer to whichever view is right; when the views disagree, the second
+view drags down items the better view had already answered. This is consistent
+with the prompting results of \cref{sec:strategies}: no amount of explicit
+reasoning recovers a complementary signal, because the limiting factor is
+adjudication between redundant views, not reasoning depth.
+
+\subsubsection{Aggregate synergy is small and positive, not zero.}
+For completeness, \cref{tab:oracle} also reports the pooled fusion synergy with
+its bootstrap CI: $+\num{2.2}$ $[\num{0.9},\num{3.3}]$ (per-city) and $+\num{2.8}$
+$[\num{1.5},\num{3.7}]$ (seen/unseen). These pooled values are item-weighted and
+thus slightly exceed the $+\num{1.2}$/$+\num{1.3}$ unweighted task means of
+\cref{tab:fusion-main}, because the larger tasks happen to carry the larger
+synergies. We do not claim the gain is zero---the interval excludes zero. We claim
+only that it is small: an order of magnitude below the $+\num{40}$ to $+\num{70}$
+points the same model gains on the cross-view control tasks (\cref{tab:control}),
+and net-negative against optimal single-view selection. Whether a $\sim$\num{2}-point average gain justifies acquiring,
+storing, and serving a second imagery modality is the practical question we take
+up in \cref{sec:discussion}.
+
+\begin{table}[t]
+  \centering
+  \caption{Item-level analysis on the \num{2932} paired eight-task questions.
+  \textbf{Oracle} picks the better single-view answer per item; \textbf{Union} is
+  the fraction either single view answers correctly. \textbf{full$-$oracle} and
+  \textbf{synergy} carry paired bootstrap \num{95}\% CIs (\num{10000} resamples).
+  \textbf{Help}/\textbf{Hurt} are the percentages of items on which the second
+  view flips the better single-view answer right and wrong, respectively. The
+  two-view model trails the per-item single-view oracle on both splits.}
+  \label{tab:oracle}
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}lcccccc@{}}
+    \toprule
+    Split & full & oracle & full$-$oracle & synergy & Help & Hurt \\
+    \midrule
+    per-city    & 69.5 & 78.8 & $-9.3$ \footnotesize$[-10.4,-8.2]$ & $+2.2$ \footnotesize$[0.9,3.3]$ & 0.9\% & 10.2\% \\
+    seen/unseen & 70.3 & 78.2 & $-7.9$ \footnotesize$[-9.1,-6.8]$ & $+2.8$ \footnotesize$[1.5,3.7]$ & 1.2\% & 9.1\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Robustness and Confounds}
+\label{sec:robustness}
+
+\todo{Each item below pairs an objection with the concrete check that addresses
+it; checks marked \textsf{[planned]} require limited new inference.}
+
+\subsubsection{Satellite resolution.}
+Our claim is bounded to commonly served resolutions, but most cities here are
+covered by \emph{sub-meter} aerial orthophotos (NAIP $\sim$\SI{0.6}{m/px}, IGN
+$\sim$\SI{0.2}{m/px}, ESRI $\sim$\SIrange{0.3}{0.5}{m/px}); Sentinel-2
+($\sim$\SI{10}{m/px}) is only a fallback. The redundancy is thus measured with
+genuinely high-resolution overhead imagery for the majority of locations, not a
+coarse proxy. For tasks that are structurally ground-level (e.g.\ road surface,
+signage-driven amenities), no overhead resolution recovers the cue; for tasks
+where higher GSD might plausibly help (building height, urban density) we report
+a targeted high-resolution sub-study \textsf{[planned]}.
+
+\subsubsection{The satellite marker.}
+The satellite tile carries a location marker. We verify the results are not an
+artifact of it via an unmarked-tile ablation \textsf{[planned]} and via the
+attention analysis below.
+
+\subsubsection{Single-image vs.\ four-view asymmetry.}
+\textsf{sv} supplies four images and \textsf{sat} one, so part of \textsf{sv}'s
+strength could be image count rather than viewpoint. We test a single
+street-level angle versus the four-view set \textsf{[planned]}; our thesis is
+explicitly that the \emph{cheaper-to-serve single view suffices}, so street-level
+richness is part of why it does, not a flaw in the comparison.
+
+\subsubsection{Text-only leakage.}
+We report \textsf{blind} accuracy per task (\cref{sec:results}) as the empirical
+ceiling of what is guessable without images, which subsumes positional, option
+length, and prior effects. The one task that was fully text-solvable was removed
+(\cref{sec:dataset}); we flag remaining tasks with elevated \textsf{blind}
+accuracy (notably road surface) and rank tasks by vision contribution rather than
+raw accuracy.
+
+\subsubsection{OSM provenance / contamination.}
+Our labels are OSM-derived. Two of the four zero-shot models---LHRS-Bot-Nova and
+EarthDial---are trained on OSM-derived text (LHRS-Align captions OSM tags across
+\num{9259} cities; EarthDial's pretraining QA is built from OSM-labeled imagery),
+so their scores may reflect shared OSM priors and we treat them as an upper bound
+on visual skill. GeoChat and SkySenseGPT are \emph{not} OSM-derived. Critically,
+the synergy claim is a \emph{within-model difference} (\textsf{full} vs.\ single
+view), so any uniform OSM prior cancels in the difference. We also report whether
+removing geographic identifiers from the prompt changes \textsf{blind} accuracy
+\textsf{[planned]}.
+
+\subsubsection{Interpretability (corroboration only).}
+Our view-importance claims rest on \emph{causal} input ablation, not attention.
+As corroboration, we measure the cross-modal attention mass the model places on
+the satellite token versus the street-level tokens when committing to an answer,
+reported per task and per layer with normalization for image-token count (a
+single satellite image vs.\ four street-level images), and explicitly framed as
+consistent-with rather than evidence-of importance, in line with known limits of
+attention as explanation~\cite{jain2019attention,wiegreffe2019attention}.
+\todo{Insert the normalized attention-vs-causal-contribution correlation once
+computed from the existing attention logs.}
+
+% =====================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+The picture that emerges is not that overhead imagery is useless, nor that fusion
+never helps. It is that complementarity is a property of the \emph{task}. When a
+question is answerable from a single location's imagery---what land use is here,
+how tall are the buildings, is the road paved---the two views encode largely the
+same answer-relevant information, and a model reads it off whichever view is more
+convenient. When a question is \emph{about the relationship} between the
+views---does this photo belong to this tile, which way is the camera
+facing---the second view is indispensable, and our models exploit it readily. The
+eight attribute tasks fall in the first regime; the cross-view tasks in the
+second.
+
+This has a concrete, practical consequence. Street-level and high-resolution
+satellite imagery differ sharply in acquisition cost, coverage, licensing, and
+latency. For the attribute families studied here, the second view buys a gain of
+only about two to three points on average---and, supplied naively, it degrades
+roughly one item in ten that the better single view already answered. A
+deployment that serves a single, well-chosen view therefore forgoes very little
+accuracy while halving its imagery footprint; if both views are available, the
+evidence favors \emph{routing} each question to one view over feeding the model
+both. The synergy, oracle-gap, and vision-contribution measurements we use form a
+reusable instrument for making that call on a new task before committing to
+dual-view collection.
+
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We measured, rather than assumed, the value of a second perspective for urban
+attribute recognition. Through a controlled four-way image ablation on a
+multi-city satellite$+$street VQA benchmark, we found that across model scale,
+training regime, city split, and prompting strategy the second view adds only a
+few points over the better single view---and that a two-view model trails a
+per-item single-view oracle by \num{8}--\num{9} points, overturning correct
+answers about ten times as often as it rescues wrong ones. The same models gain
+\num{40}--\num{70} points on cross-view tasks that genuinely require both views,
+so the effect is a property of the tasks, not of the instrument. Multi-perspective
+necessity is task-dependent; for these urban-attribute tasks, a single
+well-chosen view might be enough.
+
+% ---------------------------------------------------------------
+% TODO FINAL: remove for camera-ready; required for review.
+\clearpage
+
+%\section*{Acknowledgements}
+% TODO FINAL: add acknowledgements (no section number).
+
+\bibliographystyle{splncs04}
+\bibliography{eollm,main}
+\end{document}

@@ -21,7 +21,8 @@ defaults:
   modes: [sat_only]           # informational; llava_native families force sat_only
   image_max_edge: 768         # suite-side resize before the 504 CLIP preprocess
   max_new_tokens: 8           # answer is one letter
-  batch_size: 64              # one 504px image/item on a 96GB card — ample headroom
+  batch_size: 16              # 504px -> ~1.4k tokens/seq; bs=64 OOMs the attn matrix
+                              # on the 7B even at 96GB. bs=16 is safe (smoke-proven).
   seed: 3407
 
 models:

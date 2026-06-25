@@ -39,6 +39,9 @@ dependencies:
   - xz=5.8.2
   - zlib=1.3.1
   - pip:
+      # CUDA 12.8 wheels for torch/torchvision. Must be first so pip uses this
+      # index before PyPI — PyPI only ships CPU-only torch for this version.
+      - --extra-index-url https://download.pytorch.org/whl/cu128
       - accelerate==1.13.0
       - aiohappyeyeballs==2.6.1
       - aiohttp==3.13.5
@@ -147,5 +150,3 @@ dependencies:
       - xxhash==3.6.0
       - yarl==1.23.0
       - zipp==3.23.0
-prefix: /home/ezel/miniconda3/envs/unsloth
-

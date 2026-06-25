@@ -1,0 +1,15 @@
+
+============================================================
+TRAINING SUMMARY
+============================================================
+Profile:           rtx_pro_6000_96gb
+max_seq_length:    8192 (p99=392)
+Batch:             96 x 1 = 96
+Epochs:            5
+Early stopping:    True
+Final train loss:  0.1215
+Final val accuracy:50.7%
+Base accuracy:     18.0%
+Wall clock:        290.3 min
+Peak VRAM:         59267 MB (72% of 80 GB)
+Run dir:           ablation_split2a_per_city

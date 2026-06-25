@@ -1,0 +1,4 @@
+Resume: 5473 (record,mode) pairs already done, 9405 remain.
+[diffusiongemma_20260614_224218] Running 9405 generations across ['benchmark'] @ concurrency 8
+  mode breakdown: {'full': 5240, 'sat_only': 4819, 'sv_only': 4819}
+  results dir: /home/ezel/Development/EOLLM/reasoning_distill/results/diffusiongemma_20260614_224218

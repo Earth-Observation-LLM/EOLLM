@@ -1,0 +1,5 @@
+model_key,seen,unseen
+qwen3_5_4b_base,0.3572,0.3445
+su_base,0.6056,0.5955
+pc_base,0.6383,0.5886
+gemma_4_e2b,0.4235,0.4173

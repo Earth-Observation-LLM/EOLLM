@@ -1,0 +1,15 @@
+
+============================================================
+TRAINING SUMMARY
+============================================================
+Profile:           rtx_pro_6000_96gb
+max_seq_length:    8192 (p99=1971)
+Batch:             86 x 1 = 86
+Epochs:            10
+Early stopping:    True
+Final train loss:  0.0727
+Final val accuracy:70.8%
+Base accuracy:     19.0%
+Wall clock:        2550.9 min
+Peak VRAM:         83659 MB (102% of 80 GB)
+Run dir:           20260423_190939_rtx_pro_6000_96gb

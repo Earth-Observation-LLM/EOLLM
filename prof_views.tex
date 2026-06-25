@@ -1,0 +1,134 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}\usepackage{xcolor}\usepackage{array}
+\definecolor{good}{HTML}{2E7D32}\definecolor{bad}{HTML}{C62828}\definecolor{accent}{HTML}{1565C0}
+\setbeamercolor{frametitle}{bg=accent}
+\setbeamertemplate{section page}{\centering\usebeamerfont{section title}\insertsectionhead\par}
+\title{Do these tasks need both views?}
+\subtitle{Single view is enough \textbf{$\cdot$} extra reasoning does not change it}
+\date{}\author{}
+\begin{document}
+\maketitle
+\section{Qwen3.5-9B \textemdash{} does reasoning help fuse the two views?}
+\begin{frame}{Overall \textbf{$\cdot$} 9 urbanization tasks \textbf{$\cdot$} Qwen3.5-9B}
+\centering
+\begin{tabular}{lcccc>{\bfseries}cc}
+\toprule
+strategy & full & sat & sv & blind & full$-$best1 & full$-$blind \\
+\midrule
+current (direct) & 48.6 & 44.4 & \textbf{50.9} & 40.9 & \textcolor{bad}{-2.3} & +7.7 \\
+think16k & 49.8 & 46.1 & \textbf{51.8} & 41.0 & \textcolor{bad}{-2.0} & +8.8 \\
+multistep (4-turn) & 51.7 & 49.4 & \textbf{53.9} & 43.4 & \textcolor{bad}{-2.2} & +8.3 \\
+\bottomrule
+\end{tabular}
+\vfill\footnotesize
+\textbf{full$-$best1} $=$ full $-\max(\text{sat},\text{sv})$. Negative $\Rightarrow$ the second view does \emph{not} help.\\
+Street-view alone (sv) $\geq$ both views (full) for \emph{every} strategy --- thinking and multi-step
+raise the ceiling but lift the single view in lockstep, so fusion never starts working.
+\end{frame}
+\begin{frame}{Per task \textbf{$\cdot$} current (direct) \textbf{$\cdot$} Qwen3.5-9B}
+\centering\scriptsize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & full & sat & sv & blind & full$-$best1 \\
+\midrule
+Land use & 53.0 & 50.1 & 52.7 & 43.5 & +0.3 \\
+Building height & 61.1 & 47.9 & 64.7 & 45.8 & \textcolor{bad}{-3.6} \\
+Urban density & 38.5 & 39.2 & 44.9 & 40.4 & \textcolor{bad}{-6.4} \\
+Junction type & 62.6 & 48.8 & 62.6 & 48.5 & +0.0 \\
+Green space & 36.5 & 35.5 & 37.9 & 64.5 & \textcolor{bad}{-1.4} \\
+Amenity richness & 36.8 & 36.1 & 33.5 & 19.5 & +0.7 \\
+Road type & 47.5 & 40.1 & 57.5 & 34.9 & \textcolor{bad}{-10.0} \\
+Road surface & 82.2 & 78.9 & 87.1 & 67.7 & \textcolor{bad}{-4.9} \\
+Transit density & 32.1 & 30.9 & 30.4 & 27.3 & +1.2 \\
+\midrule
+\textbf{OVERALL} & \textbf{48.6} & \textbf{44.4} & \textbf{50.9} & \textbf{40.9} & \textbf{\textcolor{bad}{-2.3}} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+\begin{frame}{Per task \textbf{$\cdot$} think16k \textbf{$\cdot$} Qwen3.5-9B}
+\centering\scriptsize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & full & sat & sv & blind & full$-$best1 \\
+\midrule
+Land use & 51.8 & 45.1 & 51.5 & 51.5 & +0.3 \\
+Building height & 62.6 & 51.6 & 61.6 & 38.4 & +1.0 \\
+Urban density & 38.7 & 38.0 & 43.9 & 32.3 & \textcolor{bad}{-5.2} \\
+Junction type & 57.5 & 54.8 & 59.0 & 32.3 & \textcolor{bad}{-1.5} \\
+Green space & 41.4 & 38.4 & 49.8 & 59.1 & \textcolor{bad}{-8.4} \\
+Amenity richness & 36.3 & 37.3 & 34.9 & 20.9 & \textcolor{bad}{-1.0} \\
+Road type & 58.4 & 50.4 & 64.4 & 34.4 & \textcolor{bad}{-6.0} \\
+Road surface & 83.2 & 75.2 & 84.8 & 94.4 & \textcolor{bad}{-1.6} \\
+Transit density & 31.6 & 33.3 & 31.6 & 26.6 & \textcolor{bad}{-1.7} \\
+\midrule
+\textbf{OVERALL} & \textbf{49.8} & \textbf{46.1} & \textbf{51.8} & \textbf{41.0} & \textbf{\textcolor{bad}{-2.0}} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+\begin{frame}{Per task \textbf{$\cdot$} multistep (4-turn) \textbf{$\cdot$} Qwen3.5-9B}
+\centering\scriptsize
+\begin{tabular}{lcccc>{\bfseries}c}
+\toprule
+task & full & sat & sv & blind & full$-$best1 \\
+\midrule
+Land use & 49.4 & 50.1 & 53.0 & 50.6 & \textcolor{bad}{-3.6} \\
+Building height & 61.1 & 54.7 & 58.4 & 43.2 & +2.7 \\
+Urban density & 41.6 & 43.7 & 45.4 & 35.9 & \textcolor{bad}{-3.8} \\
+Junction type & 63.5 & 59.3 & 62.9 & 46.4 & +0.6 \\
+Green space & 64.5 & 62.1 & 65.0 & 68.5 & -0.5 \\
+Amenity richness & 37.1 & 38.7 & 36.1 & 25.9 & \textcolor{bad}{-1.6} \\
+Road type & 53.4 & 48.5 & 63.2 & 33.3 & \textcolor{bad}{-9.8} \\
+Road surface & 89.8 & 80.9 & 89.4 & 83.8 & +0.4 \\
+Transit density & 29.7 & 26.8 & 31.4 & 27.8 & \textcolor{bad}{-1.7} \\
+\midrule
+\textbf{OVERALL} & \textbf{51.7} & \textbf{49.4} & \textbf{53.9} & \textbf{43.4} & \textbf{\textcolor{bad}{-2.2}} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+\section{The full models on the benchmark}
+\begin{frame}{Overall \textbf{$\cdot$} full mode \textbf{$\cdot$} 4 models}
+\centering
+\begin{tabular}{lcc>{\bfseries}c}
+\toprule
+model & full & blind & vision gain \\
+\midrule
+Gemma-4-12B & 50.3 & 23.5 & \textcolor{good}{+26.8} \\
+Qwen2.5-VL-7B & 47.2 & 38.3 & \textcolor{good}{+8.9} \\
+Qwen3.5-4B & 49.0 & 38.9 & \textcolor{good}{+10.1} \\
+Qwen3.5-9B & 51.1 & 38.1 & \textcolor{good}{+13.0} \\
+\bottomrule
+\end{tabular}
+\vfill\footnotesize vision gain $=$ full $-$ blind. Vision genuinely helps --- but (Story 1) it is \emph{one-view} vision.
+\end{frame}
+\begin{frame}{Per task \textbf{$\cdot$} full-mode accuracy \textbf{$\cdot$} 4 models}
+\centering\scriptsize
+\begin{tabular}{lcccc}
+\toprule
+task & Gemma-4-12B & Qwen2.5-VL-7B & Qwen3.5-4B & Qwen3.5-9B \\
+\midrule
+Land use & 47.3 & 55.6 & 55.6 & 53.2 \\
+Building height & 61.6 & 57.9 & 61.6 & 56.8 \\
+Urban density & 37.3 & 41.8 & 36.3 & 39.0 \\
+Junction type & 66.5 & 57.5 & 50.0 & 55.7 \\
+Green space & 58.6 & 81.8 & 41.4 & 36.9 \\
+Amenity richness & 35.6 & 31.8 & 35.4 & 36.3 \\
+Road type & 65.3 & 50.6 & 57.0 & 53.0 \\
+Road surface & 78.2 & 90.8 & 91.4 & 85.5 \\
+Transit density & 28.0 & 28.0 & 34.2 & 31.4 \\
+\midrule
+\textbf{OVERALL} & \textbf{50.3} & \textbf{47.2} & \textbf{49.0} & \textbf{51.1} \\
+\bottomrule
+\end{tabular}
+\vfill\footnotesize OVERALL is over the whole benchmark (all topics); per-task rows are the 9 urbanization tasks.
+\end{frame}
+\begin{frame}{Takeaway}
+\begin{itemize}
+  \item For the 9 urbanization tasks, a \textbf{single view is enough}: street-view alone matches or
+        beats the two-view setup (full$-$best1 $\leq 0$) for every strategy and every task.
+  \item \textbf{Adding reasoning does not fix it}: 16k-token thinking and a 4-turn observe$\to$reason$\to$
+        self-check$\to$commit conversation raise accuracy, but the single view rises with it.
+  \item Across all 4 models vision \emph{does} help (full $>$ blind) --- but it is one-view vision.
+\end{itemize}
+\end{frame}
+\end{document}

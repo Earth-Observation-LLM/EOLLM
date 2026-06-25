@@ -1,0 +1,7 @@
+model_a,model_b,n,b_a_only_right,c_b_only_right,chi2,p
+gemma_4_e2b,pc_base,5240,366,1447,643.354,6.232e-142
+gemma_4_e2b,qwen3_5_4b_base,5240,970,616,78.568,7.729e-19
+gemma_4_e2b,su_base,5240,497,1447,463.272,9.329e-103
+pc_base,qwen3_5_4b_base,5240,1789,354,959.569,1.103e-210
+pc_base,su_base,5240,683,552,13.684,0.0002163
+qwen3_5_4b_base,su_base,5240,459,1763,764.09,3.465e-168

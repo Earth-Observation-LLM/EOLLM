@@ -1,0 +1,5 @@
+model_key,easy,hard,medium
+qwen3_5_4b_base,0.4256,0.38,0.2607
+su_base,0.6882,0.5463,0.5278
+pc_base,0.745,0.5226,0.5357
+gemma_4_e2b,0.4941,0.3432,0.3707

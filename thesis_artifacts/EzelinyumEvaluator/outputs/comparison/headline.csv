@@ -1,0 +1,5 @@
+model_key,display,family,n,accuracy,ci95_low,ci95_high,n_hedged,n_refused,n_unparseable,n_missing_images
+qwen3_5_4b_base,"Qwen3.5-4B base (untrained, thinking OFF)",baseline,5240,0.3548,0.3419,0.3678,0,0,1034,0
+su_base,SU-base — seen_unseen LoRA,finetuned,5240,0.6036,0.5903,0.6168,0,0,0,0
+pc_base,"PC-base — per_city LoRA (full 14 topics, 6 epochs)",finetuned,5240,0.6286,0.6155,0.6416,0,0,0,0
+gemma_4_e2b,"Gemma-4 E2B-it (instruction-tuned, multimodal)",baseline,5240,0.4223,0.409,0.4358,0,0,2,0

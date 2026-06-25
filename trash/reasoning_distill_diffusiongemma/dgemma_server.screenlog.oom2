@@ -1,0 +1,318 @@
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:339][0m 
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:339][0m        [97;1m█     █     █▄   ▄█[0m
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:339][0m  [93m▄▄[0m [94m▄█[0m [97;1m█     █     █ ▀▄▀ █[0m  version [97;1m0.22.1rc1.dev357+g74b5964f0[0m
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:339][0m   [93m█[0m[94m▄█▀[0m [97;1m█     █     █     █[0m  model   [97;1mnvidia/diffusiongemma-26B-A4B-it-NVFP4[0m
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:339][0m    [94m▀▀[0m  [97;1m▀▀▀▀▀ ▀▀▀▀▀ ▀     ▀[0m
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:339][0m 
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[api_utils.py:273][0m non-default args: {'model_tag': 'nvidia/diffusiongemma-26B-A4B-it-NVFP4', 'port': 8013, 'model': 'nvidia/diffusiongemma-26B-A4B-it-NVFP4', 'max_model_len': 16384, 'enforce_eager': True, 'served_model_name': ['diffusiongemma'], 'gpu_memory_utilization': 0.9, 'limit_mm_per_prompt': {'image': 6}, 'max_num_seqs': 16}
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:13[0m [90m[arg_utils.py:759][0m HF_HUB_OFFLINE is True, replace model_id [nvidia/diffusiongemma-26B-A4B-it-NVFP4] to model_path [/root/.cache/huggingface/hub/models--nvidia--diffusiongemma-26B-A4B-it-NVFP4/snapshots/2ea837236295d617ac27f8c17d61228081932c40]
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:13[0m [90m[envs.py:2111][0m Unknown vLLM environment variable detected: VLLM_BUILD_COMMIT
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:13[0m [90m[envs.py:2111][0m Unknown vLLM environment variable detected: VLLM_BUILD_PIPELINE
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:13[0m [90m[envs.py:2111][0m Unknown vLLM environment variable detected: VLLM_BUILD_URL
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:13[0m [90m[envs.py:2111][0m Unknown vLLM environment variable detected: VLLM_IMAGE_TAG
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[model.py:611][0m Resolved architecture: DiffusionGemmaForBlockDiffusion
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[model.py:1750][0m Using max model len 16384
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[cache.py:269][0m Using fp8_e4m3 data type to store kv cache. It reduces the GPU memory footprint and boosts the performance. Meanwhile, it may cause accuracy drop without a proper scaling factor
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[config.py:99][0m Gemma4 model has heterogeneous head dimensions (head_dim=256, global_head_dim=512). FA4 not available, forcing TRITON_ATTN backend.
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:20[0m [90m[modelopt.py:1022][0m Detected ModelOpt NVFP4 checkpoint (quant_algo=NVFP4). Please note that the format is experimental and could change in future.
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[vllm.py:1011][0m Asynchronous scheduling is enabled.
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:20[0m [90m[vllm.py:1067][0m Enforce eager set, disabling torch.compile and CUDAGraphs. This is equivalent to setting -cc.mode=none -cc.cudagraph_mode=none
+[0;36m(APIServer pid=1)[0;0m [33mWARNING[0m [90m06-15 13:37:20[0m [90m[vllm.py:1109][0m Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[kernel.py:270][0m Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native'])
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[vllm.py:1285][0m Cudagraph is disabled under eager mode
+[0;36m(APIServer pid=1)[0;0m [32mINFO[0m [90m06-15 13:37:20[0m [90m[compilation.py:321][0m Enabled custom fusions: norm_quant, act_quant
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:28[0m [90m[core.py:113][0m Initializing a V1 LLM engine (v0.22.1rc1.dev357+g74b5964f0) with config: model='/root/.cache/huggingface/hub/models--nvidia--diffusiongemma-26B-A4B-it-NVFP4/snapshots/2ea837236295d617ac27f8c17d61228081932c40', speculative_config=None, tokenizer='/root/.cache/huggingface/hub/models--nvidia--diffusiongemma-26B-A4B-it-NVFP4/snapshots/2ea837236295d617ac27f8c17d61228081932c40', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=16384, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=modelopt_fp4, quantization_config=None, enforce_eager=True, enable_return_routed_experts=False, kv_cache_dtype=fp8_e4m3, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=diffusiongemma, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.NONE: 0>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['all'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': True, 'fuse_act_quant': True, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False}, 'max_cudagraph_capture_size': 0, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['vllm_c', 'native'], fused_add_rms_norm=['vllm_c', 'native']), enable_flashinfer_autotune=True, moe_backend='auto', linear_backend='auto')
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:29[0m [90m[parallel_state.py:1568][0m world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://172.17.0.2:58041 backend=nccl
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:29[0m [90m[parallel_state.py:1903][0m rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank 0, EPLB rank N/A
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:29[0m [90m[gpu_worker.py:303][0m Using V2 Model Runner
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:30[0m [90m[model_runner.py:269][0m Loading model from scratch...
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:30[0m [90m[cuda.py:318][0m Using AttentionBackendEnum.TRITON_ATTN backend.
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:30[0m [90m[nvfp4.py:327][0m Using 'FLASHINFER_CUTLASS' NvFp4 MoE backend out of potential backends: ['FLASHINFER_TRTLLM', 'FLASHINFER_CUTEDSL', 'FLASHINFER_CUTEDSL_BATCHED', 'FLASHINFER_CUTLASS', 'VLLM_CUTLASS', 'MARLIN', 'EMULATION'].
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:30[0m [90m[cuda.py:318][0m Using AttentionBackendEnum.TRITON_ATTN backend.
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:30[0m [90m[weight_utils.py:922][0m Filesystem type for checkpoints: EXT4. Checkpoint size: 17.53 GiB. Available RAM: 79.75 GiB.
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:30[0m [90m[weight_utils.py:945][0m Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+[0;36m(EngineCore pid=154)[0;0m Loading safetensors checkpoint shards:   0% Completed | 0/2 [00:00<?, ?it/s]
+[0;36m(EngineCore pid=154)[0;0m Loading safetensors checkpoint shards:  50% Completed | 1/2 [00:01<00:01,  1.63s/it]
+[0;36m(EngineCore pid=154)[0;0m Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:03<00:00,  1.54s/it]
+[0;36m(EngineCore pid=154)[0;0m Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:03<00:00,  1.55s/it]
+[0;36m(EngineCore pid=154)[0;0m 
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:33[0m [90m[default_loader.py:397][0m Loading weights took 3.15 seconds
+[0;36m(EngineCore pid=154)[0;0m [33mWARNING[0m [90m06-15 13:37:33[0m [90m[kv_cache.py:134][0m Checkpoint does not provide a q scaling factor. Setting it to k_scale. This only matters for FP8 Attention backends (flash-attn or flashinfer).
+[0;36m(EngineCore pid=154)[0;0m [33mWARNING[0m [90m06-15 13:37:33[0m [90m[kv_cache.py:148][0m Using KV cache scaling factor 1.0 for fp8_e4m3. If this is unintended, verify that k/v_scale scaling factors are properly set in the checkpoint.
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:33[0m [90m[nvfp4.py:538][0m Using MoEPrepareAndFinalizeNoDPEPModular
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:34[0m [90m[model_runner.py:290][0m Model loading took 17.93 GiB and 4.204224 seconds
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:34[0m [90m[topk_topp_sampler.py:39][0m FlashInfer top-p/top-k sampling disabled via VLLM_USE_FLASHINFER_SAMPLER=0.
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:36[0m [90m[gpu_worker.py:480][0m Available KV cache memory: 9.83 GiB
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:36[0m [90m[kv_cache_utils.py:1744][0m GPU KV cache size: 357,397 tokens
+[0;36m(EngineCore pid=154)[0;0m [32mINFO[0m [90m06-15 13:37:36[0m [90m[kv_cache_utils.py:1745][0m Maximum concurrency for 16,384 tokens per request: 21.81x
+[0;36m(EngineCore pid=154)[0;0m 2026-06-15 13:37:36,408 - INFO - autotuner.py:622 - flashinfer.jit: [Autotuner]: Autotuning process starts ...
+[0;36m(EngineCore pid=154)[0;0m [AutoTuner]: Tuning trtllm::fused_moe::gemm1:   0%| | 0/1 [00:00<?, ?profile/s]2026-06-15 13:37:36,973 - INFO - autotuner.py:1287 - flashinfer.jit: [Autotuner]: Skipped 4 unsupported tactic(s) for trtllm::fused_moe::gemm1 (enable debug logs to see details)
+[0;36m(EngineCore pid=154)[0;0m [AutoTuner]: Tuning trtllm::fused_moe::gemm1: 100%|█| 1/1 [00:00<00:00, 27.97pr
+[0;36m(EngineCore pid=154)[0;0m [AutoTuner]: Tuning trtllm::fused_moe::gemm2:   0%| | 0/1 [00:00<?, ?profile/s]2026-06-15 13:37:37,040 - INFO - autotuner.py:1287 - flashinfer.jit: [Autotuner]: Skipped 10 unsupported tactic(s) for trtllm::fused_moe::gemm2 (enable debug logs to see details)
+[0;36m(EngineCore pid=154)[0;0m [AutoTuner]: Tuning trtllm::fused_moe::gemm2: 100%|█| 1/1 [00:00<00:00, 15.00pr
+[0;36m(EngineCore pid=154)[0;0m 2026-06-15 13:37:37,444 - INFO - autotuner.py:641 - flashinfer.jit: [Autotuner]: Autotuning process ends
+[0;36m(EngineCore pid=154)[0;0m [33mWARNING[0m [90m06-15 13:37:37[0m [90m[diffusion_gemma.py:1123][0m DiffusionGemma does not support repetition/frequency/presence penalties; ignoring them for this request.
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m EngineCore failed to start.
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m Traceback (most recent call last):
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 1165, in run_engine_core
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 931, in __init__
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     super().__init__(
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 132, in __init__
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     kv_cache_config = self._initialize_kv_caches(vllm_config)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 293, in _initialize_kv_caches
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     self.model_executor.initialize_from_config(kv_cache_configs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/executor/abstract.py", line 124, in initialize_from_config
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     compilation_times: list[CompilationTimes] = self.collective_rpc(
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                                                 ^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/executor/uniproc_executor.py", line 92, in collective_rpc
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     result = run_method(self.driver_worker, method, args, kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/serial_utils.py", line 510, in run_method
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu_worker.py", line 707, in compile_or_warm_up_model
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     warmup_kernels(self.model_runner, self.execute_model, self.sample_tokens)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/warmup.py", line 119, in warmup_kernels
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     worker_sample_tokens(grammar_output)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu_worker.py", line 803, in sample_tokens
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return self.model_runner.sample_tokens(grammar_output)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/eplb_utils.py", line 37, in wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     result = fn(self, *args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m              ^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/model_runner.py", line 1366, in sample_tokens
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     prompt_logprobs_dict = self.prompt_logprobs_worker.compute_prompt_logprobs(
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/sample/prompt_logprob.py", line 80, in compute_prompt_logprobs
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     compute_prompt_logprobs_with_chunking(
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/sample/prompt_logprob.py", line 220, in compute_prompt_logprobs_with_chunking
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     prompt_logits = logits_fn(prompt_hidden_states[start_idx:end_idx])
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/diffusion_gemma.py", line 353, in compute_logits
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     logits = _softcap_logits(logits, self.final_logit_softcapping)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 1024, in compile_wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return fn(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/diffusion_gemma.py", line 136, in _softcap_logits
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     @torch.compile(dynamic=True)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 1263, in _fn
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return fn(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/aot_autograd.py", line 1200, in forward
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return compiled_fn(full_args)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 580, in runtime_wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     all_outs = call_func_at_runtime_with_args(
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/utils.py", line 138, in call_func_at_runtime_with_args
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     out = normalize_as_list(f(args))
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m                             ^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 2298, in __call__
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return self.compiled_fn(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 783, in wrapper
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return compiled_fn(runtime_args)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 1011, in inner_fn
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     outs = compiled_fn(args)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/output_code.py", line 656, in __call__
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     return self.current_callable(inputs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/utils.py", line 3401, in run
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     out = model(new_inputs)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m           ^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m   File "/tmp/torchinductor_root/7i/c7i3a7u7aglut6t7ilhrhsbwlhiipjkutyrjossvghpi3a6gk4bl.py", line 107, in call
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m     buf0 = empty_strided_cuda((s88, s3), (s3, 1), torch.float32)
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m [31mERROR[0m [90m06-15 13:37:39[0m [90m[core.py:1196][0m torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1024.00 MiB. GPU 0 has a total capacity of 31.34 GiB of which 387.19 MiB is free. Including non-PyTorch memory, this process has 30.34 GiB memory in use. Of the allocated memory 29.54 GiB is allocated by PyTorch, and 135.79 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+[0;36m(EngineCore pid=154)[0;0m Process EngineCore:
+[0;36m(EngineCore pid=154)[0;0m Traceback (most recent call last):
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+[0;36m(EngineCore pid=154)[0;0m     self.run()
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+[0;36m(EngineCore pid=154)[0;0m     self._target(*self._args, **self._kwargs)
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 1200, in run_engine_core
+[0;36m(EngineCore pid=154)[0;0m     raise e
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 1165, in run_engine_core
+[0;36m(EngineCore pid=154)[0;0m     engine_core = EngineCoreProc(*args, engine_index=dp_rank, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 931, in __init__
+[0;36m(EngineCore pid=154)[0;0m     super().__init__(
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 132, in __init__
+[0;36m(EngineCore pid=154)[0;0m     kv_cache_config = self._initialize_kv_caches(vllm_config)
+[0;36m(EngineCore pid=154)[0;0m                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core.py", line 293, in _initialize_kv_caches
+[0;36m(EngineCore pid=154)[0;0m     self.model_executor.initialize_from_config(kv_cache_configs)
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/executor/abstract.py", line 124, in initialize_from_config
+[0;36m(EngineCore pid=154)[0;0m     compilation_times: list[CompilationTimes] = self.collective_rpc(
+[0;36m(EngineCore pid=154)[0;0m                                                 ^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/executor/uniproc_executor.py", line 92, in collective_rpc
+[0;36m(EngineCore pid=154)[0;0m     result = run_method(self.driver_worker, method, args, kwargs)
+[0;36m(EngineCore pid=154)[0;0m              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/serial_utils.py", line 510, in run_method
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu_worker.py", line 707, in compile_or_warm_up_model
+[0;36m(EngineCore pid=154)[0;0m     warmup_kernels(self.model_runner, self.execute_model, self.sample_tokens)
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/warmup.py", line 119, in warmup_kernels
+[0;36m(EngineCore pid=154)[0;0m     worker_sample_tokens(grammar_output)
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu_worker.py", line 803, in sample_tokens
+[0;36m(EngineCore pid=154)[0;0m     return self.model_runner.sample_tokens(grammar_output)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 124, in decorate_context
+[0;36m(EngineCore pid=154)[0;0m     return func(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/eplb_utils.py", line 37, in wrapper
+[0;36m(EngineCore pid=154)[0;0m     result = fn(self, *args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m              ^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/model_runner.py", line 1366, in sample_tokens
+[0;36m(EngineCore pid=154)[0;0m     prompt_logprobs_dict = self.prompt_logprobs_worker.compute_prompt_logprobs(
+[0;36m(EngineCore pid=154)[0;0m                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/sample/prompt_logprob.py", line 80, in compute_prompt_logprobs
+[0;36m(EngineCore pid=154)[0;0m     compute_prompt_logprobs_with_chunking(
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/worker/gpu/sample/prompt_logprob.py", line 220, in compute_prompt_logprobs_with_chunking
+[0;36m(EngineCore pid=154)[0;0m     prompt_logits = logits_fn(prompt_hidden_states[start_idx:end_idx])
+[0;36m(EngineCore pid=154)[0;0m                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/diffusion_gemma.py", line 353, in compute_logits
+[0;36m(EngineCore pid=154)[0;0m     logits = _softcap_logits(logits, self.final_logit_softcapping)
+[0;36m(EngineCore pid=154)[0;0m              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 1024, in compile_wrapper
+[0;36m(EngineCore pid=154)[0;0m     return fn(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/diffusion_gemma.py", line 136, in _softcap_logits
+[0;36m(EngineCore pid=154)[0;0m     @torch.compile(dynamic=True)
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_dynamo/eval_frame.py", line 1263, in _fn
+[0;36m(EngineCore pid=154)[0;0m     return fn(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/aot_autograd.py", line 1200, in forward
+[0;36m(EngineCore pid=154)[0;0m     return compiled_fn(full_args)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 580, in runtime_wrapper
+[0;36m(EngineCore pid=154)[0;0m     all_outs = call_func_at_runtime_with_args(
+[0;36m(EngineCore pid=154)[0;0m                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/utils.py", line 138, in call_func_at_runtime_with_args
+[0;36m(EngineCore pid=154)[0;0m     out = normalize_as_list(f(args))
+[0;36m(EngineCore pid=154)[0;0m                             ^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 2298, in __call__
+[0;36m(EngineCore pid=154)[0;0m     return self.compiled_fn(*args, **kwargs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 783, in wrapper
+[0;36m(EngineCore pid=154)[0;0m     return compiled_fn(runtime_args)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py", line 1011, in inner_fn
+[0;36m(EngineCore pid=154)[0;0m     outs = compiled_fn(args)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/output_code.py", line 656, in __call__
+[0;36m(EngineCore pid=154)[0;0m     return self.current_callable(inputs)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/utils.py", line 3401, in run
+[0;36m(EngineCore pid=154)[0;0m     out = model(new_inputs)
+[0;36m(EngineCore pid=154)[0;0m           ^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m   File "/tmp/torchinductor_root/7i/c7i3a7u7aglut6t7ilhrhsbwlhiipjkutyrjossvghpi3a6gk4bl.py", line 107, in call
+[0;36m(EngineCore pid=154)[0;0m     buf0 = empty_strided_cuda((s88, s3), (s3, 1), torch.float32)
+[0;36m(EngineCore pid=154)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(EngineCore pid=154)[0;0m torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1024.00 MiB. GPU 0 has a total capacity of 31.34 GiB of which 387.19 MiB is free. Including non-PyTorch memory, this process has 30.34 GiB memory in use. Of the allocated memory 29.54 GiB is allocated by PyTorch, and 135.79 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+[rank0]:[W615 13:37:40.244260196 ProcessGroupNCCL.cpp:1575] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+[0;36m(APIServer pid=1)[0;0m Traceback (most recent call last):
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/bin/vllm", line 10, in <module>
+[0;36m(APIServer pid=1)[0;0m     sys.exit(main())
+[0;36m(APIServer pid=1)[0;0m              ^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/main.py", line 95, in main
+[0;36m(APIServer pid=1)[0;0m     args.dispatch_function(args)
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/cli/serve.py", line 148, in cmd
+[0;36m(APIServer pid=1)[0;0m     uvloop.run(run_server(args))
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 96, in run
+[0;36m(APIServer pid=1)[0;0m     return __asyncio.run(
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/lib/python3.12/asyncio/runners.py", line 195, in run
+[0;36m(APIServer pid=1)[0;0m     return runner.run(main)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+[0;36m(APIServer pid=1)[0;0m     return self._loop.run_until_complete(task)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/uvloop/__init__.py", line 48, in wrapper
+[0;36m(APIServer pid=1)[0;0m     return await main
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 665, in run_server
+[0;36m(APIServer pid=1)[0;0m     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 679, in run_server_worker
+[0;36m(APIServer pid=1)[0;0m     async with build_async_engine_client(
+[0;36m(APIServer pid=1)[0;0m                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+[0;36m(APIServer pid=1)[0;0m     return await anext(self.gen)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 99, in build_async_engine_client
+[0;36m(APIServer pid=1)[0;0m     async with build_async_engine_client_from_engine_args(
+[0;36m(APIServer pid=1)[0;0m                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+[0;36m(APIServer pid=1)[0;0m     return await anext(self.gen)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/entrypoints/openai/api_server.py", line 135, in build_async_engine_client_from_engine_args
+[0;36m(APIServer pid=1)[0;0m     async_llm = AsyncLLM.from_vllm_config(
+[0;36m(APIServer pid=1)[0;0m                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/async_llm.py", line 217, in from_vllm_config
+[0;36m(APIServer pid=1)[0;0m     return cls(
+[0;36m(APIServer pid=1)[0;0m            ^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/async_llm.py", line 146, in __init__
+[0;36m(APIServer pid=1)[0;0m     self.engine_core = EngineCoreClient.make_async_mp_client(
+[0;36m(APIServer pid=1)[0;0m                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(APIServer pid=1)[0;0m     return func(*args, **kwargs)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core_client.py", line 131, in make_async_mp_client
+[0;36m(APIServer pid=1)[0;0m     return AsyncMPClient(*client_args)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+[0;36m(APIServer pid=1)[0;0m     return func(*args, **kwargs)
+[0;36m(APIServer pid=1)[0;0m            ^^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core_client.py", line 948, in __init__
+[0;36m(APIServer pid=1)[0;0m     super().__init__(
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/core_client.py", line 570, in __init__
+[0;36m(APIServer pid=1)[0;0m     with launch_core_engines(
+[0;36m(APIServer pid=1)[0;0m          ^^^^^^^^^^^^^^^^^^^^
+[0;36m(APIServer pid=1)[0;0m   File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+[0;36m(APIServer pid=1)[0;0m     next(self.gen)
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/utils.py", line 1190, in launch_core_engines
+[0;36m(APIServer pid=1)[0;0m     wait_for_engine_startup(
+[0;36m(APIServer pid=1)[0;0m   File "/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/utils.py", line 1249, in wait_for_engine_startup
+[0;36m(APIServer pid=1)[0;0m     raise RuntimeError(
+[0;36m(APIServer pid=1)[0;0m RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}

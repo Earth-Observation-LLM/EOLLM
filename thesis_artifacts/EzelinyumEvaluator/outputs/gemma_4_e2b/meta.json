@@ -1,0 +1,15 @@
+{
+  "model_key": "gemma_4_e2b",
+  "seed": 3407,
+  "max_new_tokens": 8,
+  "image_mode": "sat+stv4",
+  "wall_load_sec": 4.3,
+  "wall_eval_sec": 812.1,
+  "peak_vram_mb": 13385,
+  "git_sha": null,
+  "torch_version": "2.10.0+cu128",
+  "cuda_available": true,
+  "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+  "device_count": 1,
+  "deterministic_algorithms": false
+}

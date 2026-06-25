@@ -1,0 +1,57 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs}\usepackage{xcolor}\usepackage{array}\usepackage{colortbl}
+\definecolor{good}{HTML}{2E7D32}\definecolor{bad}{HTML}{C62828}\definecolor{accent}{HTML}{1565C0}
+\definecolor{hl}{HTML}{FFF3CD}
+\setbeamercolor{frametitle}{bg=accent}
+\newcolumntype{R}{>{\bfseries}c}
+\title{Even after fine-tuning, the second view barely helps}
+\subtitle{Raw vs.\ SFT Qwen3.5-9B \textbf{$\cdot$} per task \textbf{$\cdot$} all four image modes}
+\date{}\author{}
+\begin{document}
+\maketitle
+
+%==================================================================
+\begin{frame}{One table \textbf{$\cdot$} raw vs.\ trained Qwen3.5-9B \textbf{$\cdot$} 9 urbanization tasks}
+\centering\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l cccc R | cccc R}
+\toprule
+& \multicolumn{5}{c|}{\textbf{Raw 9B} (zero-shot, direct)} & \multicolumn{5}{c}{\textbf{Trained 9B} (SFT, this work)} \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-11}
+task & full & sat & sv & blind & {\footnotesize f$-$b1} & full & sat & sv & blind & {\footnotesize f$-$b1} \\
+\midrule
+Land use         & 53.0 & 50.1 & 52.7 & 43.5 & \cellcolor{hl}+0.3                 & 72.4 & 71.7 & 69.6 & 67.0 & \cellcolor{hl}+0.7 \\
+Building height   & 61.1 & 47.9 & 64.7 & 45.8 & \cellcolor{hl}\textcolor{bad}{-3.6} & 64.7 & 56.3 & 60.5 & 35.3 & \cellcolor{hl}+4.2 \\
+Urban density     & 38.5 & 39.2 & 44.9 & 40.4 & \cellcolor{hl}\textcolor{bad}{-6.4} & 53.2 & 53.4 & 52.7 & 35.2 & \cellcolor{hl}\textcolor{bad}{-0.2} \\
+Junction type     & 62.6 & 48.8 & 62.6 & 48.5 & \cellcolor{hl}+0.0                 & 76.3 & 71.3 & 72.2 & 51.5 & \cellcolor{hl}+4.1 \\
+Green space       & 36.5 & 35.5 & 37.9 & 64.5 & \cellcolor{hl}\textcolor{bad}{-1.4} & 99.0 & 99.5 & 99.5 &100.0 & \cellcolor{hl}\textcolor{bad}{-0.5} \\
+Amenity richness  & 36.8 & 36.1 & 33.5 & 19.5 & \cellcolor{hl}+0.7                 & 53.0 & 52.3 & 55.1 & 25.4 & \cellcolor{hl}\textcolor{bad}{-2.1} \\
+Road type         & 47.5 & 40.1 & 57.5 & 34.9 & \cellcolor{hl}\textcolor{bad}{-10.0}& 77.0 & 71.0 & 76.7 & 67.5 & \cellcolor{hl}+0.3 \\
+Road surface      & 82.2 & 78.9 & 87.1 & 67.7 & \cellcolor{hl}\textcolor{bad}{-4.9} & 95.7 & 95.7 & 94.7 & 95.7 & \cellcolor{hl}+0.0 \\
+Transit density   & 32.1 & 30.9 & 30.4 & 27.3 & \cellcolor{hl}+1.2                 & 43.0 & 40.1 & 44.7 & 25.4 & \cellcolor{hl}\textcolor{bad}{-1.7} \\
+\midrule
+\textbf{OVERALL$^\dagger$} & \textbf{48.6} & \textbf{44.4} & \textbf{50.9} & \textbf{40.9} & \cellcolor{hl}\textbf{\textcolor{bad}{-2.3}}
+                           & \textbf{62.5} & \textbf{61.1} & \textbf{62.0} & \textbf{45.2} & \cellcolor{hl}\textbf{+0.5} \\
+\bottomrule
+\end{tabular}
+\vfill\footnotesize
+\textbf{f$-$b1} $=$ full $-\max(\text{sat},\text{sv})$: the gain from the \emph{second} view. Near zero $\Rightarrow$ one view already suffices.\\
+$^\dagger$OVERALL is over the full benchmark (all topics), not just the 9 rows shown.
+\textbf{Fine-tuning lifts every mode by $\sim$14 pts but does not open a fusion gap:} trained full beats the best single view
+by only \textbf{+0.5} overall (raw: $-2.3$). Vision is real (full $-$ blind $=+17$), but it is \emph{one-view} vision.
+\end{frame}
+
+%==================================================================
+\begin{frame}{What changed, what did not}
+\begin{itemize}
+  \item \textbf{What fine-tuning fixed:} every image mode jumps $\sim$14 pts (full $48.6\!\to\!62.5$),
+        and the model now clearly \emph{uses} an image --- full beats blind by \textbf{+17.3} pts (raw: $+7.7$).
+  \item \textbf{What it did \emph{not} fix:} the two-view advantage. Trained full $-$ best-single-view $=\mathbf{+0.5}$ pt
+        overall; on 5 of 9 tasks the best single view still ties or beats both views.
+  \item \textbf{Conclusion:} the benchmark's questions are answerable from \emph{either} the satellite or the
+        street view alone. Supervised fine-tuning raises the ceiling but the second view contributes almost nothing ---
+        the same one-view story as the raw model, now at higher accuracy.
+\end{itemize}
+\end{frame}
+\end{document}
