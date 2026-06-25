@@ -1,0 +1,290 @@
+% ============================================================================
+% eollm.bib — verified references for "Single View Might Be Enough"
+% Every entry below was grounded against the primary source (arXiv / proceedings)
+% by a dedicated research pass. Venues and arXiv IDs are confirmed.
+% ============================================================================
+
+% ---- Remote-sensing VLMs we evaluate (the four zero-shot baselines) ----
+
+@inproceedings{geochat2024,
+  title     = {{GeoChat}: Grounded Large Vision-Language Model for Remote Sensing},
+  author    = {Kuckreja, Kartik and Danish, Muhammad Sohail and Naseer, Muzammal and Das, Abhijit and Khan, Salman and Khan, Fahad Shahbaz},
+  booktitle = {Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. (CVPR)},
+  year      = {2024},
+  note      = {arXiv:2311.15826}
+}
+
+@article{skysensegpt2024,
+  title   = {{SkySenseGPT}: A Fine-Grained Instruction Tuning Dataset and Model for Remote Sensing Vision-Language Understanding},
+  author  = {Luo, Junwei and Pang, Zhen and Zhang, Yongjun and Wang, Tingzhu and Wang, Linlin and Dang, Bo and Lao, Jiangwei and Wang, Jian and Chen, Jingdong and Tan, Yihua and Li, Yansheng},
+  journal = {arXiv preprint arXiv:2406.10100},
+  year    = {2024}
+}
+
+@inproceedings{lhrsbot2024,
+  title     = {{LHRS-Bot}: Empowering Remote Sensing with {VGI}-Enhanced Large Multimodal Language Model},
+  author    = {Muhtar, Dilxat and Li, Zhenshi and Gu, Feng and Zhang, Xueliang and Xiao, Pengfeng},
+  booktitle = {Proc. Eur. Conf. Comput. Vis. (ECCV)},
+  year      = {2024},
+  doi       = {10.1007/978-3-031-72904-1_26},
+  note      = {arXiv:2402.02544}
+}
+
+@article{lhrsbotnova2025,
+  title   = {{LHRS-Bot-Nova}: Improved Multimodal Large Language Model for Remote Sensing Vision-Language Interpretation},
+  author  = {Li, Zhenshi and Muhtar, Dilxat and Gu, Feng and Zhang, Xueliang and Xiao, Pengfeng and He, Guangjun and Zhu, Xiaoxiang},
+  journal = {ISPRS Journal of Photogrammetry and Remote Sensing},
+  volume  = {227},
+  year    = {2025},
+  note    = {arXiv:2411.09301}
+}
+
+@inproceedings{earthdial2025,
+  title     = {{EarthDial}: Turning Multi-sensory Earth Observations to Interactive Dialogues},
+  author    = {Soni, Sagar and Dudhane, Akshay and Debary, Hiyam and Fiaz, Mustansar and Munir, Muhammad Akhtar and Danish, Muhammad Sohail and Fraccaro, Paolo and Watson, Campbell D. and Klein, Levente J. and Khan, Fahad Shahbaz and Khan, Salman},
+  booktitle = {Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. (CVPR)},
+  year      = {2025},
+  note      = {arXiv:2412.15190}
+}
+
+% ---- Backbones / building blocks referenced in the methods table ----
+
+@inproceedings{llava15_2024,
+  title     = {Improved Baselines with Visual Instruction Tuning},
+  author    = {Liu, Haotian and Li, Chunyuan and Li, Yuheng and Lee, Yong Jae},
+  booktitle = {Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. (CVPR)},
+  year      = {2024},
+  note      = {arXiv:2310.03744}
+}
+
+@inproceedings{llava_2023,
+  title     = {Visual Instruction Tuning},
+  author    = {Liu, Haotian and Li, Chunyuan and Wu, Qingyang and Lee, Yong Jae},
+  booktitle = {Adv. Neural Inf. Process. Syst. (NeurIPS)},
+  year      = {2023},
+  note      = {arXiv:2304.08485}
+}
+
+@inproceedings{siglip_2023,
+  title     = {Sigmoid Loss for Language Image Pre-Training},
+  author    = {Zhai, Xiaohua and Mustafa, Basil and Kolesnikov, Alexander and Beyer, Lucas},
+  booktitle = {Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)},
+  year      = {2023},
+  note      = {arXiv:2303.15343}
+}
+
+@inproceedings{clip_2021,
+  title     = {Learning Transferable Visual Models from Natural Language Supervision},
+  author    = {Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and others},
+  booktitle = {Proc. Int. Conf. Mach. Learn. (ICML)},
+  year      = {2021},
+  note      = {arXiv:2103.00020}
+}
+
+% ---- LoRA / training ----
+
+@inproceedings{lora_2022,
+  title     = {{LoRA}: Low-Rank Adaptation of Large Language Models},
+  author    = {Hu, Edward J. and Shen, Yelong and Wallis, Phillip and Allen-Zhu, Zeyuan and Li, Yuanzhi and Wang, Shean and Wang, Lu and Chen, Weizhu},
+  booktitle = {Int. Conf. Learn. Represent. (ICLR)},
+  year      = {2022},
+  note      = {arXiv:2106.09685}
+}
+
+% ---- OpenStreetMap (label provenance) ----
+
+@misc{osm,
+  title        = {{OpenStreetMap}},
+  author       = {{OpenStreetMap contributors}},
+  howpublished = {\url{https://www.openstreetmap.org}},
+  year         = {2024}
+}
+
+% ---- "Attention is not explanation" line (for the interpretability caveat) ----
+
+@inproceedings{jain2019attention,
+  title     = {Attention is not Explanation},
+  author    = {Jain, Sarthak and Wallace, Byron C.},
+  booktitle = {NAACL-HLT},
+  year      = {2019},
+  note      = {arXiv:1902.10186}
+}
+
+@inproceedings{wiegreffe2019attention,
+  title     = {Attention is not not Explanation},
+  author    = {Wiegreffe, Sarah and Pinter, Yuval},
+  booktitle = {EMNLP-IJCNLP},
+  year      = {2019},
+  note      = {arXiv:1908.04626}
+}
+
+% ---- Equivalence testing (TOST) for the "synergy is statistically zero" claim ----
+
+@article{lakens2018tost,
+  title   = {Equivalence Testing for Psychological Research: A Tutorial},
+  author  = {Lakens, Dani{\"e}l and Scheel, Anne M. and Isager, Peder M.},
+  journal = {Advances in Methods and Practices in Psychological Science},
+  volume  = {1},
+  number  = {2},
+  pages   = {259--269},
+  year    = {2018}
+}
+
+% ============================================================================
+% Related work — verified arXiv IDs / venues (grounding pass)
+% ============================================================================
+
+% ---- Closest competitors: multi-view / urban VLM benchmarks ----
+
+@inproceedings{urbench2025,
+  title     = {{UrBench}: A Comprehensive Benchmark for Evaluating Large Multimodal Models in Multi-View Urban Scenarios},
+  author    = {Zhou, Baichuan and Yang, Haote and Chen, Dairong and Ye, Junyan and Bai, Tianyi and Yu, Jinhua and Zhang, Songyang and Lin, Dahua and He, Conghui and Li, Weijia},
+  booktitle = {Proc. AAAI Conf. Artif. Intell. (AAAI)},
+  year      = {2025},
+  note      = {arXiv:2408.17267}
+}
+
+@inproceedings{urbanllava2025,
+  title     = {{UrbanLLaVA}: A Multi-modal Large Language Model for Urban Intelligence with Spatial Reasoning and Understanding},
+  author    = {Feng, Jie and Wang, Shengyuan and Liu, Tianhui and Xi, Yanxin and Li, Yong},
+  booktitle = {Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)},
+  year      = {2025},
+  note      = {arXiv:2506.23219}
+}
+
+@article{citycube2026,
+  title   = {{CityCube}: Benchmarking Cross-view Spatial Reasoning on Vision-Language Models in Urban Environments},
+  author  = {Xu, Haotian and Hu, Yue and Zhu, Zhengqiu and Gao, Chen and Wang, Ziyou and Rao, Junreng and Lu, Wenhao and Li, Weishi and Yin, Quanjun and Li, Yong},
+  journal = {arXiv preprint arXiv:2601.14339},
+  year    = {2026}
+}
+
+@inproceedings{citylens2026,
+  title     = {{CityLens}: Evaluating Large Vision-Language Models for Urban Socioeconomic Sensing},
+  author    = {Liu, Tianhui and Pang, Hetian and Zhang, Xin and Ouyang, Tianjian and Zhang, Zhiyuan and Feng, Jie and Li, Yong and Hui, Pan},
+  booktitle = {Int. Conf. Learn. Represent. (ICLR)},
+  year      = {2026},
+  note      = {arXiv:2506.00530}
+}
+
+% ---- Aerial+ground fusion for recognition / the marginal value of a second view ----
+
+@article{suel2021multimodal,
+  title   = {Multimodal deep learning from satellite and street-level imagery for measuring income, overcrowding, and environmental deprivation in urban areas},
+  author  = {Suel, Esra and Bhatt, Samir and Brauer, Michael and Flaxman, Seth and Ezzati, Majid},
+  journal = {Remote Sensing of Environment},
+  volume  = {257},
+  pages   = {112339},
+  year    = {2021}
+}
+
+@inproceedings{wang2020multimodal,
+  title     = {What Makes Training Multi-modal Classification Networks Hard?},
+  author    = {Wang, Weiyao and Tran, Du and Feiszli, Matt},
+  booktitle = {Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. (CVPR)},
+  year      = {2020},
+  note      = {arXiv:1905.12681}
+}
+
+@inproceedings{liang2023quantifying,
+  title     = {Quantifying \& Modeling Multimodal Interactions: An Information Decomposition Framework},
+  author    = {Liang, Paul Pu and others},
+  booktitle = {Adv. Neural Inf. Process. Syst. (NeurIPS)},
+  year      = {2023},
+  note      = {arXiv:2302.12247}
+}
+
+@inproceedings{huang2021makes,
+  title     = {What Makes Multi-modal Learning Better than Single (Provably)},
+  author    = {Huang, Yu and Du, Chenzhuang and Xue, Zihui and Chen, Xuanyao and Zhao, Hang and Huang, Longbo},
+  booktitle = {Adv. Neural Inf. Process. Syst. (NeurIPS)},
+  year      = {2021},
+  note      = {arXiv:2106.04538}
+}
+
+@inproceedings{workman2017unified,
+  title     = {A Unified Model for Near and Remote Sensing},
+  author    = {Workman, Scott and Zhai, Menghua and Crandall, David J. and Jacobs, Nathan},
+  booktitle = {Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)},
+  year      = {2017},
+  note      = {arXiv:1708.03035}
+}
+
+@inproceedings{machado2021airound,
+  title   = {{AiRound} and {CV-BrCT}: Novel Multiview Datasets for Scene Classification},
+  author  = {Machado, Gabriel and Ferreira, Edemir and Nogueira, Keiller and Oliveira, Hugo and Brito, Matheus and Gama, Pedro H. T. and dos Santos, Jefersson A.},
+  journal = {IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing},
+  volume  = {14},
+  year    = {2021},
+  note    = {arXiv:2008.01133}
+}
+
+% ---- Cross-view geo-localization (both views jointly necessary) ----
+
+@article{durgam2024crossview,
+  title   = {Cross-view geo-localization: a survey},
+  author  = {Durgam, Abhilash and Paheding, Sidike and Dhiman, Vikas and Devabhaktuni, Vijay},
+  journal = {IEEE Access},
+  year    = {2024},
+  note    = {arXiv:2406.09722}
+}
+
+@inproceedings{zhai2017predicting,
+  title     = {Predicting Ground-Level Scene Layout from Aerial Imagery},
+  author    = {Zhai, Menghua and Bessinger, Zachary and Workman, Scott and Jacobs, Nathan},
+  booktitle = {Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. (CVPR)},
+  year      = {2017},
+  note      = {arXiv:1612.02709 (CVUSA)}
+}
+
+@inproceedings{zhu2021vigor,
+  title     = {{VIGOR}: Cross-View Image Geo-localization beyond One-to-one Retrieval},
+  author    = {Zhu, Sijie and Yang, Taojiannan and Chen, Chen},
+  booktitle = {Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recog. (CVPR)},
+  year      = {2021},
+  note      = {arXiv:2011.12172}
+}
+
+@inproceedings{zhang2023geodtr,
+  title     = {Cross-view Geo-localization via Learning Disentangled Geometric Layout Correspondence},
+  author    = {Zhang, Xiaohan and Li, Xingyu and Sultani, Waqas and Zhou, Yi and Wshah, Safwan},
+  booktitle = {Proc. AAAI Conf. Artif. Intell. (AAAI)},
+  year      = {2023},
+  note      = {arXiv:2212.04074 (GeoDTR)}
+}
+
+% ---- Remote-sensing VQA / benchmarks (single overhead view) ----
+
+@article{lobry2020rsvqa,
+  title   = {{RSVQA}: Visual Question Answering for Remote Sensing Data},
+  author  = {Lobry, Sylvain and Marcos, Diego and Murray, Jesse and Tuia, Devis},
+  journal = {IEEE Transactions on Geoscience and Remote Sensing},
+  volume  = {58},
+  number  = {12},
+  year    = {2020},
+  note    = {arXiv:2003.07333}
+}
+
+@inproceedings{li2024vrsbench,
+  title     = {{VRSBench}: A Versatile Vision-Language Benchmark Dataset for Remote Sensing Image Understanding},
+  author    = {Li, Xiang and Ding, Jian and Elhoseiny, Mohamed},
+  booktitle = {Adv. Neural Inf. Process. Syst. (NeurIPS)},
+  year      = {2024},
+  note      = {arXiv:2406.12384}
+}
+
+@article{zhang2024earthgpt,
+  title   = {{EarthGPT}: A Universal Multimodal Large Language Model for Multisensor Image Comprehension in Remote Sensing Domain},
+  author  = {Zhang, Wei and Cai, Miaoxin and Zhang, Tong and Zhuang, Yin and Mao, Xuerui},
+  journal = {IEEE Transactions on Geoscience and Remote Sensing},
+  year    = {2024},
+  note    = {arXiv:2401.16822}
+}
+
+@inproceedings{deuser2023sample4geo,
+  title     = {{Sample4Geo}: Hard Negative Sampling For Cross-View Geo-Localisation},
+  author    = {Deuser, Fabian and Habel, Konrad and Oswald, Norbert},
+  booktitle = {Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)},
+  year      = {2023},
+  note      = {arXiv:2303.11851}
+}
