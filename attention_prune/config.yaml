@@ -1,0 +1,61 @@
+# attention_prune — Phase 1 collector config.
+#
+# Points at the raw (NON-quantized) solver and the 8 urban topics. The model must
+# load in transformers + attn_implementation="eager" (the only way to read
+# attention); AWQ/vLLM cannot expose it. Run on lab-ws (RTX 6000 Pro 96GB).
+
+# Solver: raw bf16 Qwen3.6-27B. Set to the local lab-ws path once downloaded;
+# a bare hub id also works (downloads on first load on lab-ws).
+model:
+  key: qwen36_27b
+  display: "Qwen3.6-27B (raw bf16, eager)"
+  hf_id: Qwen/Qwen3.6-27B          # <-- set to the lab-ws local path when ready
+  # vision_start_id / vision_end_id are AUTO-DETECTED from the tokenizer
+  # (do NOT assume Qwen3.5's ids); override here only if detection fails.
+  # vision_start_id: 0
+  # vision_end_id: 0
+
+dataset:
+  path: dataset_content/EODATA_compressed_final/benchmark/benchmark_with_answers.jsonl
+  image_root: dataset_content/EODATA_compressed_final/benchmark
+
+# The 8 urban-attribute topics we keep (green_space deferred). sv_only is forced
+# for all of them: the whole branch is about street-view redundancy, so the
+# satellite is dropped and only the four SV angles are fed.
+topics:
+  - amenity_richness
+  - building_height
+  - junction_type
+  - land_use
+  - road_surface
+  - road_type
+  - transit_density
+  - urban_density
+
+# Solve ladder — fast generation, no attention. Tried in order; freeze on first
+# correct. Greedy (temp 0) first so the easy case yields deterministic attention.
+# Each rung pairs a temperature with the prompt variants to try at it.
+ladder:
+  - {temp: 0.0, variants: [neutral]}            # deterministic; gold case
+  - {temp: 0.0, variants: [steer]}              # steer, still deterministic
+  - {temp: 0.3, variants: [neutral, steer], samples: 2}
+  - {temp: 0.7, variants: [neutral, steer], samples: 2}
+  - {temp: 1.0, variants: [neutral, steer], samples: 2}
+
+# Attention capture on the winning attempt.
+attention:
+  layers: all                 # all | last_25pct | [start, end]
+  max_pixels: 1048576         # 96GB headroom -> bigger images than the 5090 cap
+  store_per_layer: true       # viewer scrubs layers
+  # For a sampled (temp>0) win, re-sample with the saved seed up to N times to
+  # reproduce the correct letter before reading attention. If none reproduce ->
+  # solved_unstable (excluded from pruning).
+  sampled_reproduce_tries: 3
+
+generation:
+  max_new_tokens: 8           # single-letter answer; small budget
+  base_seed: 3407             # winning seed = base_seed + attempt_index (recorded)
+
+output:
+  dir: attention_prune/solved   # solved/<model.key>/ written here
+  limit_per_topic: 0            # >0 for smoke testing
