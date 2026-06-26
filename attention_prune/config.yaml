@@ -59,3 +59,21 @@ generation:
 output:
   dir: attention_prune/solved   # solved/<model.key>/ written here
   limit_per_topic: 0            # >0 for smoke testing
+
+# Phase 2 (prune.py): re-ask each solved question on the attended k-image subset
+# in a SINGLE GREEDY PASS. Pure benchmark — no retries, no sampling, no steering.
+prune:
+  pool: [solved_greedy]   # which Phase-1 statuses enter Phase 2 (greedy-only: no
+                          # sampling on EITHER end, per the user's decision)
+  ks: [1]                 # subset sizes to test; script supports [1,2,3]
+  signal: mean            # attention ranking: mean | layer | band
+  layer: null             # for signal=layer: which layer; for band: band start
+  random_seed: 3407       # fixed seed for the random-k control
+  headline_only: false    # if true, restrict to neutral-greedy headline-eligible
+  # Arms (the negative controls make the survival number falsifiable):
+  #   top    keep the k MOST-attended images        (the claim)
+  #   fwd    k=1 only: always keep along_fwd         (tests "fwd is THE image")
+  #   random keep k at random_seed                   (control: does any k work?)
+  #   bottom keep the k LEAST-attended               (control: does rank matter?)
+  #   zero   k=0: no images                          (leakage detector)
+  arms: [top, fwd, random, bottom, zero]
