@@ -65,10 +65,12 @@ output:
 prune:
   pool: [solved_greedy]   # which Phase-1 statuses enter Phase 2 (greedy-only: no
                           # sampling on EITHER end, per the user's decision)
-  ks: [1]                 # subset sizes to test; script supports [1,2,3]
+  ks: [1, 2, 3]           # subset sizes to test (full survival curve)
   signal: mean            # attention ranking: mean | layer | band
   layer: null             # for signal=layer: which layer; for band: band start
-  random_seed: 3407       # fixed seed for the random-k control
+  random_seeds: [3407, 101, 202]  # the random-k control is run once per seed (each
+                          # a stable per-question draw) and pooled in analysis, with
+                          # the per-seed spread reported so the gap isn't one lucky draw
   headline_only: false    # if true, restrict to neutral-greedy headline-eligible
   # Arms (the negative controls make the survival number falsifiable):
   #   top    keep the k MOST-attended images        (the claim)

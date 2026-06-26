@@ -137,31 +137,50 @@ def rank_roles(attn: dict, signal: str, layer: int | None) -> list[str] | None:
     return [roles[i] for i in order]
 
 
+def _stable_seed(rng_seed: int, qid: str, all_roles: list[str]) -> int:
+    """A process-stable per-question seed (Python's str hash is salted, so we must
+    NOT use hash()/__hash__ here or the 'deterministic' random subset changes run
+    to run, breaking resume and reproducibility)."""
+    import hashlib
+    h = hashlib.sha256(f"{rng_seed}|{qid}|{','.join(all_roles)}".encode()).hexdigest()
+    return int(h[:16], 16)
+
+
+def parse_arm(arm: str):
+    """Split an arm id into (base, seed). 'random:101' -> ('random', 101); a bare
+    'random' -> ('random', None) meaning use the config default seed."""
+    if ":" in arm:
+        base, s = arm.split(":", 1)
+        return base, int(s)
+    return arm, None
+
+
 def subset_for_arm(ranked: list[str], all_roles: list[str], arm: str, k: int,
-                   rng_seed: int) -> list[str] | None:
+                   rng_seed: int, qid: str = "") -> list[str] | None:
     """The roles to KEEP for a given arm at size k. ranked is most→least attended.
 
     Order of the returned roles follows all_roles (the canonical image order), so
     the rebuilt prompt numbers images consistently regardless of attention rank.
+    `arm` may be 'random:SEED' to pick a specific random-control seed.
     Returns None if the arm is undefined for this k.
     """
-    if arm == "zero" or k == 0:
+    base, seed = parse_arm(arm)
+    if base == "zero" or k == 0:
         return []
-    if arm == "fwd":
+    if base == "fwd":
         if k != 1:
             return None
-        keep = [FWD_ROLE] if FWD_ROLE in all_roles else None
-        return keep
+        return [FWD_ROLE] if FWD_ROLE in all_roles else None
     if k >= len(all_roles):
         keep = list(all_roles)  # nothing pruned
-    elif arm == "top":
+    elif base == "top":
         keep = ranked[:k]
-    elif arm == "bottom":
+    elif base == "bottom":
         keep = ranked[-k:]
-    elif arm == "random":
-        # deterministic per-question shuffle: seed from a stable hash of roles
+    elif base == "random":
         import random
-        r = random.Random((rng_seed, tuple(all_roles)).__hash__())
+        r = random.Random(_stable_seed(seed if seed is not None else rng_seed,
+                                       qid, all_roles))
         idx = list(range(len(all_roles)))
         r.shuffle(idx)
         keep = [all_roles[i] for i in idx[:k]]
@@ -293,20 +312,31 @@ class GreedyRunner:
 # Worklist: (solved_greedy record × arm × k) -> a greedy pass over kept images
 # ---------------------------------------------------------------------------
 
-def _arms_for(k: int, arms_cfg: list[str]) -> list[str]:
-    """The arms that are defined at this k. 'fwd' only at k=1; 'zero' handled at k=0."""
+def _arms_for(k: int, arms_cfg: list[str], random_seeds: list[int]) -> list[str]:
+    """The concrete arm ids defined at this k.
+
+    'fwd' only at k=1; 'zero' is added separately as its own k=0 pass. The
+    'random' control is expanded into one arm per seed ('random:3407', ...) so
+    each seed is an independent, separately-resumable draw the analysis can pool.
+    A k that keeps all images makes the random control degenerate (it would equal
+    top/bottom), so we collapse the random seeds to a single arm there.
+    """
     out = []
     for a in arms_cfg:
         if a == "fwd" and k != 1:
             continue
         if a == "zero":
-            continue   # zero is its own k=0 pass, added separately
-        out.append(a)
+            continue
+        if a == "random":
+            seeds = random_seeds if k < 4 else random_seeds[:1]  # k>=4 = no pruning
+            out.extend(f"random:{s}" for s in seeds)
+        else:
+            out.append(a)
     return out
 
 
 def build_tasks(solved_records, image_root, max_edge, signal, layer,
-                ks, arms_cfg, rng_seed, headline_only):
+                ks, arms_cfg, random_seeds, headline_only):
     """Materialize the (record, arm, k, kept_roles, pil_subset, user_text) tasks.
 
     Images are built ONCE per record (full 4 SV angles) and sliced per arm, so we
@@ -342,22 +372,22 @@ def build_tasks(solved_records, image_root, max_edge, signal, layer,
         by_role = {s["role"]: s["image"] for s in sv}
         gold = rec_wrap.get("gold") or suite_parsing.parse_letter(rec.get("answer"))
 
-        per_k = list(ks)
-        added_zero = False
-        for k in per_k:
-            for arm in _arms_for(k, arms_cfg):
-                keep = subset_for_arm(ranked, all_roles, arm, k, rng_seed)
+        qid = rec.get("question_id")
+        for k in ks:
+            for arm in _arms_for(k, arms_cfg, random_seeds):
+                keep = subset_for_arm(ranked, all_roles, arm, k,
+                                      random_seeds[0], qid=qid)
                 if keep is None:
                     continue
                 pil = [by_role[r] for r in keep]
                 text = suite_prompt.build_user_text(rec, keep)
                 tasks.append({
-                    "question_id": rec.get("question_id"), "topic": rec_wrap["topic"],
+                    "question_id": qid, "topic": rec_wrap["topic"],
                     "city": rec.get("city"), "gold": gold, "options": rec.get("options"),
                     "arm": arm, "k": k, "kept_roles": keep,
                     "pil": pil, "user_text": text,
                 })
-        if want_zero and not added_zero:
+        if want_zero:
             text0 = suite_prompt.build_user_text(rec, [])
             tasks.append({
                 "question_id": rec.get("question_id"), "topic": rec_wrap["topic"],
@@ -415,18 +445,27 @@ def analyze(out_dir: Path, data_path: Path):
     rows = [json.loads(l) for l in open(rp) if l.strip()]
     blind = _blind_baselines(data_path)
 
-    # survival[(topic, arm, k)] = (n_correct, n_total)
+    # survival[(topic, base_arm, k)] = (n_correct, n_total); the per-seed random
+    # arms ('random:3407', ...) are POOLED into one 'random' estimate. We also keep
+    # per-seed survival to report the spread across seeds (robustness of the control).
     surv = defaultdict(lambda: [0, 0])
-    ks = set()
-    arms = set()
+    seed_surv = defaultdict(lambda: [0, 0])   # (topic, seed, k) -> for random arms
+    ks, bases, rand_seeds = set(), set(), set()
     for r in rows:
-        key = (r["topic"], r["arm"], r["k"])
+        base, seed = parse_arm(r["arm"])
+        key = (r["topic"], base, r["k"])
         surv[key][1] += 1
         surv[key][0] += int(r["correct"])
+        if base == "random" and seed is not None:
+            sk = (r["topic"], seed, r["k"])
+            seed_surv[sk][1] += 1
+            seed_surv[sk][0] += int(r["correct"])
+            rand_seeds.add(seed)
         ks.add(r["k"])
-        arms.add(r["arm"])
+        bases.add(base)
     ks = sorted(ks)
-    arm_order = [a for a in ["top", "fwd", "random", "bottom", "zero"] if a in arms]
+    rand_seeds = sorted(rand_seeds)
+    arm_order = [a for a in ["top", "fwd", "random", "bottom", "zero"] if a in bases]
 
     def cell(topic, arm, k):
         c, n = surv.get((topic, arm, k), [0, 0])
@@ -477,11 +516,28 @@ def analyze(out_dir: Path, data_path: Path):
                 line = f"\n  {label}: top-{k} survival {100*pt:.1f}% [{100*lt:.0f},{100*ht:.0f}] (n={ta})"
                 if ra:
                     pr, lr, hr = wilson(rc, ra)
-                    line += f"  | random-{k} {100*pr:.1f}%  | gap {100*(pt-pr):+.1f}pp"
+                    line += f"  | random-{k} {100*pr:.1f}% (pooled over {len(rand_seeds) or 1} seeds)"
+                    line += f"  | gap {100*(pt-pr):+.1f}pp"
                 if ba:
                     pb, _, _ = wilson(bc, ba)
                     line += f"  | bottom-{k} {100*pb:.1f}%"
                 print(line)
+                # per-seed spread of the random control over the SAFE pool — shows
+                # the gap isn't an artifact of one lucky/unlucky random draw.
+                if len(rand_seeds) > 1:
+                    seed_pcts = []
+                    for s in rand_seeds:
+                        sc = sn = 0
+                        for topic in tset:
+                            c, n = seed_surv.get((topic, s, k), [0, 0])
+                            sc += c; sn += n
+                        if sn:
+                            seed_pcts.append(100 * sc / sn)
+                    if seed_pcts:
+                        lo_s, hi_s = min(seed_pcts), max(seed_pcts)
+                        print(f"    random-{k} per-seed: "
+                              + " ".join(f"{p:.1f}%" for p in seed_pcts)
+                              + f"  (spread {hi_s-lo_s:.1f}pp)")
 
     # k=0 leakage detector
     if 0 in ks:
@@ -591,7 +647,13 @@ def main():
     signal = pcfg.get("signal", "mean")
     layer = pcfg.get("layer")
     arms_cfg = pcfg.get("arms", ["top", "fwd", "random", "bottom", "zero"])
-    rng_seed = int(pcfg.get("random_seed", 3407))
+    # Multiple seeds for the random control → the random arm is one independent draw
+    # per seed; the analysis pools them and reports the per-seed spread. Back-compat:
+    # a single 'random_seed' is honored if 'random_seeds' is absent.
+    random_seeds = pcfg.get("random_seeds")
+    if not random_seeds:
+        random_seeds = [int(pcfg.get("random_seed", 3407))]
+    random_seeds = [int(s) for s in random_seeds]
     headline_only = bool(pcfg.get("headline_only", False))
     pool = set(pcfg.get("pool", ["solved_greedy"]))
     ks = args.ks or pcfg.get("ks", [1])
@@ -617,11 +679,12 @@ def main():
         solved = solved[:args.limit]
     print(f"pool={sorted(pool)} headline_only={headline_only} -> {len(solved)} Phase-1 records",
           flush=True)
-    print(f"signal={signal} layer={layer} ks={ks} arms={arms_cfg} seed={rng_seed}", flush=True)
+    print(f"signal={signal} layer={layer} ks={ks} arms={arms_cfg} "
+          f"random_seeds={random_seeds}", flush=True)
 
     max_edge = int(cfg.get("attention", {}).get("image_max_edge", 768))
     tasks = build_tasks(solved, image_root, max_edge, signal, layer, ks,
-                        arms_cfg, rng_seed, headline_only)
+                        arms_cfg, random_seeds, headline_only)
     print(f"tasks: {len(tasks)}  per-arm {dict(Counter(t['arm'] for t in tasks))}", flush=True)
 
     done = _load_done(out_dir)
@@ -661,7 +724,7 @@ def main():
 
     meta = {"model": cfg["model"], "signal": signal, "layer": layer, "ks": ks,
             "arms": arms_cfg, "pool": sorted(pool), "headline_only": headline_only,
-            "random_seed": rng_seed, "n_tasks": len(tasks),
+            "random_seeds": random_seeds, "n_tasks": len(tasks),
             "dataset": {"path": str(data_path), "image_root": str(image_root)},
             "git_sha": _git_sha(), "elapsed_s": round(time.time() - t0, 1)}
     (out_dir / "prune_meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False))
