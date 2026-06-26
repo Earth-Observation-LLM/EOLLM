@@ -573,8 +573,30 @@ def main():
 
     cfg = yaml.safe_load(open(args.config))
     ds = cfg["dataset"]
-    data_path = REPO / ds["path"] if not Path(ds["path"]).is_absolute() else Path(ds["path"])
-    image_root = REPO / ds["image_root"] if not Path(ds["image_root"]).is_absolute() else Path(ds["image_root"])
+
+    def _resolve_data(rel: str) -> Path:
+        """Resolve a dataset path. Absolute -> as-is. Repo-relative -> under REPO;
+        but on a host where the dataset lives elsewhere (lab-ws: under training/),
+        DATASET_DIR points at the EODATA root, so a path like
+        'dataset_content/EODATA_compressed_final/benchmark/X' is remapped onto it."""
+        p = Path(rel)
+        if p.is_absolute():
+            return p
+        cand = REPO / rel
+        if cand.exists():
+            return cand
+        dd = os.environ.get("DATASET_DIR")
+        if dd:
+            # strip everything up to and including '.../EODATA_compressed_final/'
+            marker = "EODATA_compressed_final/"
+            tail = rel.split(marker, 1)[1] if marker in rel else Path(rel).name
+            remapped = Path(dd) / tail
+            if remapped.exists():
+                return remapped
+        return cand  # let the open() fail loudly with the repo-relative path
+
+    data_path = _resolve_data(ds["path"])
+    image_root = _resolve_data(ds["image_root"])
     topics = set(args.topics or cfg["topics"])
     limit = args.limit_per_topic if args.limit_per_topic is not None else cfg["output"].get("limit_per_topic", 0)
 
