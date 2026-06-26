@@ -31,6 +31,31 @@ from composite_utils import (
     make_sat_marked,
 )
 
+# ---------------------------------------------------------------------------
+# Street-view angle gate (satellite_marked only)
+# ---------------------------------------------------------------------------
+# SV_ANGLES restricts which of the 4 street-view angles are fed for
+# satellite_marked urban-attribute questions. Default = all 4 (no behavior
+# change). Set SV_ANGLES=along_fwd to feed marked-satellite + forward only —
+# the "sat + forward" ablation motivated by the Phase-2 attention-prune finding
+# that the forward camera is the one image that carries the answer. Comma-
+# separated for any subset, e.g. SV_ANGLES=along_fwd,cross_left. Only affects
+# the satellite_marked branch; every other image_mode is untouched.
+_SV_ANGLES_ENV = os.environ.get("SV_ANGLES", "").strip()
+SV_ANGLES_KEEP = (
+    [a.strip() for a in _SV_ANGLES_ENV.split(",") if a.strip()]
+    if _SV_ANGLES_ENV
+    else list(STV_ANGLES)
+)
+# Fail loud on a typo (e.g. SV_ANGLES=fwd) rather than silently drop every SV
+# image and train satellite-only without anyone noticing.
+_BAD_ANGLES = [a for a in SV_ANGLES_KEEP if a not in STV_ANGLES]
+if _BAD_ANGLES:
+    raise ValueError(
+        f"SV_ANGLES contains unknown angle(s) {_BAD_ANGLES}. "
+        f"Valid angles: {list(STV_ANGLES)}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -234,7 +259,10 @@ def convert_record(record: dict, base_dir: str, max_edge: int) -> dict:
             "along_fwd": "Fwd", "along_bwd": "Bwd",
             "cross_left": "Left", "cross_right": "Right",
         }
-        for angle in STV_ANGLES:
+        # SV_ANGLES_KEEP gates which angles are fed (default all 4). Iterate in
+        # canonical STV_ANGLES order, skipping any not requested, so the kept
+        # images keep a stable order regardless of how SV_ANGLES was written.
+        for angle in (a for a in STV_ANGLES if a in SV_ANGLES_KEEP):
             key = f"streetview_{angle}"
             sv_rel = record["images"].get(key)
             if not sv_rel:
@@ -413,7 +441,10 @@ IMG_COUNT_BY_MODE = {
     "streetview_composite": 5,
     "streetview_binary":    5,
     "streetview_mega":      2,
-    "satellite_marked":     5,
+    # satellite_marked = 1 marked-satellite + the kept SV angles (default 4).
+    # Tracks SV_ANGLES_KEEP so the probe's worst-case batch matches what
+    # training actually builds (fewer images -> larger feasible batch size).
+    "satellite_marked":     1 + len(SV_ANGLES_KEEP),
     "satellite_only":       1,
     "streetview_single":    1,
 }

@@ -97,6 +97,18 @@ COMMON_ENV=(
 [[ "${BENCHMARK}" == "1" ]] || COMMON_ENV+=("SKIP_BENCHMARK=1")
 [[ -n "${BENCHMARK_MODES:-}" ]] && COMMON_ENV+=("BENCHMARK_MODES=${BENCHMARK_MODES}")
 
+# EXTRA_ENV: arbitrary "KEY=value" pairs a config can forward to every job
+# without touching this launcher. Used by ablation configs to set e.g.
+# SV_ANGLES=along_fwd (urban tasks -> sat + forward SV only, see data.py) and
+# EXCLUDE_TOPICS=green_space. --export=ALL in run_one_model.slurm carries them
+# through to train.py. Defined in the config as a bash array:
+#   EXTRA_ENV=("SV_ANGLES=along_fwd" "EXCLUDE_TOPICS=green_space")
+if [[ -n "${EXTRA_ENV+x}" ]]; then
+    for kv in "${EXTRA_ENV[@]}"; do
+        COMMON_ENV+=("${kv}")
+    done
+fi
+
 LOGS_DIR="${SCRIPT_DIR}/logs"
 mkdir -p "${LOGS_DIR}"
 

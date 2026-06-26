@@ -250,6 +250,24 @@ def main():
     split_dir = dataset_dir / SPLIT
     val_records = load_jsonl(str(split_dir / "validation.jsonl"))
     print(f"Val records: {len(val_records)}")
+
+    # EVAL_LIMIT_PER_TOPIC=N subsamples val to the first N records per topic —
+    # a fast smoke-eval that still touches every task (and so every image_mode,
+    # including the gated satellite_marked path). Deterministic: keeps source
+    # order, no shuffle, so a smoke run is reproducible. Unset/0 = full val.
+    _lim = int(os.environ.get("EVAL_LIMIT_PER_TOPIC", "0"))
+    if _lim > 0:
+        import collections as _c
+        _seen = _c.Counter()
+        _kept = []
+        for _r in val_records:
+            _t = _r.get("topic")
+            if _seen[_t] < _lim:
+                _seen[_t] += 1
+                _kept.append(_r)
+        val_records = _kept
+        print(f"EVAL_LIMIT_PER_TOPIC={_lim}: subsampled to {len(val_records)} "
+              f"records across {len(_seen)} topics")
     # IMAGE_MAX_EDGE env overrides the profile default so eval matches the edge the
     # adapter was TRAINED at (512 for the multi-model sweep, not the profile's 768).
     _edge_env = os.environ.get("IMAGE_MAX_EDGE")
