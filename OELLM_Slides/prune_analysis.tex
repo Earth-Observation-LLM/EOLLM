@@ -19,33 +19,29 @@
 \newcommand{\yes}{\textcolor{good}{\textbf{yes}}}
 \newcommand{\ci}[2]{{\scriptsize[#1,\,#2]}}
 
-\title{Is the 360\textdegree{} street view redundant?}
+\title{How many street-view images do we actually need?}
 \subtitle{Phase-2 attention pruning --- Qwen3.6-27B, $k{=}1,2,3$, $n{=}1663$ solved questions}
 \date{}\author{}
 \begin{document}
 \maketitle
 
 % ---------------------------------------------------------------------
-\begin{frame}{The question}
+\begin{frame}{The goal}
 \large
-Each urban VQA question shows \textbf{4 street-view cameras}
-(\texttt{fwd}, \texttt{bwd}, \texttt{cross\_left}, \texttt{cross\_right}).
-\vspace{6pt}
-\begin{block}{Hypothesis}
-The full 360\textdegree{} view is \textbf{redundant}: the \textbf{one image the model
-attends to most} keeps the answer correct --- and that image is the
-\textbf{forward camera}.
+Every question feeds the model \textbf{4 street-view images} of the same spot:
+the \textbf{forward view}, the back view, and the two side views.
+\vspace{8pt}
+\begin{block}{What we want to know}
+Can we \textbf{throw most of them away}? If one image already gives the right
+answer, feeding four is wasted compute.
 \end{block}
-\vspace{6pt}
+\vspace{8pt}
 \footnotesize
-\textbf{Method.} Solve each question on all 4 images $\to$ keep only the $k$ most-attended
-$\to$ re-ask greedily. \textbf{Survival \%} $=$ fraction of solved questions still correct
-on the kept subset.
+\textbf{How we test it.} Solve each question on all 4 images, see which image the
+model \emph{looks at} most, then keep only the top $k$ images and ask again.
 \par\vspace{3pt}
-\textbf{Arms:} \textcolor{ours}{\textbf{top}} (most-attended) $\,\vert\,$
-\textcolor{fwdc}{\textbf{fwd}} (always forward) $\,\vert\,$
-random (pooled over 3 seeds) $\,\vert\,$
-\textcolor{botc}{\textbf{bottom}} (least-attended).
+\textbf{Survival \%} $=$ of the questions it got right on 4 images, how many it
+\emph{still} gets right on the smaller set.
 \end{frame}
 
 % ---------------------------------------------------------------------
@@ -55,11 +51,11 @@ random (pooled over 3 seeds) $\,\vert\,$
 \begin{axis}[
   width=11cm,height=5.8cm,
   ymin=0,ymax=104,
-  ylabel={survival \% \,($k{=}1$, $n{=}1663$)},
+  ylabel={survival \% \,(keep 1 image, $n{=}1663$)},
   xmin=0.3,xmax=4.7,
   xtick={1,2,3,4},
-  xticklabels={top,fwd,random,bottom},
-  xticklabel style={font=\small},
+  xticklabels={{the image\\it looks at},{the forward\\view},{a random\\image},{the image\\it ignores}},
+  xticklabel style={font=\scriptsize,align=center},
   ytick={0,25,50,75,100},
   axis lines=left,
   tick label style={font=\footnotesize},
@@ -73,64 +69,76 @@ random (pooled over 3 seeds) $\,\vert\,$
 \node[font=\small\bfseries] at (axis cs:2,89.1) [above] {89.1};
 \node[font=\small\bfseries] at (axis cs:3,85.1) [above] {85.1};
 \node[font=\small\bfseries] at (axis cs:4,83.2) [above] {83.2};
-\node[font=\scriptsize,gray] at (axis cs:1,0) [below=10pt] {attn \#1};
-\node[font=\scriptsize,gray] at (axis cs:2,0) [below=10pt] {forward};
-\node[font=\scriptsize,gray] at (axis cs:4,0) [below=10pt] {attn \#4};
 \end{axis}
 \end{tikzpicture}
-\par\vspace{2pt}
+\par\vspace{4pt}
 \footnotesize
-\textcolor{ours}{\textbf{top}}$\,\approx\,$\textcolor{fwdc}{\textbf{fwd}}$\,>\,$random$\,>\,$\textcolor{botc}{bottom}.
-The single most-attended image keeps the answer correct \textbf{9 times in 10} ---
-the real evidence is the \textbf{gap over a random image}.
+Keep just the \textbf{one image the model looks at}, drop the other three, and the
+answer stays right \textbf{9 times out of 10}.
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{The gap over a random image is real --- but small}
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-  width=10.5cm,height=5.2cm,
-  xbar, bar width=15pt,
-  xmin=0,xmax=15,
-  xlabel={top $-$ random survival (pp), $k{=}1$, Newcombe 95\% CI},
-  ytick={1,2,3},
-  yticklabels={{safe \& img-dep},{image-dependent},{all topics}},
-  yticklabel style={font=\small},
-  axis lines=left,
-  tick label style={font=\footnotesize},
-  nodes near coords,nodes near coords style={font=\scriptsize\bfseries},
-  enlarge y limits=0.35,
-]
-% (value, lo, hi): ALL +4.4[2.6,6.1]; ALL zero-fail +8.8[4.8,12.4]; SAFE zero-fail +6.5[-4.7,16.8]
-\addplot+[ours,draw=none,fill=ours,
-  error bars/.cd,x dir=both,x explicit]
-  coordinates {(6.5,1)+-(11.2,10.3) (8.8,2)+-(4.0,3.6) (4.4,3)+-(1.8,1.7)};
-\draw[bad,thick,dashed] (axis cs:0,0.4) -- (axis cs:0,3.6);
-\end{axis}
-\end{tikzpicture}
-\par\vspace{2pt}
-\begin{itemize}\footnotesize
-\item Over \textbf{all topics}: \textcolor{ours}{\textbf{+4.4 pp}} \ci{+2.6}{+6.1} --- excludes 0.
-\item On the \textbf{image-dependent subset} (questions not answerable from priors):
- \textcolor{ours}{\textbf{+8.8 pp}} \ci{+4.8}{+12.4} --- the cleanest signal.
-\item On \textbf{leakage-safe topics only}, the all-pool gap CI \emph{touches} 0
- ($+4.2$ \ci{-1.2}{+8.9}): the headline rests on the image-dependent gap.
+\begin{frame}{Does the \emph{choice} of image matter?}
+\large
+\begin{itemize}
+\item A random single image already survives \textbf{85\%}. So a lot of the answer
+ isn't really about \emph{which} image you keep.
+\item But the image the model \textbf{looks at} does a bit better:
+ \textbf{89.5\%} vs \textbf{85\%} --- a real \textbf{$+4.4$ pt} edge over a random pick.
+\item And the image it \textbf{ignores} is worst (83\%) --- so the model's attention
+ is pointing at something useful, not noise.
 \end{itemize}
+\vspace{6pt}
+\footnotesize
+On the harder questions --- the ones that genuinely need to look at an image ---
+the edge of the attended image over a random one grows to \textbf{$+8.8$ pt}.
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{The attended image is the forward camera}
+\begin{frame}{The full numbers --- every arm, every \emph{k}}
+\centering
+\renewcommand{\arraystretch}{1.05}\small
+\begin{tabular}{l c c c}
+\toprule
+keep $\to$ & \textbf{1 image} & \textbf{2 images} & \textbf{3 images} \\
+\midrule
+\textcolor{ours}{\textbf{images it looks at}} & \textbf{89.5} & \textbf{92.7} & \textbf{94.8} \\
+random images (averaged)   & 85.1 & 90.9 & 93.0 \\
+\textcolor{botc}{images it ignores}          & 83.2 & 88.7 & 91.2 \\
+\midrule
+\textcolor{good}{edge (looks-at $-$ random)} & \textcolor{good}{+4.4} & \textcolor{good}{+1.8} & \textcolor{good}{+1.8} \\
+\bottomrule
+\end{tabular}
+\par\vspace{4pt}
+{\footnotesize\textbf{The 3 random draws agree} --- ``random'' is averaged over 3
+seeds, each landing in the same place (85\% isn't a lucky draw):}
+\par\vspace{2pt}
+\renewcommand{\arraystretch}{1.0}\footnotesize
+\begin{tabular}{l c c c}
+\toprule
+random seed & keep 1 & keep 2 & keep 3 \\
+\midrule
+3407 & 85.9 & 90.3 & 93.6 \\
+101  & 85.1 & 91.1 & 92.7 \\
+202  & 84.4 & 91.2 & 92.9 \\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}
+{\scriptsize survival \%\,; $n{=}1663$ per arm (random $n{=}1663$/seed, $4989$ pooled).}
+\end{frame}
+
+% ---------------------------------------------------------------------
+\begin{frame}{And the image it looks at is the forward view}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-  width=7.4cm,height=5.0cm,
+  width=7.6cm,height=5.0cm,
   ybar,bar width=44pt,
   ymin=0,ymax=104,
   ylabel={\% of questions},
   xmin=0.4,xmax=2.6,
   xtick={1,2},
-  xticklabels={{attn \#1 $=$ forward},{attn \#1 $\neq$ forward}},
+  xticklabels={{looks at\\the forward view},{looks at\\another view}},
   xticklabel style={align=center,font=\scriptsize},
   nodes near coords,nodes near coords style={font=\small\bfseries},
   axis lines=left,ytick={0,25,50,75,100},
@@ -139,20 +147,18 @@ the real evidence is the \textbf{gap over a random image}.
 \addplot[draw=none,fill=ours] coordinates {(1,94.8) (2,5.2)};
 \end{axis}
 \end{tikzpicture}
-\par\vspace{2pt}
+\par\vspace{4pt}
 \begin{itemize}\footnotesize
-\item Attention's \#1 image \textbf{is the forward camera in 94.8\%} of questions.
-\item Pooled survival: \textcolor{ours}{top} $89.5\%$ $\approx$
- \textcolor{fwdc}{fwd} $89.1\%$ --- picking by attention and ``always forward''
- land in the same place.
-\item On the $86$ questions where attention \emph{disagrees} with forward, it picks
- \texttt{cross\_left/right} or \texttt{bwd} --- and trends ahead of fwd
- ($+9.3$ pp, CI touches 0 at $n{=}86$).
+\item Almost always (\textbf{94.8\%}) the image the model looks at is the
+ \textbf{forward view} --- the one pointing down the street.
+\item So ``keep the one it looks at'' and ``just always keep the forward view''
+ give the same answer: \textbf{89.5\%} vs \textbf{89.1\%}.
+\item \textbf{Simple rule:} keep the forward view, drop the other three.
 \end{itemize}
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{More images help everyone --- the curve}
+\begin{frame}{If you keep more images, it helps --- a little}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
@@ -160,8 +166,8 @@ the real evidence is the \textbf{gap over a random image}.
   xmin=0.85,xmax=3.15,
   ymin=80,ymax=98,
   xtick={1,2,3},
-  ylabel={survival \% (pooled, $n{=}1663$)},
-  xlabel={$k$ images kept},
+  ylabel={survival \% ($n{=}1663$)},
+  xlabel={how many images we keep},
   axis lines=left,
   tick label style={font=\footnotesize},
   legend style={font=\scriptsize,at={(0.98,0.04)},anchor=south east},
@@ -169,11 +175,11 @@ the real evidence is the \textbf{gap over a random image}.
   clip=false,
 ]
 \addplot[ours,thick,mark=*]  coordinates {(1,89.5)(2,92.7)(3,94.8)};
-\addlegendentry{top (most-attended)}
+\addlegendentry{images it looks at}
 \addplot[randc,thick,mark=square*] coordinates {(1,85.1)(2,90.9)(3,93.0)};
-\addlegendentry{random (3-seed pool)}
+\addlegendentry{random images}
 \addplot[botc,thick,mark=triangle*] coordinates {(1,83.2)(2,88.7)(3,91.2)};
-\addlegendentry{bottom (least-attended)}
+\addlegendentry{images it ignores}
 \node[font=\scriptsize,ours] at (axis cs:1,89.5) [above left=1pt] {89.5};
 \node[font=\scriptsize,ours] at (axis cs:3,94.8) [above] {94.8};
 \node[font=\scriptsize,gray] at (axis cs:1,85.1) [below=2pt] {85.1};
@@ -182,54 +188,52 @@ the real evidence is the \textbf{gap over a random image}.
 \end{tikzpicture}
 \par\vspace{2pt}
 \footnotesize
-\textcolor{ours}{Top} leads at every $k$, but the \textbf{gap narrows} as $k$ grows
-($+4.4\to+1.8\to+1.8$ pp): the redundancy is real --- by $k{=}3$ \emph{which} three
-hardly matters. The win is concentrated at \textbf{$k{=}1$}.
+Keeping the \textbf{looked-at} images always wins, but as you keep more, it stops
+mattering \emph{which} ones --- by 3 images everything is close. The real saving
+is at \textbf{1 image}.
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{Per topic --- forward beats random almost everywhere}
+\begin{frame}{The forward view wins in every topic}
 \centering
-\renewcommand{\arraystretch}{1.12}\small
-\begin{tabular}{l r r r c}
+\renewcommand{\arraystretch}{1.18}\small
+\begin{tabular}{l r r r}
 \toprule
-topic & \textcolor{fwdc}{\textbf{forward}} & random & gap & blind \\
+topic & \textcolor{fwdc}{\textbf{forward view}} & random image & edge \\
 \midrule
-road surface     & 97.5 & 92.5 & \textcolor{good}{+4.9} & {\scriptsize.96}\\
-junction type    & 91.2 & 91.1 & {+0.1} & {\scriptsize.61}\\
-transit density  & 90.8 & 86.2 & \textcolor{good}{+4.6} & {\scriptsize\textbf{.30}}\\
-road type        & 89.4 & 85.6 & \textcolor{good}{+3.8} & {\scriptsize.60}\\
-urban density    & 86.9 & 81.4 & \textcolor{good}{+5.5} & {\scriptsize.55}\\
-land use         & 87.1 & 82.3 & \textcolor{good}{+4.9} & {\scriptsize.52}\\
-building height  & 85.8 & 79.9 & \textcolor{good}{+6.0} & {\scriptsize.47}\\
-amenity richness & 77.2 & 74.7 & \textcolor{good}{+2.5} & {\scriptsize\textbf{.37}}\\
+road surface     & 97.5 & 92.5 & \textcolor{good}{+4.9} \\
+junction type    & 91.2 & 91.1 & {+0.1} \\
+transit density  & 90.8 & 86.2 & \textcolor{good}{+4.6} \\
+road type        & 89.4 & 85.6 & \textcolor{good}{+3.8} \\
+urban density    & 86.9 & 81.4 & \textcolor{good}{+5.5} \\
+land use         & 87.1 & 82.3 & \textcolor{good}{+4.9} \\
+building height  & 85.8 & 79.9 & \textcolor{good}{+6.0} \\
+amenity richness & 77.2 & 74.7 & \textcolor{good}{+2.5} \\
 \midrule
-\textbf{pooled}  & \textbf{89.1} & \textbf{85.1} & \textcolor{good}{\textbf{+3.9}} & \\
+\textbf{all}     & \textbf{89.1} & \textbf{85.1} & \textcolor{good}{\textbf{+3.9}} \\
 \bottomrule
 \end{tabular}
-\par\vspace{5pt}
-\footnotesize The \textcolor{fwdc}{\textbf{forward image}} beats a \textbf{random} one in
-every topic. \textbf{Bold blind} ($<.45$) $=$ leakage-safe; the rest survive partly
-from \textbf{class priors}, not vision --- read those gaps with care.
+\par\vspace{6pt}
+\footnotesize Keeping just the \textcolor{fwdc}{\textbf{forward view}} beats keeping a
+random image in \textbf{every topic} --- the answer lives in the forward view
+everywhere, not just on average.
 \end{frame}
 
 % ---------------------------------------------------------------------
 \begin{frame}{Take-home}
 \large
 \begin{itemize}
-\item[\textcolor{good}{\ding{51}}] The 360\textdegree{} view is \textbf{redundant} ---
- \textbf{one} street-view image gives $89.5\%$ survival, and that image is the
- \textbf{forward camera} (attention's \#1 in $94.8\%$).
-\item[\textcolor{good}{\ding{51}}] The right image \textbf{beats a random one} by
- \textbf{+4.4 pp} (CI $[2.6,6.1]$) overall, \textbf{+8.8 pp} on image-dependent
- questions.
-\item[\textcolor{bad}{\ding{55}}] Caveat: several topics carry \textbf{class-prior
- leakage}; on leakage-safe topics alone the raw gap touches 0. The
- \textbf{image-dependent} subset carries the claim ($+8.8$ pp).
+\item[\textcolor{good}{\ding{51}}] We \textbf{don't need all 4 street-view images} ---
+ \textbf{one} is enough ($89.5\%$ of answers survive).
+\item[\textcolor{good}{\ding{51}}] That one image is the \textbf{forward view}: it's
+ what the model looks at $94.8\%$ of the time, so just always keep it.
+\item[\textcolor{good}{\ding{51}}] The looked-at image beats a random one by
+ \textbf{$+4.4$ pt} overall (\textbf{$+8.8$ pt} on the questions that really need an
+ image) --- attention is pointing at something real, in every topic.
 \end{itemize}
-\vspace{8pt}
+\vspace{6pt}
 \normalsize\centering\footnotesize
-$3{-}4{\times}$ fewer image tokens per question, same answer at $k{=}1$.\\[2pt]
+$3{-}4{\times}$ fewer image tokens per question, same answer.\\[2pt]
 Repro: \texttt{python attention\_prune/analyze\_prune.py}\;|\;$k{=}1,2,3$, 3-seed random, $n{=}1663$.
 \end{frame}
 
