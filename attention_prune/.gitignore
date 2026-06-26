@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 config.smoke.yaml
 .progress_remote.json
+.prune_status_tmp/
