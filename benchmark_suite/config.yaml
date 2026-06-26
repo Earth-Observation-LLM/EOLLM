@@ -45,6 +45,17 @@ models:
     family: qwen
     attention: false          # raw -> vllm if installed, else transformers
 
+  # --- the raw local 9B (vLLM on the 5090; no attention) -------------------
+  - key: qwen35_9b_local
+    display: "Qwen3.5-9B raw (local 5090, vLLM)"
+    hf_id: Qwen/Qwen3.5-9B          # resolved from the HF cache
+    family: qwen
+    backend: vllm
+    attention: false
+    max_model_len: 16384            # requested max context
+    gpu_mem_util: 0.95             # 32GB 5090; weights ~17.7GB, rest -> KV cache
+    max_num_seqs: 24               # ~16x concurrency observed at 16384 ctx; small headroom
+
   # --- a remote AWQ model (vLLM only; lab-ws) ------------------------------
   - key: qwen35_9b_awq
     display: "Qwen3.5-9B AWQ (remote lab-ws)"

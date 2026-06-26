@@ -277,7 +277,12 @@ def run_model(model_cfg, defaults, records, image_root, out_root, out_key, ds_me
         print(f"\n=== {out_key} === SKIP (results/{out_key}/summary.json exists; FORCE=1 to rerun)", flush=True)
         return
     backend_name = resolve_backend(model_cfg)
-    requested_modes = model_cfg.get("modes", defaults.get("modes"))
+    # SUITE_MODES (comma-separated) lets a caller run one mode at a time in
+    # separate processes — the per-mode worklist holds far fewer decoded images
+    # in host RAM than all four modes at once (the large-benchmark OOM/freeze).
+    env_modes = os.environ.get("SUITE_MODES")
+    requested_modes = ([m.strip() for m in env_modes.split(",") if m.strip()]
+                       if env_modes else model_cfg.get("modes", defaults.get("modes")))
     image_max_edge = model_cfg.get("image_max_edge", defaults.get("image_max_edge", 768))
 
     # Satellite-only single-image models (GeoChat / SkySenseGPT) are confined to

@@ -80,6 +80,7 @@ class VLLMBackend(Backend):
             max_num_seqs=max_num_seqs,
             limit_mm_per_prompt={"image": 6},
             trust_remote_code=True,
+            disable_log_stats=False,   # show scheduler "Running: N reqs" lines
         )
         self.processor = AutoProcessor.from_pretrained(hf_id, trust_remote_code=True)
         self.sampling = SamplingParams(temperature=0, max_tokens=8, logprobs=20)
@@ -110,31 +111,45 @@ class VLLMBackend(Backend):
         return out
 
     def run(self, items: list[WorkItem]) -> list[ResultRow]:
-        vinputs = []
-        for it in items:
-            pil = self._resize(it.images)
-            prompt_text = self._build_prompt(it)
-            vinputs.append({"prompt": prompt_text,
-                            "multi_modal_data": {"image": pil} if pil else {}})
-        print(f"  [vllm] generating {len(vinputs)} prompts (batched)...", flush=True)
-        outputs = self.llm.generate(vinputs, sampling_params=self.sampling)
-
-        rows = []
-        for it, out in zip(items, outputs):
-            res = out.outputs[0]
-            raw = res.text.strip()
-            options = it.record["options"]
-            valid = sorted(options.keys())
-            parsed = suite_parsing.parse_answer(raw, options=options)
-            prob_dict = None
-            if res.logprobs:
-                prob_dict = _extract_prob_dict(res.logprobs[0], valid)
-            rows.append(ResultRow(
-                index=it.index, mode=it.mode,
-                gold=suite_parsing.parse_letter(it.record.get("answer")),
-                prediction=parsed.letter, raw_response=raw, prob_dict=prob_dict,
-                hedged=parsed.hedged, refused=parsed.refused,
-                n_images=len(it.images), roles=it.roles))
+        # Generate in CHUNKS so we never hold the decoded pixels for the whole
+        # worklist (20k+ items) in host RAM at once. Building every {prompt,
+        # multi_modal_data} up front and handing it to a single generate() spikes
+        # host memory enough to freeze a desktop on a large benchmark. vLLM only
+        # schedules ~max_num_seqs concurrently regardless, so a chunk in the low
+        # thousands fully saturates the GPU. Tune via SUITE_VLLM_CHUNK / vllm_chunk.
+        import os
+        chunk = int(os.environ.get(
+            "SUITE_VLLM_CHUNK",
+            self.cfg.get("vllm_chunk", self.defaults.get("vllm_chunk", 1024))))
+        rows: list[ResultRow] = []
+        total = len(items)
+        for start in range(0, total, chunk):
+            batch = items[start:start + chunk]
+            vinputs = []
+            for it in batch:
+                pil = self._resize(it.images)
+                prompt_text = self._build_prompt(it)
+                vinputs.append({"prompt": prompt_text,
+                                "multi_modal_data": {"image": pil} if pil else {}})
+            print(f"  [vllm] generating {start}..{start+len(batch)} of {total} "
+                  f"(chunk={chunk})...", flush=True)
+            outputs = self.llm.generate(vinputs, sampling_params=self.sampling)
+            for it, out in zip(batch, outputs):
+                res = out.outputs[0]
+                raw = res.text.strip()
+                options = it.record["options"]
+                valid = sorted(options.keys())
+                parsed = suite_parsing.parse_answer(raw, options=options)
+                prob_dict = None
+                if res.logprobs:
+                    prob_dict = _extract_prob_dict(res.logprobs[0], valid)
+                rows.append(ResultRow(
+                    index=it.index, mode=it.mode,
+                    gold=suite_parsing.parse_letter(it.record.get("answer")),
+                    prediction=parsed.letter, raw_response=raw, prob_dict=prob_dict,
+                    hedged=parsed.hedged, refused=parsed.refused,
+                    n_images=len(it.images), roles=it.roles))
+            del vinputs, outputs  # drop this chunk's pixels before the next
         return rows
 
     def close(self):
