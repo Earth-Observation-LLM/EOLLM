@@ -1,7 +1,7 @@
 % =====================================================================
 %  Phase-2 Attention-Pruning analysis — slide deck
 %  Compile:  tectonic prune_analysis.tex   (auto-fetches metropolis + pgfplots)
-%  Data: attention_prune/analyze_prune_k1.py  (single-seed k=1, n=1663)
+%  Data: attention_prune/analyze_prune.py  (k=1,2,3; random pooled over 3 seeds; n=1663)
 %  All figures drawn natively in TikZ/pgfplots (no embedded PDFs).
 % =====================================================================
 \documentclass[aspectratio=169]{beamer}
@@ -13,14 +13,14 @@
 
 \definecolor{good}{HTML}{2E7D32}\definecolor{bad}{HTML}{C62828}\definecolor{accent}{HTML}{1565C0}
 \definecolor{ours}{HTML}{0D47A1}\definecolor{fwdc}{HTML}{1565C0}\definecolor{randc}{HTML}{9E9E9E}
-\definecolor{botc}{HTML}{C0392B}
+\definecolor{botc}{HTML}{C0392B}\definecolor{zeroc}{HTML}{6D4C41}
 \setbeamercolor{frametitle}{bg=accent}
 \setbeamerfont{frametitle}{size=\large}
 \newcommand{\yes}{\textcolor{good}{\textbf{yes}}}
 \newcommand{\ci}[2]{{\scriptsize[#1,\,#2]}}
 
 \title{Is the 360\textdegree{} street view redundant?}
-\subtitle{Phase-2 attention pruning --- Qwen3.6-27B, $k{=}1$, $n{=}1663$ solved questions}
+\subtitle{Phase-2 attention pruning --- Qwen3.6-27B, $k{=}1,2,3$, $n{=}1663$ solved questions}
 \date{}\author{}
 \begin{document}
 \maketitle
@@ -38,49 +38,87 @@ attends to most} keeps the answer correct --- and that image is the
 \end{block}
 \vspace{6pt}
 \footnotesize
-\textbf{Method.} Solve each question on all 4 images $\to$ keep only the single
-chosen image $\to$ re-ask greedily. \textbf{Survival \%} $=$ fraction of solved
-questions still correct on the kept image.
+\textbf{Method.} Solve each question on all 4 images $\to$ keep only the $k$ most-attended
+$\to$ re-ask greedily. \textbf{Survival \%} $=$ fraction of solved questions still correct
+on the kept subset.
 \par\vspace{3pt}
 \textbf{Arms:} \textcolor{ours}{\textbf{top}} (most-attended) $\,\vert\,$
 \textcolor{fwdc}{\textbf{fwd}} (always forward) $\,\vert\,$
-random $\,\vert\,$ \textcolor{botc}{\textbf{bottom}} (least-attended).
+random (pooled over 3 seeds) $\,\vert\,$
+\textcolor{botc}{\textbf{bottom}} (least-attended) $\,\vert\,$
+\textcolor{zeroc}{\textbf{zero}} (no image --- leakage probe).
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{One image is enough}
+\begin{frame}{One image is (almost) enough}
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-  width=10.5cm,height=5.8cm,
+  width=11cm,height=5.8cm,
   ymin=0,ymax=104,
-  ylabel={survival \% \,($n{=}1663$)},
-  xmin=0.3,xmax=4.7,
-  xtick={1,2,3,4},
-  xticklabels={top,fwd,random,bottom},
+  ylabel={survival \% \,($k{=}1$, $n{=}1663$)},
+  xmin=0.3,xmax=5.7,
+  xtick={1,2,3,4,5},
+  xticklabels={top,fwd,random,bottom,zero},
   xticklabel style={font=\small},
   ytick={0,25,50,75,100},
   axis lines=left,
   tick label style={font=\footnotesize},
   clip=false,
 ]
-\addplot[ybar,bar width=36pt,draw=none,fill=ours]  coordinates {(1,89.5)};
-\addplot[ybar,bar width=36pt,draw=none,fill=fwdc]  coordinates {(2,89.1)};
-\addplot[ybar,bar width=36pt,draw=none,fill=randc] coordinates {(3,82.1)};
-\addplot[ybar,bar width=36pt,draw=none,fill=botc]  coordinates {(4,83.2)};
+\addplot[ybar,bar width=30pt,draw=none,fill=ours]  coordinates {(1,89.5)};
+\addplot[ybar,bar width=30pt,draw=none,fill=fwdc]  coordinates {(2,89.1)};
+\addplot[ybar,bar width=30pt,draw=none,fill=randc] coordinates {(3,85.1)};
+\addplot[ybar,bar width=30pt,draw=none,fill=botc]  coordinates {(4,83.2)};
+\addplot[ybar,bar width=30pt,draw=none,fill=zeroc] coordinates {(5,67.0)};
 \node[font=\small\bfseries] at (axis cs:1,89.5) [above] {89.5};
 \node[font=\small\bfseries] at (axis cs:2,89.1) [above] {89.1};
-\node[font=\small\bfseries] at (axis cs:3,82.1) [above] {82.1};
+\node[font=\small\bfseries] at (axis cs:3,85.1) [above] {85.1};
 \node[font=\small\bfseries] at (axis cs:4,83.2) [above] {83.2};
+\node[font=\small\bfseries] at (axis cs:5,67.0) [above] {67.0};
 \node[font=\scriptsize,gray] at (axis cs:1,0) [below=10pt] {attn \#1};
-\node[font=\scriptsize,gray] at (axis cs:2,0) [below=10pt] {forward};
-\node[font=\scriptsize,gray] at (axis cs:4,0) [below=10pt] {attn \#4};
+\node[font=\scriptsize,gray] at (axis cs:5,0) [below=10pt] {no image};
 \end{axis}
 \end{tikzpicture}
 \par\vspace{2pt}
 \footnotesize
-\textcolor{ours}{\textbf{top}}$\,=\,$\textcolor{fwdc}{\textbf{fwd}}$\,\gg\,$random.
-The single most-attended image keeps the answer correct \textbf{9 times in 10}.
+\textcolor{ours}{\textbf{top}}$\,\approx\,$\textcolor{fwdc}{\textbf{fwd}}$\,>\,$random$\,>\,$\textcolor{botc}{bottom}$\,\gg\,$\textcolor{zeroc}{zero}.
+The single most-attended image keeps the answer correct \textbf{9 times in 10}; even
+\emph{no} image survives $67\%$ --- so the real evidence is the \textbf{gap over random}.
+\end{frame}
+
+% ---------------------------------------------------------------------
+\begin{frame}{The gap over a random image is real --- but small}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=10.5cm,height=5.2cm,
+  xbar, bar width=15pt,
+  xmin=0,xmax=15,
+  xlabel={top $-$ random survival (pp), $k{=}1$, Newcombe 95\% CI},
+  ytick={1,2,3},
+  yticklabels={{SAFE zero-FAIL},{ALL zero-FAIL},{ALL topics}},
+  yticklabel style={font=\small},
+  axis lines=left,
+  tick label style={font=\footnotesize},
+  nodes near coords,nodes near coords style={font=\scriptsize\bfseries},
+  enlarge y limits=0.35,
+]
+% (value, lo, hi): ALL +4.4[2.6,6.1]; ALL zero-fail +8.8[4.8,12.4]; SAFE zero-fail +6.5[-4.7,16.8]
+\addplot+[ours,draw=none,fill=ours,
+  error bars/.cd,x dir=both,x explicit]
+  coordinates {(6.5,1)+-(11.2,10.3) (8.8,2)+-(4.0,3.6) (4.4,3)+-(1.8,1.7)};
+\draw[bad,thick,dashed] (axis cs:0,0.4) -- (axis cs:0,3.6);
+\end{axis}
+\end{tikzpicture}
+\par\vspace{2pt}
+\begin{itemize}\footnotesize
+\item Over \textbf{all topics}: \textcolor{ours}{\textbf{+4.4 pp}} \ci{+2.6}{+6.1} --- excludes 0.
+\item On the \textbf{image-dependent subset} (questions failed with \emph{no} image):
+ \textcolor{ours}{\textbf{+8.8 pp}} \ci{+4.8}{+12.4} --- the cleanest signal.
+\item On \textbf{leakage-safe topics only}, the all-pool gap CI \emph{touches} 0
+ ($+4.2$ \ci{-1.2}{+8.9}): the headline rests on zero-FAIL, not raw survival.
+\end{itemize}
 \end{frame}
 
 % ---------------------------------------------------------------------
@@ -88,7 +126,7 @@ The single most-attended image keeps the answer correct \textbf{9 times in 10}.
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-  width=7.4cm,height=5.4cm,
+  width=7.4cm,height=5.0cm,
   ybar,bar width=44pt,
   ymin=0,ymax=104,
   ylabel={\% of questions},
@@ -109,50 +147,92 @@ The single most-attended image keeps the answer correct \textbf{9 times in 10}.
 \item Pooled survival: \textcolor{ours}{top} $89.5\%$ $\approx$
  \textcolor{fwdc}{fwd} $89.1\%$ --- picking by attention and ``always forward''
  land in the same place.
-\item Practical rule: \textbf{keep the forward image, drop the other three}.
+\item On the $86$ questions where attention \emph{disagrees} with forward, it picks
+ \texttt{cross\_left/right} or \texttt{bwd} --- and trends ahead of fwd
+ ($+9.3$ pp, CI touches 0 at $n{=}86$).
 \end{itemize}
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{Holds across every topic}
+\begin{frame}{More images help everyone --- the curve}
 \centering
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{l r r r}
+\begin{tikzpicture}
+\begin{axis}[
+  width=10.5cm,height=6.0cm,
+  xmin=0.85,xmax=3.15,
+  ymin=80,ymax=98,
+  xtick={1,2,3},
+  ylabel={survival \% (pooled, $n{=}1663$)},
+  xlabel={$k$ images kept},
+  axis lines=left,
+  tick label style={font=\footnotesize},
+  legend style={font=\scriptsize,at={(0.98,0.04)},anchor=south east},
+  legend cell align=left,
+  clip=false,
+]
+\addplot[ours,thick,mark=*]  coordinates {(1,89.5)(2,92.7)(3,94.8)};
+\addlegendentry{top (most-attended)}
+\addplot[randc,thick,mark=square*] coordinates {(1,85.1)(2,90.9)(3,93.0)};
+\addlegendentry{random (3-seed pool)}
+\addplot[botc,thick,mark=triangle*] coordinates {(1,83.2)(2,88.7)(3,91.2)};
+\addlegendentry{bottom (least-attended)}
+\node[font=\scriptsize,ours] at (axis cs:1,89.5) [above left=1pt] {89.5};
+\node[font=\scriptsize,ours] at (axis cs:3,94.8) [above] {94.8};
+\node[font=\scriptsize,gray] at (axis cs:1,85.1) [below=2pt] {85.1};
+\node[font=\scriptsize,botc] at (axis cs:1,83.2) [below=2pt] {83.2};
+\end{axis}
+\end{tikzpicture}
+\par\vspace{2pt}
+\footnotesize
+\textcolor{ours}{Top} leads at every $k$, but the \textbf{gap narrows} as $k$ grows
+($+4.4\to+1.8\to+1.8$ pp): the redundancy is real --- by $k{=}3$ \emph{which} three
+hardly matters. The win is concentrated at \textbf{$k{=}1$}.
+\end{frame}
+
+% ---------------------------------------------------------------------
+\begin{frame}{Per topic --- forward beats random almost everywhere}
+\centering
+\renewcommand{\arraystretch}{1.12}\small
+\begin{tabular}{l r r r c}
 \toprule
-topic & \textcolor{fwdc}{\textbf{forward}} & random & gap \\
+topic & \textcolor{fwdc}{\textbf{forward}} & random & gap & blind \\
 \midrule
-road surface     & 97.5 & 87.0 & \textcolor{good}{+10.5} \\
-junction type    & 91.2 & 89.0 & \textcolor{good}{+2.2} \\
-transit density  & 90.8 & 83.8 & \textcolor{good}{+7.0} \\
-road type        & 89.4 & 82.2 & \textcolor{good}{+7.2} \\
-urban density    & 86.9 & 79.8 & \textcolor{good}{+7.1} \\
-land use         & 87.1 & 79.8 & \textcolor{good}{+7.3} \\
-building height  & 85.8 & 76.9 & \textcolor{good}{+8.9} \\
-amenity richness & 77.2 & 72.8 & \textcolor{good}{+4.4} \\
+road surface     & 97.5 & 92.5 & \textcolor{good}{+4.9} & {\scriptsize.96}\\
+junction type    & 91.2 & 91.1 & {+0.1} & {\scriptsize.61}\\
+transit density  & 90.8 & 86.2 & \textcolor{good}{+4.6} & {\scriptsize\textbf{.30}}\\
+road type        & 89.4 & 85.6 & \textcolor{good}{+3.8} & {\scriptsize.60}\\
+urban density    & 86.9 & 81.4 & \textcolor{good}{+5.5} & {\scriptsize.55}\\
+land use         & 87.1 & 82.3 & \textcolor{good}{+4.9} & {\scriptsize.52}\\
+building height  & 85.8 & 79.9 & \textcolor{good}{+6.0} & {\scriptsize.47}\\
+amenity richness & 77.2 & 74.7 & \textcolor{good}{+2.5} & {\scriptsize\textbf{.37}}\\
 \midrule
-\textbf{pooled}  & \textbf{89.1} & \textbf{82.1} & \textcolor{good}{\textbf{+7.0}} \\
+\textbf{pooled}  & \textbf{89.1} & \textbf{85.1} & \textcolor{good}{\textbf{+3.9}} & \\
 \bottomrule
 \end{tabular}
-\par\vspace{6pt}
-\footnotesize The \textcolor{fwdc}{\textbf{forward image}} beats a \textbf{random}
-one in \textbf{every} topic --- the answer lives in the forward view everywhere.
+\par\vspace{5pt}
+\footnotesize The \textcolor{fwdc}{\textbf{forward image}} beats a \textbf{random} one in
+every topic. \textbf{Bold blind} ($<.45$) $=$ leakage-safe; the rest survive partly
+from \textbf{class priors}, not vision --- read those gaps with care.
 \end{frame}
 
 % ---------------------------------------------------------------------
 \begin{frame}{Take-home}
-\Large
+\large
 \begin{itemize}
 \item[\textcolor{good}{\ding{51}}] The 360\textdegree{} view is \textbf{redundant} ---
- \textbf{one} street-view image suffices ($89.5\%$ survival).
-\item[\textcolor{good}{\ding{51}}] That image is the \textbf{forward camera}
- (\texttt{along\_fwd}), chosen by attention $94.8\%$ of the time.
-\item[\textcolor{good}{\ding{51}}] The right image \textbf{beats a random one}
- by $+7$ pts, in \textbf{every} topic.
+ \textbf{one} street-view image gives $89.5\%$ survival, and that image is the
+ \textbf{forward camera} (attention's \#1 in $94.8\%$).
+\item[\textcolor{good}{\ding{51}}] The right image \textbf{beats a random one} by
+ \textbf{+4.4 pp} (CI $[2.6,6.1]$) overall, \textbf{+8.8 pp} on image-dependent
+ questions.
+\item[\textcolor{bad}{\ding{55}}] Caveat: $67\%$ survives with \emph{no} image
+ (class-prior leakage); on safe topics alone the raw gap touches 0. The
+ \textbf{zero-FAIL} signal carries the claim.
 \end{itemize}
-\vspace{10pt}
+\vspace{8pt}
 \normalsize\centering\footnotesize
-$3{\times}$ fewer image tokens per question, same answer.\\[2pt]
-Repro: \texttt{python attention\_prune/analyze\_prune\_k1.py}\;|\;$n{=}1663$, sha \texttt{b083f41}.
+$3{-}4{\times}$ fewer image tokens per question, same answer at $k{=}1$.\\[2pt]
+Repro: \texttt{python attention\_prune/analyze\_prune.py}\;|\;$k{=}1,2,3$, 3-seed random, $n{=}1663$.
 \end{frame}
 
 \end{document}
