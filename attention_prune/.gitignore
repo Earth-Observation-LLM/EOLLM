@@ -1,0 +1,6 @@
+solved/
+logs/
+__pycache__/
+*.pyc
+config.smoke.yaml
+.progress_remote.json

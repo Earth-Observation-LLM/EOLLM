@@ -53,6 +53,18 @@ import prompt as suite_prompt          # noqa: E402
 import parsing as suite_parsing        # noqa: E402
 import prompts as task_prompts         # noqa: E402
 
+import re as _re
+_THINK_RE = _re.compile(r"<think>.*?</think>", _re.DOTALL | _re.IGNORECASE)
+
+
+def _strip_think(text: str) -> str:
+    """Remove a <think>...</think> block (and any dangling open tag) before the
+    answer is parsed. Backstop only — thinking is verified off at load."""
+    text = _THINK_RE.sub("", text)
+    if "<think>" in text.lower():            # unterminated (truncated by max_new_tokens)
+        text = _re.split(r"(?i)<think>", text)[0]
+    return text.strip()
+
 
 # ---------------------------------------------------------------------------
 # Vision-span token-id auto-detection (do NOT hardcode Qwen3.5's ids)
@@ -123,6 +135,43 @@ class Collector:
         self.n_layers = (getattr(cfg, "num_hidden_layers", None)
                          or (getattr(tc, "num_hidden_layers", None) if tc else None)
                          or 48)
+        self._verify_thinking_off()
+
+    def _verify_thinking_off(self):
+        """Make 'thinking off' real, not just requested. (1) Does the chat
+        template accept enable_thinking? (2) Render a probe turn and assert the
+        generation prompt does NOT invite open-ended reasoning. Fails loudly.
+
+        NB: Qwen renders a CLOSED, EMPTY `<think>\\n\\n</think>` block when thinking
+        is off — that is the correct thinking-off priming (the model is told the
+        reasoning slot is already finished), NOT thinking being on. We only reject
+        a think block that is left OPEN (no closing tag) or non-empty, which is what
+        an actually-thinking template emits."""
+        probe = [{"role": "user", "content": [{"type": "text", "text": "Reply A."}]}]
+        # Empirically test the kwarg (some processors accept **kwargs silently).
+        try:
+            self.processor.apply_chat_template(
+                probe, add_generation_prompt=True, tokenize=False, enable_thinking=False)
+            takes = True
+        except TypeError:
+            takes = False
+        self._template_takes_thinking = takes
+        rendered = self.processor.apply_chat_template(
+            probe, add_generation_prompt=True, tokenize=False,
+            **({"enable_thinking": False} if takes else {}))
+        tail = rendered[rendered.rfind("<|im_start|>assistant"):] if "<|im_start|>assistant" in rendered else rendered
+        opens = tail.count("<think>")
+        closes = tail.count("</think>")
+        # extract any think-block contents in the assistant turn
+        import re
+        nonempty = any(m.strip() for m in re.findall(r"<think>(.*?)</think>", tail, re.DOTALL))
+        if opens > closes or nonempty:
+            raise RuntimeError(
+                "thinking appears ENABLED: the generation prompt has an open or "
+                "non-empty <think> block even with enable_thinking=False. Refusing "
+                "to run — set the model's chat template to non-thinking before "
+                f"collecting attention. (rendered tail: {tail[-120:]!r})")
+        print(f"[load] thinking OFF (template_takes_enable_thinking={takes})", flush=True)
 
     def _tok(self):
         p = self.processor
@@ -153,12 +202,14 @@ class Collector:
 
     def _apply_template(self, item, steer: str) -> str:
         msgs = self._messages(item, steer)
-        try:
+        if self._template_takes_thinking:
             return self.processor.apply_chat_template(
                 msgs, add_generation_prompt=True, tokenize=False, enable_thinking=False)
-        except TypeError:
-            return self.processor.apply_chat_template(
-                msgs, add_generation_prompt=True, tokenize=False)
+        # The signature does not accept enable_thinking. That is only safe if the
+        # template emits NO thinking block by default (verified once at load); the
+        # parse-time <think> strip is a further backstop.
+        return self.processor.apply_chat_template(
+            msgs, add_generation_prompt=True, tokenize=False)
 
     def _make_inputs(self, item, steer: str):
         text = self._apply_template(item, steer)
@@ -188,8 +239,14 @@ class Collector:
         gen = self.model.generate(**inputs, **kwargs)
         prompt_len = inputs["input_ids"].shape[1]
         ans_ids = gen.sequences[0, prompt_len:]          # exact generated ids
+        # Backstop: if the model ever emits a <think>...</think> block despite the
+        # template, drop it BEFORE the answer is parsed. NOTE: ans_ids (used for the
+        # attention forward) are left intact — the attention is read over the actual
+        # generated tokens, and with thinking verified off at load this should be a
+        # no-op in practice; the strip only affects letter PARSING below.
         tok = self._tok()
         raw = tok.decode(ans_ids, skip_special_tokens=True).strip()
+        raw = _strip_think(raw)
         return raw, ans_ids
 
     def solve(self, item) -> dict | None:
@@ -469,6 +526,44 @@ def _git_sha():
         return "unknown"
 
 
+def _load_done(out_dir: Path):
+    """Question ids already recorded + their status counts, for resume."""
+    done, counts = set(), Counter()
+    for name in ("solved.jsonl", "unsolved.jsonl"):
+        p = out_dir / name
+        if not p.exists():
+            continue
+        for line in open(p):
+            if not line.strip():
+                continue
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError:
+                continue  # tolerate a half-written trailing line from a kill
+            qid = r.get("question_id")
+            if qid is not None:
+                done.add(qid)
+                counts[r.get("status", "?")] += 1
+    return done, counts
+
+
+def _write_progress(path: Path, done, total, counts, rate_s, eta_min, model_key):
+    """A small heartbeat file you can poll (status.py / scp) without tailing logs."""
+    headline = counts.get("solved_greedy", 0)  # neutral-greedy subset is computed in analysis;
+    solved = sum(v for k, v in counts.items() if k.startswith("solved"))
+    payload = {
+        "model": model_key,
+        "done": done, "total": total,
+        "pct": round(100 * done / total, 1) if total else 0.0,
+        "rate_s_per_q": round(rate_s, 2),
+        "eta_min": round(eta_min, 1),
+        "solved": solved,
+        "solve_rate_pct": round(100 * solved / done, 1) if done else 0.0,
+        "status_counts": counts,
+    }
+    path.write_text(json.dumps(payload, indent=2))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(HERE / "config.yaml"))
@@ -494,24 +589,39 @@ def main():
     print(f"worklist: {len(work)} questions; per-topic "
           f"{dict(Counter(w['topic'] for w in work))}", flush=True)
 
-    col = Collector(cfg)
     out_dir = (REPO / cfg["output"]["dir"] / cfg["model"]["key"])
     out_dir.mkdir(parents=True, exist_ok=True)
-    solved_f = open(out_dir / "solved.jsonl", "w")
-    unsolved_f = open(out_dir / "unsolved.jsonl", "w")
+
+    # Resume: skip questions already recorded (survives a SLURM timeout/requeue).
+    done_qids, prior_counts = _load_done(out_dir)
+    if done_qids:
+        before = len(work)
+        work = [w for w in work if w["record"].get("question_id") not in done_qids]
+        print(f"resume: {len(done_qids)} already done, {len(work)}/{before} remaining", flush=True)
+
+    col = Collector(cfg)
+    solved_f = open(out_dir / "solved.jsonl", "a")     # append (resume-safe)
+    unsolved_f = open(out_dir / "unsolved.jsonl", "a")
+    progress_path = out_dir / "progress.json"
 
     t0 = time.time()
-    status_counts = Counter()
+    status_counts = Counter(prior_counts)
+    total = len(work) + len(done_qids)
     for n, item in enumerate(work, 1):
         res = col.process(item)
         status_counts[res["status"]] += 1
         f = unsolved_f if res["status"] == "unsolved" else solved_f
         f.write(json.dumps(res, ensure_ascii=False) + "\n")
         f.flush()
-        if n % 10 == 0 or n == len(work):
+        done = n + len(done_qids)
+        if n % 5 == 0 or n == len(work):
             el = time.time() - t0
-            print(f"  [{n}/{len(work)}] {dict(status_counts)} "
-                  f"({el/60:.1f} min, {el/n:.1f}s/q)", flush=True)
+            rate = el / n
+            eta_min = rate * (len(work) - n) / 60
+            _write_progress(progress_path, done, total, dict(status_counts),
+                            rate, eta_min, cfg["model"]["key"])
+            print(f"  [{done}/{total}] {dict(status_counts)} "
+                  f"({el/60:.1f} min, {rate:.1f}s/q, ETA {eta_min:.0f} min)", flush=True)
     col.close()
     solved_f.close()
     unsolved_f.close()
