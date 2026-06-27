@@ -48,6 +48,14 @@ export DATASET_DIR="${DATASET_DIR:-/home/ain480/training/dataset_content/EODATA_
 echo "=== DATASET_DIR=$DATASET_DIR ==="
 [ -f "$DATASET_DIR/composite_utils.py" ] || { echo "!! composite_utils.py not found under DATASET_DIR"; exit 1; }
 
+# Street-view angle gate (satellite_marked only) — must MATCH how the model was
+# trained. For a SV_ANGLES=along_fwd model (sat+forward ablation) submit with
+# SV_ANGLES=along_fwd so eval feeds the same images training did; unset = all 4
+# SV angles (default, every other model). images.py reads this and fails loud on
+# a bad angle. Echo it so the run log records which SV feed was used.
+export SV_ANGLES="${SV_ANGLES:-}"
+echo "=== SV_ANGLES='${SV_ANGLES}' (empty = all 4 SV angles) ==="
+
 # --- probe the max batch size (skipped during smoke / when PROBE_MODEL unset) ---
 if [ -n "${PROBE_MODEL:-}" ] && [ -z "${LIMIT:-}" ]; then
   echo "=== probing max_num_seqs for $PROBE_MODEL (gpu_util=$PROBE_GPU_UTIL, real_max_len=$REAL_MAX_LEN) ==="

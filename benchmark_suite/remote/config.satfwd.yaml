@@ -1,0 +1,52 @@
+# config.satfwd.yaml — lab-ws (vLLM). The sat+forward ablation 9B model:
+# Qwen3.5-9B LoRA (r16) trained on the seen_unseen split with SV_ANGLES=along_fwd,
+# i.e. every satellite_marked record saw marked-sat + FORWARD SV only (2 imgs),
+# never the usual 4 SV angles. Evaluated on (a) its OWN seen_unseen validation
+# split and (b) the shared held-out benchmark.
+#
+# RUN THIS WITH SV_ANGLES=along_fwd IN THE ENVIRONMENT. images.py honours the
+# same gate training used, so the satellite_marked branch feeds marked-sat +
+# forward SV. The four ablation modes then mean, for this model:
+#   full     = marked-sat + forward SV   (its trained, in-distribution input)
+#   sat_only = marked-sat                 (drop the one SV it was trained on)
+#   sv_only  = forward SV                 (drop satellite)
+#   blind    = text only
+# This is the fusion question for a single-STV model: does forward SV + sat beat
+# either view alone? fusion.py --by-topic reads these four to compute synergy /
+# fusion_win / fusion_hurt. Without SV_ANGLES=along_fwd the suite would feed all
+# 4 SV at eval — off-distribution for this model — so the gate is REQUIRED, not
+# optional. submit.slurm exports SV_ANGLES; sanity-check it printed in the log.
+#
+# WHY merged bf16 (not LoRA-in-vLLM): the adapter targets the VISION tower as
+# well as the LM; vLLM's experimental multimodal-LoRA path does not reliably
+# apply vision-tower LoRA and would silently drop trained weights. Merge the
+# adapter to standalone bf16 first (remote/merge_adapter.py + merge_9b.slurm) and
+# point hf_id at the merged dir. The epoch-4 final LoRA is the 76.2%-val model.
+#
+# image_max_edge = 512: this adapter was TRAINED at 512px (same multi-model sweep
+# as config.9b.yaml). Eval MUST match the trained edge. Do not change.
+
+defaults:
+  modes: [blind, sv_only, sat_only, full]   # canonical order; auto-pruned per topic
+  enable_thinking: false
+  image_max_edge: 512
+  max_model_len: 16384
+  max_num_seqs: 64           # fallback only; SLURM probe exports SUITE_MAX_NUM_SEQS
+  gpu_mem_util: 0.90         # headroom for the streetview_mega activation spike
+  seed: 3407
+
+models:
+  # ---- sat+forward seen/unseen model: its own val split (FIRST) + benchmark ---
+  - key: qwen9b_satfwd_seen_unseen
+    display: "Qwen3.5-9B sat+fwd seen/unseen (merged ep4)"
+    hf_id: /home/ain480/training/training/runs/mm_qwen9b_satfwd_r16_seen_unseen/merged_ep4_hf
+    family: qwen
+    backend: vllm
+    attention: false
+    dataset:
+      - tag: seen_unseen_val
+        path: /home/ain480/training/dataset_content/EODATA_compressed_final/splits_seen_unseen/validation.jsonl
+        image_root: /home/ain480/training/dataset_content/EODATA_compressed_final/splits_seen_unseen
+      - tag: benchmark
+        path: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark/benchmark_with_answers.jsonl
+        image_root: /home/ain480/training/dataset_content/EODATA_compressed_final/benchmark

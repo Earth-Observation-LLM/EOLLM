@@ -76,6 +76,30 @@ _ANGLE_LABEL = {
     "cross_right": "Right",
 }
 
+# Street-view angle gate (satellite_marked only) — MIRRORS training/data.py.
+# SV_ANGLES restricts which of the 4 street-view angles are fed for
+# satellite_marked urban-attribute records. Default = all 4 (no behavior
+# change, so every existing eval is byte-identical). Set SV_ANGLES=along_fwd to
+# feed marked-satellite + forward SV only — required to eval a model TRAINED
+# with SV_ANGLES=along_fwd on its own image distribution. The gate runs BEFORE
+# the ablation filter in modes.py, so `full`/`sv_only` compose correctly on top
+# (sv_only then means "forward SV only" for such a model). Comma-separated for
+# any subset, e.g. SV_ANGLES=along_fwd,cross_left.
+_SV_ANGLES_ENV = os.environ.get("SV_ANGLES", "").strip()
+SV_ANGLES_KEEP = (
+    [a.strip() for a in _SV_ANGLES_ENV.split(",") if a.strip()]
+    if _SV_ANGLES_ENV
+    else list(STV_ANGLES)
+)
+# Fail loud on a typo (e.g. SV_ANGLES=fwd) rather than silently drop every SV
+# image and eval satellite-only without anyone noticing.
+_BAD_ANGLES = [a for a in SV_ANGLES_KEEP if a not in STV_ANGLES]
+if _BAD_ANGLES:
+    raise ValueError(
+        f"SV_ANGLES contains unknown angle(s) {_BAD_ANGLES}. "
+        f"Valid angles: {list(STV_ANGLES)}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Resize + corner-label — byte-identical re-implementation of training/data.py
@@ -202,7 +226,10 @@ def build_images(record: dict, base_dir: str | Path, max_edge: int) -> list[dict
         # DIRECTION (Fwd/Bwd/Left/Right) — NOT A/B/C/D (those are the answers).
         sat_path = os.path.join(base, record["images"]["satellite"])
         push("satellite_marked", make_sat_marked(sat_path))
-        for angle in STV_ANGLES:
+        # SV_ANGLES_KEEP gates which angles are fed (default all 4). Iterate in
+        # canonical STV_ANGLES order so kept images keep a stable order
+        # regardless of how SV_ANGLES was written.
+        for angle in (a for a in STV_ANGLES if a in SV_ANGLES_KEEP):
             rel = record["images"].get(f"streetview_{angle}")
             if not rel:
                 continue  # rare missing angle (London SV gaps) — skip, don't fail
