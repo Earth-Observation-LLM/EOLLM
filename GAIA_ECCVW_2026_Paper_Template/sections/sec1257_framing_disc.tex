@@ -1,0 +1,84 @@
+% =====================================================================
+\section{Discussion}
+\label{sec:discussion}
+% =====================================================================
+
+Our reading is that complementarity is a property of the task, not of imagery in
+general. An attribute question---local land use, building height, transit
+access---can be answered from one location's imagery, and the two views then encode
+much the same answer-relevant content, so the model reads it off whichever view is
+convenient and is, on net, distracted by the other. A cross-view question (whether a
+street photo belongs to a tile, or which way a camera points) instead depends on the
+relationship between the views, where our models do use both. The seven attribute
+tasks fall in the first regime, the cross-view tasks in the second.
+
+We frame the mechanism behaviorally and decline to overclaim it. Our measurements
+show the model derives little usable signal from the second view on these tasks and
+is, on net, distracted by it; we do not claim to identify the internal cause.
+Redundant information across views, a representation dominated by one modality, and
+an architecture that fails to combine them would all produce the pattern we observe,
+and our data do not distinguish among them. What we establish is the input--output
+fact---adding the second view does not help and often hurts---which is what a
+practitioner deciding whether to collect it needs to know.
+
+This has a practical consequence. Street-level and high-resolution satellite imagery
+differ sharply in cost, coverage, and licensing, yet for these attribute families the
+second view adds at most a couple of points and degrades about one item in ten. A
+deployment can serve a single view---the cheaper or better-covered one---at little
+accuracy cost; and when both are available, the evidence favors \emph{routing} each
+question to one view over feeding the model both. The synergy, vision-contribution,
+and interference measures we use form a reusable instrument for making that call
+before committing to dual-view collection.
+
+\paragraph{What we do and do not claim.}
+We claim that current VLMs do not, on these urban-attribute tasks, convert a second
+view into accuracy, and that the second view is on net a mild distractor; we do not
+claim VLMs are incapable of fusion---the cross-view controls show the same models
+fusing when fusion is the only route to the answer. We claim the second view's
+information is largely redundant \emph{for these tasks at the resolutions we serve};
+we do not claim satellite imagery is uninformative, nor that no task or higher ground
+sampling distance would benefit. Our title is a question we answer conditionally: the
+second view helps when the task structurally requires cross-view correspondence, and
+largely does not when a single location's attributes are at issue.
+
+\subsection{Limitations and scope}
+\label{sec:limitations}
+The claim concerns seven urban-attribute tasks in four-way MCQ form at commonly
+served satellite resolutions; it is not a claim that overhead imagery is
+uninformative or that fusion fails in general, as the cross-view controls show large
+synergy on the same models. Three caveats bound it further: our two training regimes
+share one held-out test set, of which the held-out-cities split is the true
+generalization check; higher ground sampling distance might help the few
+overhead-geometry-limited tasks (building height, urban density); and an open-ended
+or regression formulation could surface complementary signal an MCQ cannot express.
+
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% =====================================================================
+
+We measured, rather than assumed, the value of a second perspective for urban
+attribute recognition. Across model scale, training regime, inference-time view
+count, and prompting strategy, the second view adds at most a couple of points over
+the better single view and overturns a correct answer about nine times as often as it
+rescues a wrong one, while the same models gain \num{19}--\num{71} points on
+cross-view tasks that require both views. Multi-perspective necessity is thus
+task-dependent. We release OELLM---benchmark, adapters, and the audit
+protocol---so that the next paired-modality study can ask, before collecting a second
+view, whether its tasks are the kind that need one.
+
+% =====================================================================
+\section{Future Work}
+\label{sec:future}
+% =====================================================================
+
+Because only the cross-view tasks consistently benefit from multiple street views,
+the natural next step is to exploit those views for richer geometric reasoning. The
+four road-aligned angles per location contain the signal needed for local 3D
+reconstruction; lifting urban understanding from 2D image fusion to 3D spatial
+reasoning would let a model reason about occlusion, scale, building geometry, and
+pedestrian-environment affordances in ways single 2D images cannot support, with
+OELLM's four-angle captures as a natural input substrate. Further directions include
+fusion architectures that genuinely combine modalities rather than selecting between
+them, scaling to more cities to reduce the Europe-heavy distribution, and extending
+deterministic OSM grounding to socio-economic indicators.

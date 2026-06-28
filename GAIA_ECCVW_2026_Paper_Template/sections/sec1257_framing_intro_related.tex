@@ -1,0 +1,140 @@
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+% =====================================================================
+
+More perspectives are assumed to be better: a satellite tile shows layout and
+connectivity, a street-level view shows facades, surfaces, and signage, and pairing
+them should give a vision--language model a richer picture of a place than either
+alone. A growing line of work collects, aligns, and jointly models satellite and
+ground views for urban understanding on exactly this premise. But ``should'' is
+rarely tested directly---existing benchmarks report one accuracy over a mix of
+tasks, some answerable from a single view and some requiring both, so a high number
+can mean genuine fusion or simply that one view sufficed. We ask the question the
+aggregate hides: \emph{when does the second view actually help?}
+
+We answer it with a controlled audit. We build OELLM, a deterministic,
+OpenStreetMap-grounded benchmark that pairs a marked satellite tile with
+road-aligned street-level views across \num{40} cities, spanning urban-attribute
+tasks (answerable from one location) and cross-view tasks (answerable only from the
+relationship between views). Our instrument is a four-way image
+ablation---\textsf{blind}, \textsf{sat}, \textsf{sv}, \textsf{full}---from which we
+read \emph{fusion synergy} ($\textsf{full}-\max(\textsf{sat},\textsf{sv})$, the gain
+of both views over the better single one) and an item-level \emph{interference
+asymmetry}. We evaluate at the minimum-sufficient input---one satellite tile plus
+one forward street view---so every comparison sits on the same regime, and apply the
+audit to a fine-tuned 9B VLM and a panel of raw open VLMs.
+\Cref{fig:teaser} previews the setup and the headline effect.
+
+The result is a sharp dissociation. On the seven urban-attribute tasks, the second
+view adds only $+\num{0.5}$ points over the better single view on average, and at
+the item level it is mildly \emph{harmful}: it overturns a correct answer about nine
+times as often as it rescues a wrong one, so a per-item single-view oracle---an upper
+bound on single-view routing---beats the two-view model by \num{12} points
+($p<\num{e-60}$). On the five cross-view tasks the same model and instrument gain
+$+\num{19}$ to $+\num{71}$ points, so the audit registers fusion exactly when the
+task requires it. The pattern is robust: it reproduces across raw VLMs of different
+families and scales, survives a \num{16}k-token reasoning budget and a multi-turn
+self-check, holds when inference-time pruning keeps a single street view (which
+retains \num{89}\% of correct answers), and persists when the model is trained with
+all four street views instead of one (which adds only $\sim$\num{2} points).
+
+We frame this carefully. It is a \emph{task-dependent} observation about
+single-view-decidable attribute recognition at commonly served satellite
+resolutions, not a claim that overhead imagery is uninformative or that fusion fails
+in general---the cross-view controls show large synergy on the same models. We
+report bootstrap confidence intervals on every estimate, audit the benchmark for
+text-only leakage, and characterise the items where the second view changes the
+answer.
+
+Our contributions are:
+\begin{enumerate}[itemsep=1pt,topsep=2pt]
+  \item \textbf{A task-dependence result for cross-view fusion.} On seven
+  urban-attribute tasks a fine-tuned 9B VLM gains only $+\num{0.5}$ points from a
+  second view over the better single view, whereas on five cross-view tasks built
+  into the same benchmark it gains $+\num{19}$ to $+\num{71}$---a within-model
+  dissociation showing that pairing helps only when the task structurally requires
+  it.
+  \item \textbf{An item-level interference analysis.} Beyond the small average, the
+  second view is net-harmful on the urban tasks: it overturns a correct answer about
+  nine times as often as it rescues a wrong one, and a per-item single-view oracle
+  exceeds the two-view model by \num{12} points---evidence that the model
+  adjudicates poorly between redundant views rather than failing to read them.
+  \item \textbf{OELLM, a deterministic paired-view benchmark} of \num{12}
+  OSM-grounded task families over \num{40} cities, with a four-way image ablation
+  and built-in cross-view controls that make the single-view-sufficient versus
+  fusion-required distinction measurable.
+  \item \textbf{A reusable audit protocol}---fusion synergy, vision contribution,
+  and interference asymmetry---for deciding, before committing to dual-view
+  collection, whether a second view is warranted; we show the verdict is robust
+  across model families and scales, inference-time view pruning, and training-time
+  view count.
+\end{enumerate}
+
+% =====================================================================
+\section{Related Work}
+\label{sec:related}
+% =====================================================================
+
+\subsubsection{Remote-sensing vision-language models are single-view.}
+A wave of instruction-tuned VLMs target remote sensing, including
+GeoChat~\cite{geochat2024}, SkySenseGPT~\cite{skysensegpt2024},
+LHRS-Bot and LHRS-Bot-Nova~\cite{lhrsbot2024,lhrsbotnova2025},
+EarthGPT~\cite{zhang2024earthgpt}, and the multi-sensor generalist
+EarthDial~\cite{earthdial2025}. These models are overhead-only: each consumes a
+single aerial or satellite image, and none ingests ground-level imagery
+(\cref{tab:models}). Where ``multi-modal'' appears here it refers to multiple
+\emph{overhead} sensors---optical, SAR, infrared---rather than to pairing satellite
+with street-level views. The dominant suites follow suit: RSVQA~\cite{lobry2020rsvqa},
+VRSBench~\cite{li2024vrsbench}, and GeoChat's own benchmark pose questions over a
+single overhead image. None isolates the marginal value of a second, ground-level
+view. Architecturally these build on LLaVA-style designs~\cite{llava_2023,llava15_2024}
+with CLIP or SigLIP encoders~\cite{clip_2021,siglip_2023}; we use four as zero-shot
+baselines and discuss their training-data provenance in \cref{sec:setup}.
+
+\subsubsection{Multi-view urban benchmarks.}
+A smaller set of benchmarks pairs overhead and ground views and notices the surface
+phenomenon we study, but stops short of explaining it. UrBench~\cite{urbench2025}
+reports that multi-image and single-image performance differ little on
+coordinate-aligned street/satellite pairs, but attributes the gap to question
+\emph{comprehension} and measures only aggregate accuracy, leaving open whether the
+second view is unused, redundant, or actively harmful. CityLens~\cite{citylens2026},
+concurrent with our work, finds street view alone competitive with both views---but
+on a three-task socioeconomic \emph{regression} target, with a single model and no
+item-level or cross-view analysis. Neither isolates \emph{where in input-mode space}
+the effect lives. We contribute the missing instrument: a four-way image ablation
+yielding a per-item interference asymmetry and a single-view oracle, applied across a
+task taxonomy whose built-in cross-view controls confirm the same instrument
+registers large fusion when fusion is required. The result is not ``a second view
+rarely helps''---already suspected---but a \emph{mechanism} (the model overturns
+about nine correct answers for each it rescues) and a \emph{boundary} (fusion is
+decisive exactly when the answer lives between views). Convergent prior observations
+make this audit timely; they do not make it redundant. UrbanLLaVA~\cite{urbanllava2025}
+trains over satellite, street-view, OSM, and trajectory inputs but poses its
+attribute tasks from satellite alone; CityCube~\cite{citycube2026} targets cross-view
+spatial reasoning rather than attribute recognition.
+
+\subsubsection{Cross-view geo-localization: where both views are necessary.}
+Satellite--ground pairing is well established in cross-view geo-localization, where
+the goal is to match a ground photo to an overhead
+reference~\cite{durgam2024crossview,zhai2017predicting,zhu2021vigor}. There the two
+views are jointly \emph{necessary}, and methods succeed by modeling the
+distinct-but-linkable layout they share~\cite{zhang2023geodtr}. This is the regime
+our cross-view controls occupy; complementarity that is constitutive of localization
+is largely absent from single-view-decidable attribute recognition.
+
+\subsubsection{The marginal value of a second modality.}
+That adding a modality need not help is known beyond geosensing. Wang
+\etal~\cite{wang2020multimodal} show the best single-modal network can outperform a
+naively fused one, and Liang \etal~\cite{liang2023quantifying} formalize multimodal
+interaction into redundancy, uniqueness, and synergy, showing low-synergy regimes are
+real; our ``fusion synergy'' is the behavioral analogue of their synergy term.
+Against this, multimodal learning can provably lower achievable
+risk~\cite{huang2021makes}, and several aerial$+$ground systems report recognition
+gains~\cite{workman2017unified,machado2021airound}. Most directly counter to our
+setting, Suel \etal~\cite{suel2021multimodal} find fusing satellite and street
+imagery improves \emph{regression} of income and deprivation; we engage this in
+\cref{sec:discussion}, noting it differs in task type (regression vs.\ four-way
+recognition), labels, and model. Our finding refines rather than contradicts the
+``fusion helps'' literature by naming a regime where it does not.
+
