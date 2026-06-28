@@ -1,0 +1,485 @@
+I actually think this is the right time to do a **"camera-ready quality" editing pass** rather than another scientific revision. At this stage, you're optimizing reviewer experience rather than changing the contribution.
+
+I'd give your AI agent something like the following.
+
+# Final Revision Instructions for ECCV Workshop Submission
+
+## Overall Objective
+
+The paper is scientifically mature and the experimental story is complete. This revision should **not introduce new experiments or substantially change the scientific conclusions**. Instead, the goal is to maximize reviewer readability while reducing the manuscript from approximately **15 pages to 13–14 pages** (preferably around **13.5 pages before references**), leaving room for a few additional figures.
+
+This should be treated as a **presentation and writing optimization pass**, not a research revision.
+
+---
+
+# Primary Goals (Highest Priority)
+
+1. Reduce the manuscript to approximately 13–14 pages.
+2. Improve visual presentation by adding 2–3 high-impact figures.
+3. Reduce redundancy throughout the paper.
+4. Slightly soften causal/mechanistic claims.
+5. Make the paper read more naturally and less over-edited.
+6. Improve reviewer experience by making the central message immediately obvious.
+
+No new experiments are required unless they are trivial to produce.
+
+---
+
+# 1. Preserve the Existing Scientific Story
+
+Do **not** substantially change the paper's narrative.
+
+The paper should continue to follow this progression:
+
+Existing benchmarks assume multiple views help
+
+↓
+
+OELLM measures whether they actually help
+
+↓
+
+Urban semantic tasks show almost no measurable benefit
+
+↓
+
+Cross-view tasks show very large benefits
+
+↓
+
+Therefore, multi-view usefulness is fundamentally task-dependent.
+
+This narrative is one of the strongest aspects of the current manuscript and should remain intact.
+
+---
+
+# 2. Reduce Length (Highest Editing Priority)
+
+Current manuscript is longer than necessary.
+
+Target:
+
+Reduce approximately 1–2 pages while improving readability.
+
+Focus on removing repeated explanations rather than deleting technical content.
+
+Specifically:
+
+* Remove repeated descriptions of benchmark motivation.
+
+* Remove repeated explanations that urban tasks test whether the second modality adds value.
+
+* Compress repeated reminders of limitations.
+
+* Compress repeated summaries at the end of sections.
+
+* Merge consecutive paragraphs that make essentially the same point.
+
+The reader should only need to hear each major idea once.
+
+---
+
+# 3. Remove Writing Redundancy
+
+Several ideas appear multiple times.
+
+Reduce repetition of statements such as:
+
+* current VLMs derive little benefit from the second view
+
+* urban tasks differ from cross-view tasks
+
+* the benchmark measures complementarity
+
+* the paper does not overclaim
+
+Once introduced clearly, later sections should simply reference the earlier explanation rather than re-explaining it.
+
+---
+
+# 4. Reduce Meta-Writing
+
+The manuscript currently contains many sentences describing what the paper is doing rather than simply presenting the evidence.
+
+Reduce phrases such as:
+
+* We are careful...
+
+* We emphasize...
+
+* We note...
+
+* We stress...
+
+* We do not claim...
+
+* Two facts stand out...
+
+* This establishes...
+
+Instead, state the evidence directly.
+
+For example:
+
+Instead of
+
+"We are careful not to overclaim."
+
+Prefer
+
+"The experiments do not distinguish among these explanations."
+
+Readers naturally infer the paper is being careful.
+
+---
+
+# 5. Slightly Humanize the Writing
+
+The writing is technically excellent but somewhat uniformly polished.
+
+The goal is NOT to make it casual.
+
+Instead, make it sound more like an experienced researcher.
+
+Specifically:
+
+* Vary sentence length.
+
+* Allow some paragraphs to end immediately after presenting evidence.
+
+* Avoid ending every paragraph with an interpretive summary.
+
+* Reduce overly polished transitions.
+
+* Accept slightly more direct wording.
+
+The paper should feel less like every paragraph has been optimized independently.
+
+---
+
+# 6. Keep Claims Strictly Behavioral
+
+This is the most important scientific wording change.
+
+The experiments demonstrate:
+
+* adding the second view rarely improves accuracy
+
+* the better single view usually performs as well as both views
+
+* cross-view tasks are different
+
+The experiments do NOT identify why this happens internally.
+
+Avoid implying mechanisms.
+
+Avoid statements like:
+
+* the model selects one modality
+
+* the model is distracted
+
+* fusion fails
+
+Prefer:
+
+* the model derives little measurable benefit
+
+* the second view rarely improves prediction
+
+* combined input seldom exceeds the better single view
+
+* the experiments do not distinguish among possible mechanisms
+
+Maintain the cautious tone already used in the Discussion section throughout the paper.
+
+---
+
+# 7. Strengthen Reviewer Defenses
+
+One likely reviewer criticism is:
+
+"The benchmark was designed so that one modality is sufficient."
+
+Address this proactively.
+
+Clarify that:
+
+The contribution is NOT demonstrating that one modality can solve the task.
+
+Rather, it demonstrates that even when two informative modalities are available, current VLMs derive almost no measurable improvement from combining them.
+
+The contribution concerns utilization of redundant multimodal information.
+
+---
+
+# 8. Surface the Strongest Result Earlier
+
+The strongest empirical finding is not the average synergy.
+
+It is the item-level audit.
+
+Specifically:
+
+Fusion rescues very few predictions while overturning many correct ones.
+
+Mention this result earlier.
+
+Ideally:
+
+* Abstract
+
+* End of Introduction
+
+* Beginning of Results
+
+This statistic is memorable and easy for reviewers to recall.
+
+---
+
+# 9. Improve Section Flow
+
+Each section should answer one clearly stated question.
+
+Suggested progression:
+
+Section 4.1
+
+How are the experiments designed?
+
+↓
+
+Section 4.2
+
+Does adding the second view improve average performance?
+
+↓
+
+Section 4.3
+
+Can the benchmark detect fusion when fusion genuinely exists?
+
+↓
+
+Section 4.4
+
+Where exactly does fusion help or hurt?
+
+↓
+
+Section 4.5
+
+Can unnecessary street views be removed?
+
+↓
+
+Section 4.6
+
+Does training with additional views matter?
+
+The transitions should explicitly motivate why the next section exists.
+
+---
+
+# 10. Increase Visual Communication
+
+The paper currently relies heavily on tables.
+
+ECCV reviewers skim visually before reading carefully.
+
+The manuscript should contain more figures summarizing key trends.
+
+Target approximately 5–6 figures total.
+
+---
+
+## Figure Priority 1 (Highest)
+
+Fusion Synergy Across Tasks
+
+Horizontal bar plot.
+
+Urban tasks:
+
+Synergy clustered around zero.
+
+Cross-view tasks:
+
+Very large positive synergy.
+
+This should become the paper's signature figure.
+
+---
+
+## Figure Priority 2
+
+Item-Level Audit
+
+Flow diagram or Sankey.
+
+Prediction changes:
+
+Fusion helps
+
+↓
+
+No change
+
+↓
+
+Fusion hurts
+
+The reader should immediately understand the imbalance.
+
+---
+
+## Figure Priority 3
+
+Best Single View vs Full Model
+
+Scatter plot.
+
+Each point:
+
+One task.
+
+x-axis:
+
+Best(single)
+
+y-axis:
+
+Full
+
+Include diagonal.
+
+This visually demonstrates that nearly all urban tasks lie close to y=x.
+
+---
+
+## Optional Figure
+
+Street View Pruning
+
+Simple line plot.
+
+Number of street views retained
+
+↓
+
+Performance
+
+This replaces text with an immediately understandable trend.
+
+---
+
+# 11. Prefer Figures Over Tables Where Appropriate
+
+If a result primarily communicates a trend rather than exact numerical values, convert it into a figure.
+
+Keep tables for precise comparisons.
+
+Use figures for:
+
+* trends
+
+* distributions
+
+* relationships
+
+* comparisons
+
+Reviewers remember figures much more easily than tables.
+
+---
+
+# 12. Improve Conclusion
+
+Current conclusion is already good.
+
+Minor improvement:
+
+Finish with the practical implication rather than the benchmark release.
+
+Suggested emphasis:
+
+Before collecting additional visual modalities, practitioners should first ask whether their task structurally requires cross-view reasoning.
+
+This leaves reviewers with the central takeaway rather than the artifact.
+
+---
+
+# 13. Preserve Discussion
+
+The Discussion section is one of the strongest parts of the paper.
+
+Avoid major rewriting.
+
+Only remove repetition.
+
+The cautious wording regarding mechanisms should remain.
+
+---
+
+# 14. Preserve Experimental Content
+
+Do not remove:
+
+* positive-control experiments
+
+* item-level audit
+
+* pruning experiment
+
+* training-view ablation
+
+These experiments together build a coherent scientific argument.
+
+Compression should come from writing, not from deleting evidence.
+
+---
+
+# 15. Final Quality Checklist
+
+Before considering the revision complete, verify the following:
+
+□ Total length reduced to approximately 13–14 pages.
+
+□ Added 2–3 informative figures.
+
+□ Reduced repeated explanations throughout.
+
+□ Removed unnecessary meta-writing.
+
+□ Claims remain strictly supported by experiments.
+
+□ Writing feels more natural and less uniformly polished.
+
+□ Strongest empirical findings appear earlier.
+
+□ Section transitions are clearer.
+
+□ Reviewer objections are proactively addressed.
+
+□ Figures communicate the main story even without reading every table.
+
+---
+
+# Final Objective
+
+The revised paper should read like a mature ECCV workshop paper written by experienced researchers.
+
+A reviewer should be able to understand the paper's central contribution within the first few minutes of reading, remember its key empirical findings after finishing, and find very little room to criticize either the scientific framing or the presentation.
+
+The revision should prioritize clarity, conciseness, and visual communication over additional polish or additional experiments.
+
+One final comment that isn't in the document because it's more strategic than editorial:
+
+I think you're **past the point of needing more science**. If I were allocating another 15 hours to this project, I would spend approximately:
+
+* **60%** on rewriting and shortening,
+* **30%** on redesigning figures and improving visual storytelling,
+* **10%** on checking every sentence for precision and consistency.
+
+I would spend **0%** of that time on inventing another ablation unless a genuinely new insight emerges. Looking at the trajectory from your earlier drafts to this one, the biggest gains have come from **better framing**, not from more experiments. At this stage, making the paper easier to read and easier to remember is likely to have a larger impact on reviewers than adding another table of results.
+

@@ -1,0 +1,162 @@
+\documentclass[runningheads]{llncs}
+
+% ---------------------------------------------------------------
+% Include basic ECCV package
+% TODO REVIEW: Insert your submission number below by replacing '*****'
+% TODO FINAL: Comment out the following line for the camera-ready version
+\usepackage[review,year=2026,ID=*****]{eccv}
+% TODO FINAL: Un-comment the following line for the camera-ready version
+%\usepackage{eccv}
+
+% ---------------------------------------------------------------
+% Other packages
+\usepackage{eccvabbrv}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{siunitx}
+\sisetup{detect-weight=true,detect-family=true,group-separator={,}}
+% axessibility.sty (PDF accessibility for math) relies on pdfTeX-only primitives
+% and does not compile under XeTeX/LuaTeX. It is loaded for the pdfLaTeX
+% camera-ready build (the template's default engine) and skipped otherwise, with
+% no effect on layout or content. To force pdfLaTeX: ``pdflatex main''.
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[accsupp]{axessibility}  % Improves PDF readability for those with disabilities.
+\fi
+
+% ---------------------------------------------------------------
+% Hyperref
+% TODO FINAL: Comment out the following line for the camera-ready version
+%\usepackage[pagebackref,breaklinks,colorlinks,citecolor=eccvblue]{hyperref}
+% TODO FINAL: Un-comment the following line for the camera-ready version
+\usepackage{hyperref}
+\usepackage{orcidlink}
+
+% A light convenience macro for in-draft notes. Remove before submission.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\begin{document}
+
+% ---------------------------------------------------------------
+\title{When Does the Second View Help? Auditing Cross-View Fusion in Urban Vision-Language Models}
+
+\titlerunning{When Does the Second View Help?}
+
+% In review mode, the eccv package auto-replaces the author/institute/running
+% heads with anonymous placeholders, so the real names below are only used for
+% the camera-ready build. (See eccv.sty review-mode \maketitle override.)
+% TODO FINAL: add ORCIDs and correct affiliations for camera-ready.
+\author{Ezel Bayraktar\inst{1} \and
+Alperen Demirci\inst{1} \and
+Erkut Erdem\inst{1} \and
+Aykut Erdem\inst{1} \and
+Mukhamediyar Amanzhanov\inst{1} \and
+Adam Sattout\inst{1}}
+\authorrunning{E.~Bayraktar et al.}
+\institute{Hacettepe University, Ankara, Turkey}
+
+\maketitle
+
+\begin{abstract}
+Pairing overhead satellite and ground-level street imagery is widely assumed to give
+vision--language models a richer view of a place than either alone. We test when this
+assumption holds. We build OELLM, a deterministic, OpenStreetMap-grounded benchmark
+that pairs a marked satellite tile with road-aligned street views across \num{40}
+cities, spanning urban-attribute tasks (answerable from one location) and cross-view
+tasks (answerable only from the relationship between views). Our instrument is a
+four-way image ablation---blind, satellite-only, street-only, and both---from which
+we read \emph{fusion synergy} (the gain of both views over the better single one) and
+an item-level \emph{interference asymmetry}. On seven urban-attribute tasks, a
+fine-tuned 9B VLM gains only $+\num{0.5}$ points from the second view, and at the
+item level it overturns a correct answer about nine times as often as it rescues a
+wrong one, so a per-item single-view oracle beats the two-view model by \num{12}
+points. On five cross-view tasks the same model and instrument gain $+\num{19}$ to
+$+\num{71}$ points, confirming the audit detects fusion when the task requires it. The
+pattern replicates across model families and scales, stronger prompting,
+inference-time view pruning, and training-time view count. Multi-view fusion is
+task-shaped, not pervasive.
+  \keywords{Geosensing \and Vision-language models \and Multi-view fusion}
+\end{abstract}
+
+% =====================================================================
+\input{sections/sec1257_framing_intro_related}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures_new/fig_teaser.pdf}
+  \caption{\textbf{Left:} one held-out location (Sydney). Each benchmark location
+  provides a marked sub-meter satellite tile and four cardinal street-level views;
+  the dataset always supplies all four. Our primary model consumes only \emph{two}
+  images---the satellite tile and the \emph{forward} street view---and the ablation
+  is computed in that configuration: ``full'' here means satellite $+$ forward street
+  view. For this task (urban density) full barely exceeds the better single view,
+  while both far exceed the no-image prior (blind). \textbf{Right:} per-task fusion
+  gain ($\textsf{full}-$ better single view) across all \num{12} evaluated tasks. The
+  second view helps only when the task requires cross-view correspondence:
+  $\approx$0 on the seven urban tasks (some negative), $+\num{19}$ to $+\num{71}$ on
+  the five cross-view tasks. Imagery is unmodified dataset content: satellite tile \copyright\ Esri World
+  Imagery; street-view panels \copyright\ Google (Street View).}
+  \label{fig:teaser}
+\end{figure*}
+
+\input{sections/sec3_benchmark}
+
+\begin{figure}[t]
+  \centering
+  \begin{minipage}{0.49\linewidth}\centering
+    \includegraphics[width=\linewidth]{../scratch_reports/examples_12tasks/examples/ex_land_use.png}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\linewidth}\centering
+    \includegraphics[width=\linewidth]{../scratch_reports/examples_12tasks/examples/ex_camera_direction.png}
+  \end{minipage}
+  \caption{Two rendered tasks. \textbf{Left} (urban understanding,
+  \textsf{land\_use}): a marked satellite tile and four street views; the answer
+  follows from one location's OSM context. \textbf{Right} (cross-view,
+  \textsf{camera\_direction}): four satellite crops with candidate heading arrows and
+  one street-view query; the answer lives in the relationship between the views.}
+  \label{fig:examples}
+\end{figure}
+
+% Off-the-shelf RS-VLM baseline specs (table floats into the Experiments section,
+% first referenced in the Setup subsection).
+\begin{table}[t]
+  \centering
+  \caption{Off-the-shelf remote-sensing VLMs evaluated zero-shot on the overhead
+  (satellite-only) half of the benchmark. All four are single-image and
+  \emph{overhead-only}; none ingests ground-level imagery. ``OSM data'' marks whether
+  the model's training corpus is derived from OpenStreetMap (relevant to the
+  provenance caveat in \cref{sec:robustness}).}
+  \label{tab:models}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lllll@{}}
+    \toprule
+    Model & Base LLM & Vision encoder & Input res. & OSM data \\
+    \midrule
+    GeoChat-7B~\cite{geochat2024}       & Vicuna-1.5-7B & CLIP ViT-L/14 & 504 & No \\
+    SkySenseGPT-7B~\cite{skysensegpt2024} & Vicuna-1.5-7B & CLIP ViT-L/14 & 336 & No \\
+    LHRS-Bot-Nova~\cite{lhrsbotnova2025}  & Llama-3-8B    & SigLIP-L/14   & 336 & \textbf{Yes} \\
+    EarthDial-4B-RGB~\cite{earthdial2025} & Phi-3-Mini    & InternViT-300M & tiled & \textbf{Yes} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\input{sections/sec4_experiments}
+
+\input{sections/sec6_robustness}
+
+\input{sections/sec1257_framing_disc}
+
+% ---------------------------------------------------------------
+% TODO FINAL: remove for camera-ready; required for review.
+\clearpage
+
+%\section*{Acknowledgements}
+% TODO FINAL: add acknowledgements (no section number).
+
+\bibliographystyle{splncs04}
+\bibliography{eollm,main}
+\end{document}

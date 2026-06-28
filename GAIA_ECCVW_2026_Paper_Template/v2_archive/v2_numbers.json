@@ -1,0 +1,549 @@
+{
+  "_meta": {
+    "checkpoint": "Qwen3.5-9B satfwd seen_unseen merged_ep4",
+    "pred_dir": "/home/ezel/Development/EOLLM/benchmark_suite/results/qwen9b_satfwd_seen_unseen__benchmark",
+    "bootstrap_seed": 3407,
+    "n_bootstrap": 10000,
+    "urban7": [
+      "land_use",
+      "building_height",
+      "urban_density",
+      "road_type",
+      "junction_type",
+      "amenity_richness",
+      "transit_density"
+    ],
+    "cross5": [
+      "camera_direction",
+      "mismatch_binary_easy",
+      "mismatch_binary_hard",
+      "mismatch_mcq_easy",
+      "mismatch_mcq_hard"
+    ],
+    "retired": [
+      "green_space",
+      "road_surface"
+    ],
+    "note": "All numbers recomputed from per-record logs; nothing hand-typed."
+  },
+  "topic_n": {
+    "amenity_richness": 421,
+    "camera_direction": 421,
+    "land_use": 421,
+    "mismatch_binary_hard": 421,
+    "mismatch_binary_easy": 421,
+    "mismatch_mcq_hard": 421,
+    "mismatch_mcq_easy": 421,
+    "road_surface": 303,
+    "road_type": 421,
+    "transit_density": 421,
+    "urban_density": 421,
+    "building_height": 190,
+    "junction_type": 334,
+    "green_space": 203
+  },
+  "topic_acc": {
+    "amenity_richness": {
+      "blind": 24.465558194774346,
+      "sat_only": 55.34441805225653,
+      "sv_only": 47.74346793349169,
+      "full": 52.96912114014252
+    },
+    "camera_direction": {
+      "blind": 25.17814726840855,
+      "sat_only": 23.040380047505938,
+      "full": 42.042755344418055
+    },
+    "land_use": {
+      "blind": 66.5083135391924,
+      "sat_only": 72.44655581947744,
+      "sv_only": 71.73396674584323,
+      "full": 72.92161520190024
+    },
+    "mismatch_binary_hard": {
+      "blind": 56.76959619952494,
+      "sat_only": 47.980997624703086,
+      "sv_only": 44.180522565320665,
+      "full": 92.39904988123516
+    },
+    "mismatch_binary_easy": {
+      "blind": 45.13064133016627,
+      "sat_only": 47.03087885985748,
+      "sv_only": 53.44418052256532,
+      "full": 97.62470308788599
+    },
+    "mismatch_mcq_hard": {
+      "blind": 23.51543942992874,
+      "sat_only": 22.565320665083135,
+      "sv_only": 24.94061757719715,
+      "full": 87.17339667458432
+    },
+    "mismatch_mcq_easy": {
+      "blind": 23.51543942992874,
+      "sat_only": 26.128266033254157,
+      "sv_only": 23.752969121140143,
+      "full": 96.91211401425178
+    },
+    "road_surface": {
+      "blind": 95.7095709570957,
+      "sat_only": 95.04950495049505,
+      "sv_only": 93.06930693069307,
+      "full": 95.04950495049505
+    },
+    "road_type": {
+      "blind": 68.64608076009502,
+      "sat_only": 72.68408551068883,
+      "sv_only": 76.00950118764845,
+      "full": 74.58432304038004
+    },
+    "transit_density": {
+      "blind": 28.741092636579573,
+      "sat_only": 46.318289786223275,
+      "sv_only": 46.080760095011875,
+      "full": 49.1686460807601
+    },
+    "urban_density": {
+      "blind": 54.394299287410924,
+      "sat_only": 69.59619952494062,
+      "sv_only": 59.14489311163896,
+      "full": 70.07125890736341
+    },
+    "building_height": {
+      "blind": 46.8421052631579,
+      "sat_only": 60.0,
+      "sv_only": 62.63157894736842,
+      "full": 63.68421052631579
+    },
+    "junction_type": {
+      "blind": 48.203592814371255,
+      "sat_only": 71.55688622754491,
+      "sv_only": 66.46706586826348,
+      "full": 73.95209580838323
+    },
+    "green_space": {
+      "blind": 56.65024630541872,
+      "sat_only": 48.76847290640394,
+      "sv_only": 54.679802955665025,
+      "full": 48.76847290640394
+    }
+  },
+  "urban7_n_paired": 2629,
+  "table2_urban7": {
+    "land_use": {
+      "n": 421,
+      "blind": 66.5083135391924,
+      "sat": 72.44655581947744,
+      "sv": 71.73396674584323,
+      "full": 72.92161520190024,
+      "synergy": 0.4750593824227991,
+      "vision_contrib": 6.413301662707838,
+      "oracle_item": 81.47268408551069,
+      "full_paired": 72.92161520190024
+    },
+    "building_height": {
+      "n": 190,
+      "blind": 46.8421052631579,
+      "sat": 60.0,
+      "sv": 62.63157894736842,
+      "full": 63.68421052631579,
+      "synergy": 1.05263157894737,
+      "vision_contrib": 16.84210526315789,
+      "oracle_item": 74.21052631578948,
+      "full_paired": 63.68421052631579
+    },
+    "urban_density": {
+      "n": 421,
+      "blind": 54.394299287410924,
+      "sat": 69.59619952494062,
+      "sv": 59.14489311163896,
+      "full": 70.07125890736341,
+      "synergy": 0.4750593824227991,
+      "vision_contrib": 15.676959619952491,
+      "oracle_item": 83.1353919239905,
+      "full_paired": 70.07125890736341
+    },
+    "road_type": {
+      "n": 421,
+      "blind": 68.64608076009502,
+      "sat": 72.68408551068883,
+      "sv": 76.00950118764845,
+      "full": 74.58432304038004,
+      "synergy": -1.4251781472684115,
+      "vision_contrib": 5.938242280285024,
+      "oracle_item": 83.8479809976247,
+      "full_paired": 74.58432304038004
+    },
+    "junction_type": {
+      "n": 334,
+      "blind": 48.203592814371255,
+      "sat": 71.55688622754491,
+      "sv": 66.46706586826348,
+      "full": 73.95209580838323,
+      "synergy": 2.3952095808383262,
+      "vision_contrib": 25.74850299401198,
+      "oracle_item": 86.82634730538922,
+      "full_paired": 73.95209580838323
+    },
+    "amenity_richness": {
+      "n": 421,
+      "blind": 24.465558194774346,
+      "sat": 55.34441805225653,
+      "sv": 47.74346793349169,
+      "full": 52.96912114014252,
+      "synergy": -2.3752969121140097,
+      "vision_contrib": 28.503562945368174,
+      "oracle_item": 68.88361045130641,
+      "full_paired": 52.96912114014252
+    },
+    "transit_density": {
+      "n": 421,
+      "blind": 28.741092636579573,
+      "sat": 46.318289786223275,
+      "sv": 46.080760095011875,
+      "full": 49.1686460807601,
+      "synergy": 2.850356294536823,
+      "vision_contrib": 20.427553444180525,
+      "oracle_item": 64.13301662707839,
+      "full_paired": 49.1686460807601
+    },
+    "MEAN": {
+      "blind": 48.25729178508306,
+      "sat": 63.99234784587594,
+      "sv": 61.401604841323724,
+      "full": 65.33589581503504,
+      "synergy_unweighted": 0.4925487371122423,
+      "vision_contrib": 17.078604029951986
+    }
+  },
+  "pooled_urban7": {
+    "blind": 48.38341574743249,
+    "sat": 64.09281095473564,
+    "sv": 61.12590338531761,
+    "full": 65.19589197413465,
+    "oracle_better_single": 77.48193229364777,
+    "synergy_pooled": 1.1030810193990104,
+    "synergy_pooled_ci": [
+      -0.22822365918599985,
+      2.4343856979840206
+    ],
+    "synergy_pooled_ci_crosses_zero": true,
+    "full_minus_oracle": -12.286040319513114,
+    "full_minus_oracle_ci": [
+      -13.693419551160135,
+      -10.878661087866103
+    ],
+    "full_minus_oracle_ci_excludes_zero": true
+  },
+  "item_level_urban7": {
+    "n": 2629,
+    "fusion_win": 40,
+    "fusion_win_pct": 1.5214910612400152,
+    "fusion_win_ci": [
+      1.0650437428680106,
+      2.01597565614302
+    ],
+    "interfere": 363,
+    "interfere_pct": 13.807531380753138,
+    "interfere_ci": [
+      12.514263978699125,
+      15.138836059338152
+    ],
+    "ratio_interfere_to_win": 9.075,
+    "identity_check": {
+      "full_minus_oracle_pct": -12.286040319513114,
+      "(fusion_win-interfere)/n_pct": -12.286040319513123,
+      "equal": true,
+      "note": "full-oracle and (fusion_win-interfere)/n are the SAME statistic; report once."
+    }
+  },
+  "mcnemar_urban7": {
+    "full_vs_sat": {
+      "b": 174,
+      "c": 145,
+      "discordant": 319,
+      "p_exact": 0.11681202012222958,
+      "chi2_cc": 2.457680250783699
+    },
+    "full_vs_sv": {
+      "b": 349,
+      "c": 242,
+      "discordant": 591,
+      "p_exact": 1.2341728289260183e-05,
+      "chi2_cc": 19.011844331641285
+    },
+    "full_vs_oracle": {
+      "b": 40,
+      "c": 363,
+      "discordant": 403,
+      "p_exact": 2.933662649336664e-66,
+      "chi2_cc": 257.2803970223325
+    },
+    "note": "full-vs-sat is NOT significant (p~0.12); headline test is full-vs-oracle (p<<1e-60)."
+  },
+  "leakage_robustness_urban7": {
+    "full_minus_oracle_all_items": -12.286040319513114,
+    "n_blind_wrong": 1357,
+    "full_minus_oracle_blind_wrong": -12.159174649963155,
+    "refused_any_mode": 0,
+    "refused": {
+      "blind": 0,
+      "sat_only": 0,
+      "sv_only": 0,
+      "full": 0
+    },
+    "hedged": {
+      "blind": 0,
+      "sat_only": 0,
+      "sv_only": 0,
+      "full": 0
+    },
+    "n_per_mode": {
+      "blind": 2629,
+      "sat_only": 2629,
+      "sv_only": 2629,
+      "full": 2629
+    }
+  },
+  "table4_crossview": {
+    "camera_direction": {
+      "n": 421,
+      "blind": 25.17814726840855,
+      "sat": 23.040380047505938,
+      "sv": null,
+      "full": 42.042755344418055,
+      "synergy": 19.002375296912117
+    },
+    "mismatch_binary_easy": {
+      "n": 421,
+      "blind": 45.13064133016627,
+      "sat": 47.03087885985748,
+      "sv": 53.44418052256532,
+      "full": 97.62470308788599,
+      "synergy": 44.18052256532067
+    },
+    "mismatch_binary_hard": {
+      "n": 421,
+      "blind": 56.76959619952494,
+      "sat": 47.980997624703086,
+      "sv": 44.180522565320665,
+      "full": 92.39904988123516,
+      "synergy": 44.41805225653207
+    },
+    "mismatch_mcq_easy": {
+      "n": 421,
+      "blind": 23.51543942992874,
+      "sat": 26.128266033254157,
+      "sv": 23.752969121140143,
+      "full": 96.91211401425178,
+      "synergy": 70.78384798099762
+    },
+    "mismatch_mcq_hard": {
+      "n": 421,
+      "blind": 23.51543942992874,
+      "sat": 22.565320665083135,
+      "sv": 24.94061757719715,
+      "full": 87.17339667458432,
+      "synergy": 62.23277909738718
+    }
+  },
+  "image_count_full_mode": {
+    "urban7": {
+      "2": 2629
+    },
+    "cross5": {
+      "5": 1263,
+      "2": 842
+    },
+    "note": "urban full=2 imgs (sat+fwd); cross-view full=5 (sat+4SV). Control is a sensitivity proof, NOT an image-count-matched comparison."
+  },
+  "option_length_urban7": {
+    "n": 2629,
+    "correct_is_longest_pct": 22.89844047166223,
+    "mean_correct_len": 25.88931152529479,
+    "mean_distractor_len": 26.460377836946876,
+    "note": "correct-is-longest 22.9% < 25% chance; correct option slightly SHORTER than distractors."
+  },
+  "letter_distribution": {
+    "urban7": {
+      "n": 2629,
+      "A": 662,
+      "B": 694,
+      "C": 628,
+      "D": 645,
+      "chi2": 3.619246861924686,
+      "always_A_pct": 25.180677063522253
+    },
+    "cross5": {
+      "n": 2105,
+      "A": 725,
+      "B": 740,
+      "C": 302,
+      "D": 338,
+      "chi2": 324.78242280285036,
+      "always_A_pct": 34.441805225653205
+    },
+    "released12": {
+      "n": 4734,
+      "A": 1387,
+      "B": 1434,
+      "C": 930,
+      "D": 983,
+      "chi2": 176.2779890156316,
+      "always_A_pct": 29.298690325306296
+    },
+    "note": "URBAN7 uniform (chi2~3.6); skew concentrated in cross-view; and headline metric is within-item so option order cancels."
+  },
+  "benchmark_funnel": {
+    "file_rows": 5240,
+    "file_topics": 14,
+    "retired_in_file": 506,
+    "retired_breakdown": {
+      "green_space": 203,
+      "road_surface": 303
+    },
+    "released_benchmark_12task": 4734,
+    "urban7": 2629,
+    "cross5": 2105,
+    "per_task_n": {
+      "land_use": 421,
+      "building_height": 190,
+      "urban_density": 421,
+      "road_type": 421,
+      "junction_type": 334,
+      "amenity_richness": 421,
+      "transit_density": 421,
+      "camera_direction": 421,
+      "mismatch_binary_easy": 421,
+      "mismatch_binary_hard": 421,
+      "mismatch_mcq_easy": 421,
+      "mismatch_mcq_hard": 421
+    },
+    "check_4734": true,
+    "check_sum": true
+  },
+  "external_rsvlm_urban7": {
+    "GeoChat-7B": {
+      "urban7_mean": 20.95714285714286,
+      "per_topic": {
+        "land_use": 48.699999999999996,
+        "building_height": 30.5,
+        "urban_density": 13.5,
+        "road_type": 10.7,
+        "junction_type": 8.4,
+        "amenity_richness": 13.5,
+        "transit_density": 21.4
+      },
+      "caveat": ""
+    },
+    "SkySenseGPT-7B": {
+      "urban7_mean": 27.17142857142857,
+      "per_topic": {
+        "land_use": 53.400000000000006,
+        "building_height": 34.699999999999996,
+        "urban_density": 14.499999999999998,
+        "road_type": 18.099999999999998,
+        "junction_type": 30.8,
+        "amenity_richness": 12.6,
+        "transit_density": 26.1
+      },
+      "caveat": ""
+    },
+    "LHRS-Bot-Nova": {
+      "urban7_mean": 29.485714285714288,
+      "per_topic": {
+        "land_use": 46.300000000000004,
+        "building_height": 28.9,
+        "urban_density": 17.8,
+        "road_type": 26.1,
+        "junction_type": 35.3,
+        "amenity_richness": 17.8,
+        "transit_density": 34.2
+      },
+      "caveat": "OSM_provenance_overlap (upper bound)"
+    },
+    "EarthDial-4B-RGB": {
+      "urban7_mean": 37.77142857142858,
+      "per_topic": {
+        "land_use": 47.5,
+        "building_height": 32.6,
+        "urban_density": 30.4,
+        "road_type": 46.1,
+        "junction_type": 52.7,
+        "amenity_richness": 25.4,
+        "transit_density": 29.7
+      },
+      "caveat": "OSM_provenance_overlap (upper bound)"
+    },
+    "_our_satfwd_sat_urban7_ref": 63.99234784587594
+  },
+  "raw_vlm_overall": {
+    "Gemma-4-12B-thinkoff": {
+      "all_full": 0.5011,
+      "urban_full": 0.502,
+      "blind": 0.2094
+    },
+    "Qwen3.5-9B-raw": {
+      "all_full": 0.5445,
+      "urban_full": 0.5235,
+      "blind": 0.4065
+    },
+    "Qwen3.5-9B-thinkoff": {
+      "all_full": 0.5061,
+      "urban_full": 0.4976,
+      "blind": 0.4144
+    },
+    "gemma-4-12b-awq": {
+      "all_full": 0.5031,
+      "urban_full": 0.5031,
+      "blind": 0.2098
+    },
+    "qwen2.5-vl-7b-awq": {
+      "all_full": 0.4718,
+      "urban_full": 0.4952,
+      "blind": 0.3772
+    },
+    "qwen3.5-4b-awq": {
+      "all_full": 0.4899,
+      "urban_full": 0.5051,
+      "blind": 0.4083
+    },
+    "qwen3.5-9b-awq": {
+      "all_full": 0.5113,
+      "urban_full": 0.4942,
+      "blind": 0.3844
+    }
+  },
+  "supp_5stv_vs_satfwd": {
+    "scope_8urban_noleak": "benchmark MEAN incl. road_surface (sheet MEAN row)",
+    "model_A_5stv_full_8urban": 71.05,
+    "model_B_satfwd_full_8urban": 69.05,
+    "delta_full_8urban": -2.0,
+    "model_A_5stv_full_urban7": 67.62142857142858,
+    "model_B_satfwd_full_urban7": 65.33428571428571,
+    "delta_full_urban7_satfwd_minus_5stv": -2.287142857142868,
+    "note": "On the benchmark, the 4-SV (5STV) model scores ~67.6 vs satfwd ~65.3 on the 7 urban tasks: training with 3 more street views buys ~+2.3 pts. Honest framing: a small gain, well below the 4x visual-data cost."
+  },
+  "sample4geo": {
+    "Sample4Geo-CVUSA": {
+      "binary_easy": 0.639,
+      "binary_hard": 0.6223
+    },
+    "Sample4Geo-VIGOR": {
+      "binary_easy": 0.6461,
+      "binary_hard": 0.6461
+    }
+  },
+  "prune_survival_27b": {
+    "zero_k0": 0.6705,
+    "top_k1": 0.8954,
+    "fwd_k1": 0.8906,
+    "bottom_k1": 0.8316,
+    "random_k1_mean": 0.8513000000000001,
+    "random_k1_seeds": [
+      0.8587,
+      0.8515,
+      0.8437
+    ],
+    "_note": "Survival = fraction of GREEDY-SOLVED questions still correct when pruned to k images (NOT accuracy). fwd-k1 ~89%, zero-k0 ~67% (leakage floor). top vs random vs bottom @k1 modest."
+  }
+}

@@ -6,9 +6,11 @@
 We build \textbf{OELLM}, a deterministic, OpenStreetMap-grounded benchmark that
 pairs overhead and street-level imagery to make the question \emph{``when does a
 second view help?''} measurable. Every answer derives from OSM tags or coordinate
-geometry rather than human annotation. The benchmark is limited to what OSM and
-geometry can certify, but every answer is verifiable and the same OSM snapshot
-regenerates it.
+geometry rather than human annotation, so the corpus is bit-exact reproducible and
+carries no annotator drift. We describe the construction, the task taxonomy, the
+splits, and the evaluation protocol, and state the trade-off honestly: the
+benchmark is limited to what OSM and geometry can certify, but every answer is
+verifiable and the same OSM snapshot regenerates the same questions.
 
 \subsection{Construction}
 \label{sec:construction}
@@ -81,12 +83,12 @@ accuracies of our trained model track each other closely (e.g.\ \textsf{land\_us
 \textsf{road\_type} \num{72.7} vs.\ \num{76.0}; \cref{sec:main}). The question is
 therefore not whether one view \emph{can} suffice but whether a model \emph{gains}
 from holding both---a fair test of fusion precisely because each view is
-independently sufficient. The contribution is therefore not that one modality can
-solve these tasks (both can) but that when two informative views are available,
-current VLMs extract almost no additional accuracy from combining them. The
-cross-view group is the complement: a class of tasks that genuinely \emph{require}
-fusion, included so the same instrument can register large synergy when fusion is the
-only route to the answer.
+independently sufficient. The cross-view group is the complement: a class of tasks
+that genuinely \emph{require} fusion, included so the same instrument can register
+large synergy when fusion is the only route to the answer. We do not claim urban
+semantics can never require cross-view reasoning; we claim that the attribute tasks
+deployed in current urban-VLM benchmarks do not, and we provide the cross-view
+group to exhibit tasks that do.
 
 \subsection{Splits}
 \label{sec:splits}
@@ -132,15 +134,16 @@ and \textsf{full} (both). The text of the question and options is byte-identical
 across conditions; only the supplied images change. We decode greedily with a fixed
 seed and parse a single answer letter with a strict word-boundary matcher; the same
 harness, prompt, and rendering run across all models so that only the forward pass
-differs. The fusion audit uses the \num{2629} urban-attribute questions of the
-benchmark; the \num{2105} cross-view questions serve as the positive control. Per-task
-counts are uneven by design, reflecting OSM-tag availability rather than importance
-(\textsf{building\_height}, \num{190}; \textsf{junction\_type}, \num{334}; the other
-five urban tasks, \num{421} each).
+differs. Of the \num{4734} benchmark questions spanning all \num{12} released tasks,
+this study's fusion audit uses the \num{2629} questions from the seven
+urban-attribute tasks; the remaining \num{2105} cross-view questions serve as the
+positive control. Per-task question counts are uneven by design, reflecting OSM-tag
+availability rather than importance (\textsf{building\_height}, \num{190};
+\textsf{junction\_type}, \num{334}; the other five urban tasks, \num{421} each).
 
 \subsection{Coverage and limitations}
 \label{sec:coverage}
-Coverage is uneven in two respects. Geographically the corpus is Europe-weighted
+We flag two forms of uneven coverage. Geographically the corpus is Europe-weighted
 (the single largest share of records), with the remaining cities spread across five
 other continents; absolute accuracies should be read with that skew in mind, though
 our headline metric is computed within each question and is unaffected by the

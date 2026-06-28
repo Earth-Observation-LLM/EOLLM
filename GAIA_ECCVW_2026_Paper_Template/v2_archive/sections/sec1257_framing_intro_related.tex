@@ -39,10 +39,13 @@ self-check, holds when inference-time pruning keeps a single street view (which
 retains \num{89}\% of correct answers), and persists when the model is trained with
 all four street views instead of one (which adds only $\sim$\num{2} points).
 
-This is a \emph{task-dependent} observation about single-view-decidable attribute
-recognition at commonly served satellite resolutions, not a claim that overhead
-imagery is uninformative or that fusion fails in general---the cross-view controls
-show large synergy on the same models.
+We frame this carefully. It is a \emph{task-dependent} observation about
+single-view-decidable attribute recognition at commonly served satellite
+resolutions, not a claim that overhead imagery is uninformative or that fusion fails
+in general---the cross-view controls show large synergy on the same models. We
+report bootstrap confidence intervals on every estimate, audit the benchmark for
+text-only leakage, and characterise the items where the second view changes the
+answer.
 
 Our contributions are:
 \begin{enumerate}[itemsep=1pt,topsep=2pt]
@@ -51,8 +54,7 @@ Our contributions are:
   second view over the better single view, whereas on five cross-view tasks built
   into the same benchmark it gains $+\num{19}$ to $+\num{71}$---a within-model
   dissociation showing that pairing helps only when the task structurally requires
-  it. This concerns how current models \emph{use} two informative views, not whether
-  one view alone could suffice.
+  it.
   \item \textbf{An item-level interference analysis.} Beyond the small average, the
   second view is net-harmful on the urban tasks: it overturns a correct answer about
   nine times as often as it rescues a wrong one, and a per-item single-view oracle
@@ -104,9 +106,9 @@ the effect lives. We contribute the missing instrument: a four-way image ablatio
 yielding a per-item interference asymmetry and a single-view oracle, applied across a
 task taxonomy whose built-in cross-view controls confirm the same instrument
 registers large fusion when fusion is required. The result is not ``a second view
-rarely helps''---already suspected---but a quantified \emph{effect} (the second view
-overturns about nine correct answers for each it rescues) and a \emph{boundary}
-(fusion is decisive exactly when the answer lives between views). Convergent prior observations
+rarely helps''---already suspected---but a \emph{mechanism} (the model overturns
+about nine correct answers for each it rescues) and a \emph{boundary} (fusion is
+decisive exactly when the answer lives between views). Convergent prior observations
 make this audit timely; they do not make it redundant. UrbanLLaVA~\cite{urbanllava2025}
 trains over satellite, street-view, OSM, and trajectory inputs but poses its
 attribute tasks from satellite alone; CityCube~\cite{citycube2026} targets cross-view

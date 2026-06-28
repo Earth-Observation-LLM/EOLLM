@@ -200,158 +200,26 @@ def fig_synergy_control():
 
 
 # ============================================================================
-# FIG: item-level audit — diverging bar (rescued vs overturned), 9:1 imbalance
+# FIG: oracle dumbbell — full vs better single view, per urban task
 # ============================================================================
-def fig_item_level():
-    il = NUMS["item_level_urban7"]
-    n = il["n"]
-    resc = il["fusion_win"]; resc_pct = il["fusion_win_pct"]
-    over = il["interfere"]; over_pct = il["interfere_pct"]
-    ratio = il["ratio_interfere_to_win"]
-    unchanged = n - resc - over
-
-    fig, ax = plt.subplots(figsize=(5.2, 1.7))
-    # two horizontal bars on a shared zero baseline (✓/✗ as Unicode; no LaTeX escapes)
-    ax.barh([1], [resc], color=GREEN, height=0.60, zorder=3)
-    ax.barh([0], [-over], color=VERM, height=0.60, zorder=3)
-    ax.axvline(0, color="#555555", lw=0.9, zorder=4)
-    ax.set_yticks([1, 0])
-    ax.set_yticklabels(["rescued\n(full ✓, both single ✗)",
-                        "overturned\n(full ✗, a single ✓)"], fontsize=6.6)
-    # value labels just OUTSIDE the bar tips, pointing toward the axis edges (clear of y-labels)
-    ax.text(resc + 14, 1, f"{resc}  ({resc_pct:.1f}%)", va="center", ha="left", fontsize=7.2, color=GREEN)
-    ax.text(-over + 14, 0, f"{over}  ({over_pct:.1f}%)", va="center", ha="left", fontsize=7.2,
-            color="white", fontweight="bold", zorder=5)
-    ax.text(0, 1.7, f"{ratio:.0f} : 1 against fusion", ha="center", fontsize=7.4, color="#333333")
-    ax.set_xlim(-430, 260)
-    ax.set_xlabel(f"items the second view changes  (of {n:,}; {unchanged:,} unchanged)", fontsize=6.9)
-    for s in ("top", "right", "left"):
-        ax.spines[s].set_visible(False)
-    ax.tick_params(axis="y", length=0)
-    ax.set_xticks([-400, -200, 0, 200]); ax.set_xticklabels(["400", "200", "0", "200"], fontsize=6.4)
-    p = os.path.join(OUT, "fig_item_level.pdf")
-    fig.savefig(p, bbox_inches="tight")
-    plt.close(fig)
-    print("wrote", p)
-
-
-# ============================================================================
-# FIG: full vs per-item oracle scatter — all urban tasks below y=x
-# ============================================================================
-def fig_oracle_scatter():
-    u = urban_oracle_rows()   # (name, n, full_paired, oracle_item)
-    fig, ax = plt.subplots(figsize=(3.4, 3.4))
-    lo, hi = 45, 90
-    # faint shade below the diagonal
-    ax.fill_between([lo, hi], [lo, hi], [lo, lo], color=GREY, alpha=0.08, zorder=0)
-    ax.plot([lo, hi], [lo, hi], ls="--", color="#888888", lw=0.8, zorder=1)
-    # per-task label nudges to avoid collisions in the upper-right cluster
-    nudge = {"road_type": (4, 4), "junction_type": (4, -7), "land_use": (-2, -8),
-             "urban_density": (4, -2), "building_height": (4, -2),
-             "amenity_richness": (4, 2), "transit_density": (4, -2)}
-    for name, nn_, full, oracle in u:
-        ax.plot(oracle, full, "o", color=VERM, ms=6, zorder=3)
-        dx, dy = nudge.get(name, (4, -3))
-        ax.annotate(nn(name), (oracle, full), fontsize=5.6, color="#333333",
-                    xytext=(dx, dy), textcoords="offset points", zorder=4)
-    ax.text(0.04, 0.93,
-            "all tasks below $y=x$:\na per-item single-view\noracle beats the two-view\nmodel on every task",
-            transform=ax.transAxes, ha="left", va="top", fontsize=6.0, color="#555555")
-    ax.set_xlim(lo, hi); ax.set_ylim(lo, hi); ax.set_aspect("equal")
-    ax.set_xlabel("per-item single-view oracle (%)", fontsize=7.5)
-    ax.set_ylabel("two-view full (%)", fontsize=7.5)
-    ax.tick_params(labelsize=6.8)
+def fig_oracle_dumbbell():
+    fig, ax = plt.subplots(figsize=(5.0, 3.0))
+    u = sorted(urban_oracle_rows(), key=lambda r: r[2])   # by full_paired
+    y = list(range(len(u)))
+    for i, (name, n, full, oracle) in enumerate(u):
+        ax.plot([full, oracle], [i, i], color=GREY, lw=1.1, zorder=2)
+        ax.plot([full], [i], "o", color=VERM, ms=5, zorder=3,
+                label="two-view (full)" if i == 0 else "")
+        ax.plot([oracle], [i], "o", color=BLUE, ms=5, zorder=3,
+                label="per-item single-view oracle" if i == 0 else "")
+    ax.set_yticks(y); ax.set_yticklabels([f"{nn(a[0])} (n={a[1]})" for a in u])
+    ax.set_xlabel("accuracy (%)")
+    ax.legend(fontsize=6.8, loc="lower right", frameon=False)
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    p = os.path.join(OUT, "fig_oracle_scatter.pdf")
-    fig.savefig(p, bbox_inches="tight")
-    plt.close(fig)
-    print("wrote", p)
-
-
-# ============================================================================
-# FIG (optional): street-view pruning survival — ordered bars at k=1 + k=0 floor
-# ============================================================================
-def fig_prune():
-    pr = NUMS["prune_survival_27b"]
-    floor = pr["zero_k0"] * 100
-    arms = [("top-1 (attention)", pr["top_k1"] * 100, BLUE),
-            ("forward-1", pr["fwd_k1"] * 100, GREEN),
-            ("random-1", pr["random_k1_mean"] * 100, GREY),
-            ("worst-1", pr["bottom_k1"] * 100, GREY)]
-    fig, ax = plt.subplots(figsize=(4.2, 1.9))
-    y = list(range(len(arms)))[::-1]
-    for yi, (lab, val, col) in zip(y, arms):
-        ax.barh([yi], [val], color=col, height=0.6, zorder=3)
-        ax.text(val + 0.6, yi, f"{val:.0f}", va="center", fontsize=6.6)
-    ax.axvline(floor, color=VERM, ls="--", lw=1.0, zorder=4)
-    ax.text(floor, len(arms) - 0.4, f"satellite only (k=0): {floor:.0f}%",
-            color=VERM, fontsize=6.2, ha="center", va="bottom")
-    ax.set_yticks(y); ax.set_yticklabels([a[0] for a in arms], fontsize=6.8)
-    ax.set_xlim(60, 100)
-    ax.set_xlabel("survival of already-correct answers (%), k=1 street view", fontsize=6.8)
-    ax.tick_params(axis="y", length=0)
-    for s in ("top", "right", "left"):
-        ax.spines[s].set_visible(False)
-    p = os.path.join(OUT, "fig_prune.pdf")
-    fig.savefig(p, bbox_inches="tight")
-    plt.close(fig)
-    print("wrote", p)
-
-
-# ============================================================================
-# FIG: combined item-level panel (diverging bar on top, oracle scatter below) —
-# one float that carries both the imbalance and the per-task oracle gap.
-# ============================================================================
-def fig_item_combined():
-    il = NUMS["item_level_urban7"]
-    n = il["n"]; resc = il["fusion_win"]; resc_pct = il["fusion_win_pct"]
-    over = il["interfere"]; over_pct = il["interfere_pct"]; ratio = il["ratio_interfere_to_win"]
-    unchanged = n - resc - over
-    u = urban_oracle_rows()
-
-    fig = plt.figure(figsize=(6.6, 2.5))
-    gs = fig.add_gridspec(1, 2, width_ratios=[1.35, 1.0], wspace=0.32)
-
-    # --- left: diverging bar ---
-    axb = fig.add_subplot(gs[0])
-    axb.barh([1], [resc], color=GREEN, height=0.58, zorder=3)
-    axb.barh([0], [-over], color=VERM, height=0.58, zorder=3)
-    axb.axvline(0, color="#555555", lw=0.9, zorder=4)
-    axb.set_yticks([1, 0])
-    axb.set_yticklabels(["rescued\n(full ✓, both ✗)", "overturned\n(full ✗, a single ✓)"], fontsize=6.4)
-    axb.text(resc + 14, 1, f"{resc} ({resc_pct:.1f}%)", va="center", ha="left", fontsize=6.8, color=GREEN)
-    axb.text(-over + 14, 0, f"{over} ({over_pct:.1f}%)", va="center", ha="left", fontsize=6.8,
-             color="white", fontweight="bold", zorder=5)
-    axb.text(0, 1.72, f"{ratio:.0f} : 1 against fusion", ha="center", fontsize=7.0, color="#333333")
-    axb.set_xlim(-430, 250)
-    axb.set_xlabel(f"items changed (of {n:,}; {unchanged:,} unchanged)", fontsize=6.6)
-    for s in ("top", "right", "left"):
-        axb.spines[s].set_visible(False)
-    axb.tick_params(axis="y", length=0)
-    axb.set_xticks([-400, -200, 0, 200]); axb.set_xticklabels(["400", "200", "0", "200"], fontsize=6.0)
-
-    # --- right: oracle scatter ---
-    ax = fig.add_subplot(gs[1])
-    lo, hi = 45, 90
-    ax.fill_between([lo, hi], [lo, hi], [lo, lo], color=GREY, alpha=0.08, zorder=0)
-    ax.plot([lo, hi], [lo, hi], ls="--", color="#888888", lw=0.8, zorder=1)
-    nudge = {"road_type": (3, 3), "junction_type": (3, -6), "land_use": (-1, -7),
-             "urban_density": (3, -2), "building_height": (3, -2),
-             "amenity_richness": (3, 2), "transit_density": (3, -2)}
-    for name, nn_, full, oracle in u:
-        ax.plot(oracle, full, "o", color=VERM, ms=5, zorder=3)
-        dx, dy = nudge.get(name, (3, -3))
-        ax.annotate(nn(name), (oracle, full), fontsize=4.8, color="#333333",
-                    xytext=(dx, dy), textcoords="offset points", zorder=4)
-    ax.set_xlim(lo, hi); ax.set_ylim(lo, hi); ax.set_aspect("equal")
-    ax.set_xlabel("single-view oracle (%)", fontsize=6.8)
-    ax.set_ylabel("two-view full (%)", fontsize=6.8)
-    ax.tick_params(labelsize=6.0)
-    ax.text(0.04, 0.96, "all below $y=x$", transform=ax.transAxes, ha="left", va="top",
-            fontsize=6.2, color="#555555")
-    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-
-    p = os.path.join(OUT, "fig_item_combined.pdf")
+    gap = NUMS["pooled_urban7"]["full_minus_oracle"]
+    ax.set_title("Per task, the two-view model vs. the better single view "
+                 f"(pooled item-level oracle gap $={gap:.1f}$ pts).", fontsize=7.2)
+    p = os.path.join(OUT, "fig_oracle_dumbbell.pdf")
     fig.savefig(p, bbox_inches="tight")
     plt.close(fig)
     print("wrote", p)
@@ -360,8 +228,5 @@ def fig_item_combined():
 if __name__ == "__main__":
     fig_teaser()
     fig_synergy_control()
-    fig_item_level()
-    fig_oracle_scatter()
-    fig_item_combined()
-    fig_prune()
+    fig_oracle_dumbbell()
     print("done.")

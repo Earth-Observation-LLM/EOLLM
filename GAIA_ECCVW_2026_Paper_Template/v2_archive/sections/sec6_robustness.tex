@@ -1,0 +1,68 @@
+% =====================================================================
+\section{Robustness and Confounds}
+\label{sec:robustness}
+% =====================================================================
+
+We check the confounds a templated benchmark and a within-model ablation invite.
+
+\subsubsection{Option text and position.}
+Because the questions are templated, we verify the answer cannot be read off the
+options. On the seven urban-attribute tasks that carry our headline result, the
+correct letter is uniform (A/B/C/D $=$ \num{662}/\num{694}/\num{628}/\num{645};
+$\chi^2=\num{3.6}$, $p=\num{0.31}$ against uniform; an always-`A' baseline scores
+\num{25.2}\%), and the correct option is not systematically the longest---its mean
+length (\num{25.9} characters) is slightly below that of the distractors
+(\num{26.5}), and it is the single longest option on only \num{22.9}\% of items,
+below the \num{25}\% chance rate. We note for completeness that across the full
+\num{12}-task corpus the letter distribution is skewed (always-`A' \num{29.3}\%),
+an artefact of the option-shuffling RNG documented in the dataset report; this skew
+is carried by the cross-view tasks (always-`A' \num{34.4}\%) and is absent from the
+urban tasks evaluated here. Crucially, our headline metric is a within-item
+comparison across image conditions (\textsf{full} vs.\ a single view) on identical
+option text, so any residual option regularity cancels in the difference and cannot
+produce the effect.
+
+\subsubsection{Text-only leakage and degenerate tasks.}
+We treat $\textsf{full}-\textsf{blind}$ as the vision-attributable signal and audit
+every task in \textsf{blind} mode. This audit removed two tasks from the released
+benchmark: \textsf{green\_space}, which a model answered at \num{100}\% accuracy with
+no image (the correct option wording was identifiable independent of its position),
+and \textsf{road\_surface}, which was near-ceiling and essentially text-solvable.
+Removing degenerate tasks before reporting is a strength, not a gap: it leaves the
+seven urban tasks, on each of which the imagery contributes a meaningful margin over
+the text-only prior (for example $+\num{22}$ points of vision contribution on
+\textsf{transit\_density} and $+\num{29}$ on \textsf{amenity\_richness};
+\cref{sec:main}). The interference result of \cref{sec:itemlevel} is, moreover,
+robust to any residual leakage: the per-item single-view oracle beats the two-view
+model by \num{12.3} points overall and by \num{12.2} points when restricted to the
+\num{1357} items the model answers \emph{incorrectly} while blind---the items that
+genuinely require vision. No model refused or hedged on any urban item in any mode.
+
+\subsubsection{Image count.}
+A concern in multi-view ablations is that one condition may simply present more
+images than another. In our primary configuration this concern does not arise: the
+\textsf{sat}, \textsf{sv}, and \textsf{full} conditions supply one, one, and two
+images respectively, so the comparison of \textsf{full} against either single view
+adds exactly one image of the other modality, with no token-count asymmetry between
+the two views. (The cross-view control tasks of \cref{sec:control} feed the full
+street-view set by construction; we treat them as a sensitivity check on the
+instrument, not as an image-count-matched comparison, and the headline result does
+not depend on them.)
+
+\subsubsection{OSM provenance.}
+Our labels are OSM-derived, and two of the four zero-shot remote-sensing models we
+compare against---LHRS-Bot-Nova and EarthDial---are trained on OSM-derived text, so
+their scores may reflect shared OSM priors; we treat them as an upper bound on
+visual skill and mark them accordingly (\cref{sec:zeroshot}). This does not touch
+our main result, which is a \emph{within-model} difference (\textsf{full} vs.\ the
+better single view): any view-independent OSM prior cancels in the difference.
+
+\subsubsection{Satellite resolution.}
+The redundancy is measured against high-resolution overhead imagery, not a coarse
+proxy: every benchmark tile resolves to a sub-meter source (ESRI
+$\sim$\SIrange{0.3}{0.5}{m/px}, NAIP $\sim$\SI{0.6}{m/px}, IGN $\sim$\SI{0.2}{m/px}),
+and the Sentinel-2 fallback is never triggered. For tasks that are structurally
+ground-level no overhead resolution recovers the cue. We cannot rule out that still
+higher ground sampling distance would help the few tasks where overhead geometry is
+plausibly resolution-limited (building height, urban density), and flag this as the
+main open question (\cref{sec:limitations}).
