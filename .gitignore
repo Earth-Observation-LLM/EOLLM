@@ -56,3 +56,7 @@ PROMPT.md
 
 # Local CLI tool config
 .claude/
+thesis_artifacts/loras/**/adapter_model.safetensors
+training/_diag_9b/adapter/adapter_model.safetensors
+training/_diag_9b/adapter/optimizer.pt
+thesis_artifacts/loras/**/optimizer.pt
