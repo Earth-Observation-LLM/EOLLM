@@ -4,13 +4,10 @@
 % =====================================================================
 
 Complementarity here is a property of the task, not of imagery in general. An
-attribute question---local land use, building height, transit access---can be
-answered from one location's imagery, and the two views then encode much the same
-answer-relevant content, so the combined input rarely exceeds the better single
-view. A cross-view question (whether a street photo belongs to a tile, or which way
-a camera points) instead depends on the relationship between the views, where our
-models do use both. The seven attribute tasks fall in the first regime, the
-cross-view tasks in the second.
+attribute question---local land use, building height, transit access---is answerable
+from one location's imagery, so the two views carry much the same answer-relevant
+content and the combined input rarely beats the stronger one. A cross-view question
+depends instead on the relationship between the views, where our models do use both.
 
 The measurements show the model derives little usable signal from the second view,
 and that the combined input is on net slightly worse than the better single view;
@@ -25,25 +22,13 @@ differ sharply in cost, coverage, and licensing, yet for these attribute familie
 second view adds at most a couple of points and degrades about one item in ten. A
 deployment can serve a single view---the cheaper or better-covered one---at little
 accuracy cost; and when both are available, the evidence favors \emph{routing} each
-question to one view over feeding the model both. The synergy, vision-contribution,
-and interference measures we use form a reusable instrument for making that call
-before committing to dual-view collection.
-
-\paragraph{Scope.}
-Current VLMs do not, on these urban-attribute tasks, convert a second view into
-accuracy, and the combined input is on net mildly worse than the better single view.
-This does not show VLMs are incapable of fusion---the cross-view controls show the
-same models fusing when fusion is the only route to the answer---nor that the second
-view's information, largely redundant for these tasks at the resolutions we serve,
-is redundant at every resolution. The title is a question we answer conditionally:
-the second view helps when the task structurally requires cross-view correspondence,
-and largely does not when a single location's attributes are at issue.
+question to one view over feeding the model both.
 
 \subsection{Limitations and scope}
 \label{sec:limitations}
-The claim concerns seven urban-attribute tasks in four-way MCQ form at commonly
+The claim concerns seven urban-attribute tasks in four-option MCQ form at commonly
 served satellite resolutions; it is not a claim that overhead imagery is
-uninformative or that fusion fails in general, as the cross-view controls show large
+uninformative or that fusion fails in general, as the cross-view tasks show large
 synergy on the same models. Three caveats bound it further: our two training regimes
 share one held-out test set, of which the held-out-cities split is the true
 generalization check; higher ground sampling distance might help the few
@@ -58,12 +43,12 @@ or regression formulation could surface complementary signal an MCQ cannot expre
 We measured, rather than assumed, the value of a second perspective for urban
 attribute recognition. Across model scale, training regime, inference-time view
 count, and prompting strategy, the second view adds at most a couple of points over
-the better single view and overturns a correct answer about nine times as often as it
-rescues a wrong one, while the same models gain \num{19}--\num{71} points on
-cross-view tasks that require both views. We release OELLM---benchmark, adapters, and
-audit protocol---for reuse. The practical lesson is simple: before collecting a
-second visual modality, ask whether the task structurally requires cross-view
-reasoning; if it does not, current models will not turn the extra view into accuracy.
+the better single view, and item by item it removes more correct answers than it
+adds; the same models do benefit on tasks whose answer lives in the correspondence
+between the two views. We release OELLM---benchmark, adapters, and protocol---for
+reuse. The practical lesson is simple: before collecting a second visual modality,
+ask whether the task structurally requires cross-view reasoning; if it does not,
+current models will not turn the extra view into accuracy.
 
 % =====================================================================
 \section{Future Work}

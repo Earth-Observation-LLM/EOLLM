@@ -28,37 +28,30 @@ question generation, and validation/splitting.
   \label{fig:pipeline}
 \end{figure}
 
-Satellite imagery is sourced per location by geography---sub-meter aerial
-orthophotos: ESRI World Imagery ($\sim$\SIrange{0.3}{0.5}{m/px} in cities) as the
-global default, NAIP ($\sim$\SI{0.6}{m/px}) in the US, and IGN ($\sim$\SI{0.2}{m/px})
-in France, with a coarse Sentinel-2 fallback ($\sim$\SI{10}{m/px}) reserved for
-locations no high-resolution source covers. Across the \num{34484}-record corpus,
-\num{31489} questions (\num{91}\%) draw ESRI imagery, \num{1946} NAIP, and
-\num{1049} IGN; the Sentinel-2 fallback was never triggered, so the redundancy we
-report later is measured against uniformly sub-meter overhead imagery rather than a
-coarse proxy. The satellite tile carries a marker indicating the queried location;
-the marker is part of the input and is held fixed across all ablation modes (its
-effect is examined in \cref{sec:robustness}). Street-level views are retrieved from
-Google Street View and retain Google's original attribution; satellite imagery is
-\copyright\ its respective provider (Esri, NAIP/USDA, IGN).
+Satellite imagery is sourced per location by geography, always from a sub-meter
+aerial orthophoto: ESRI World Imagery ($\sim$\SIrange{0.3}{0.5}{m/px} in cities) as
+the global default, NAIP ($\sim$\SI{0.6}{m/px}) in the US, and IGN
+($\sim$\SI{0.2}{m/px}) in France. Across the \num{34484}-record corpus, \num{31489}
+questions (\num{91}\%) draw ESRI imagery, \num{1946} NAIP, and \num{1049} IGN, so the
+redundancy we report later is measured against uniformly sub-meter overhead imagery.
+The satellite tile carries a marker indicating the queried location; the marker is
+part of the input and is held fixed across all conditions (its effect is examined in
+\cref{sec:robustness}). Street-level views are retrieved from Google Street View and
+retain Google's original attribution; satellite imagery is \copyright\ its respective
+provider (Esri, NAIP/USDA, IGN).
 
 \subsection{Task taxonomy}
 \label{sec:taxonomy}
-The benchmark contains \num{12} task families in two groups
-(\cref{fig:examples}). Two satellite-only tasks present in earlier drafts,
-\textsf{green\_space} and \textsf{road\_surface}, were \emph{retired} from the
-released benchmark because every model we evaluated solved them almost perfectly
-and they therefore carried no discriminative signal; we discuss this audit in
-\cref{sec:robustness} and report on the \num{10} retained tasks below.
+The benchmark contains \num{12} task families in two groups (\cref{fig:examples}):
+seven urban-attribute tasks and five cross-view tasks.
 
 \paragraph{Urban understanding (seven tasks).}
 \textsf{land\_use}, \textsf{building\_height}, \textsf{urban\_density},
 \textsf{road\_type}, \textsf{junction\_type}, \textsf{amenity\_richness}, and
-\textsf{transit\_density}. Each is a four-way multiple-choice question whose answer
-follows from one location's OSM context; the visual is a marked satellite tile plus
-street-level imagery. These are the tasks for which ``do we need both views?'' is
-well-posed, because each is in principle answerable from imagery of a single
-location.
+\textsf{transit\_density}. Each is a four-way multiple-choice question over a marked
+satellite tile and street-level imagery of one location, with the answer determined
+by that location's OSM context. These are the tasks on which we ask whether a model
+gains from holding both views.
 
 \paragraph{Cross-view geolocalisation (five tasks).}
 \textsf{camera\_direction} asks which of four arrows on the satellite tile points
@@ -72,44 +65,42 @@ isolating the geometric match. These answers live in the \emph{relationship}
 between views and are unanswerable from a single view by construction.
 
 \paragraph{A fair test of fusion.}
-The two groups differ in what fusion can buy, and this difference is the benchmark's
-design principle. An urban-attribute question is, by construction, answerable in
-principle from \emph{either} modality, and empirically each single view alone
-carries the answer: for most urban tasks the satellite-only and street-only
-accuracies of our trained model track each other closely (e.g.\ \textsf{land\_use}
-\num{72.4} vs.\ \num{71.7}, \textsf{building\_height} \num{60.0} vs.\ \num{62.6},
-\textsf{road\_type} \num{72.7} vs.\ \num{76.0}; \cref{sec:main}). The question is
-therefore not whether one view \emph{can} suffice but whether a model \emph{gains}
-from holding both---a fair test of fusion precisely because each view is
-independently sufficient. The contribution is therefore not that one modality can
-solve these tasks (both can) but that when two informative views are available,
-current VLMs extract almost no additional accuracy from combining them. The
-cross-view group is the complement: a class of tasks that genuinely \emph{require}
-fusion, included so the same instrument can register large synergy when fusion is the
-only route to the answer.
+The two groups differ in what a second view can buy, and that difference is the
+design principle. On the urban tasks each single view already carries the answer:
+the satellite-only and street-only accuracies of our trained model track each other
+closely (e.g.\ \textsf{land\_use} \num{72.4} vs.\ \num{71.7},
+\textsf{building\_height} \num{60.0} vs.\ \num{62.6}; \cref{sec:main}). The question
+is therefore not whether one view \emph{can} suffice but whether a model \emph{gains}
+from holding both---a fair test, because each view is independently sufficient. The
+cross-view group is the complement, included so the same instrument can register
+synergy when fusion is the only route to the answer.
 
 \subsection{Splits}
 \label{sec:splits}
-All splits operate at the location level, so no location's questions span two
-splits. We hold out a disjoint \emph{benchmark} of \num{4734} questions (all
-\num{12} released tasks) drawn from a mixture of seen and unseen cities, shipped in
-two parallel files (\texttt{public}, no answers; \texttt{with\_answers},
-gold-labelled). For training we use two strategies that share this benchmark
-(\cref{tab:dataset}): a \emph{per-city} split (random locations per city to
-validation) and a \emph{seen/unseen} split (eight cities held out entirely, probing
-geographic generalisation). Our primary model is trained on the seen/unseen split.
-Question generation seeds option shuffling from \texttt{sample\_id}\,$+$\,topic, so
-the correct letter is stable across re-runs but distributed across the corpus; we
-keep one question per (location, task) pair to avoid location-level inflation, and
-discard locations with fewer than four street-level views.
+Splitting is done at the location level: all of a location's questions stay together,
+never crossing the train/validation/benchmark boundary \emph{within a given training
+strategy}. The \emph{benchmark} is carved out first and identically---ten percent of
+the locations in every one of the \num{40} cities, the same \num{4734} questions (all
+\num{12} tasks) regardless of strategy---and shipped in two parallel files
+(\texttt{public}, no answers; \texttt{with\_answers}, gold-labelled). The remaining
+locations are then divided two ways (\cref{tab:dataset}): a \emph{per-city} split that
+sends a fixed fraction of each city's locations to validation (every city appears in
+both train and validation), and a \emph{seen/unseen} split that holds out eight
+cities entirely to probe geographic generalisation. The two strategies draw their
+train and validation pools from the same remainder, so they are not mutually disjoint;
+each is internally clean against the shared benchmark, and we train models under both.
+The headline model uses the seen/unseen split. Option shuffling is seeded from
+\texttt{sample\_id}\,$+$\,topic so the correct letter is stable across re-runs; we
+keep one question per (location, task) pair and discard locations with fewer than four
+street-level views.
 
 \begin{table}[t]
   \centering
   \caption{Record counts for the released OELLM corpus (\num{34484} questions over
   \num{4168} locations in \num{40} cities). Two training strategies share one
-  disjoint benchmark. This paper's fusion audit uses the seven urban-attribute
-  tasks of the benchmark ($n=\num{2629}$); the remaining \num{2105} cross-view
-  questions form the positive control of \cref{sec:control}.}
+  benchmark, carved out first and identically. This paper's fusion audit uses the
+  seven urban-attribute tasks of the benchmark ($n=\num{2629}$); the remaining
+  \num{2105} cross-view questions provide the sensitivity check of \cref{sec:control}.}
   \label{tab:dataset}
   \setlength{\tabcolsep}{8pt}
   \begin{tabular}{@{}lrrr@{}}
@@ -126,15 +117,16 @@ discard locations with fewer than four street-level views.
 \subsection{Evaluation protocol}
 \label{sec:protocol}
 We evaluate every model under a controlled \emph{image ablation}: each question is
-posed under four input conditions---\textsf{blind} (question and options only),
-\textsf{sat} (the marked satellite tile only), \textsf{sv} (street-level view only),
-and \textsf{full} (both). The text of the question and options is byte-identical
-across conditions; only the supplied images change. We decode greedily with a fixed
-seed and parse a single answer letter with a strict word-boundary matcher; the same
-harness, prompt, and rendering run across all models so that only the forward pass
-differs. The fusion audit uses the \num{2629} urban-attribute questions of the
-benchmark; the \num{2105} cross-view questions serve as the positive control. Per-task
-counts are uneven by design, reflecting OSM-tag availability rather than importance
+posed under three input conditions---\textsf{sat} (the marked satellite tile only),
+\textsf{sv} (street-level view only), and \textsf{full} (both). The text of the
+question and options is byte-identical across conditions; only the supplied images
+change, so the contrast of \textsf{full} against either single view isolates the
+marginal value of adding the other modality. We decode greedily with a fixed seed and
+parse a single answer letter with a strict word-boundary matcher; the same harness,
+prompt, and rendering run across all models so that only the forward pass differs. The
+fusion audit uses the \num{2629} urban-attribute questions; the \num{2105} cross-view
+questions serve as a sensitivity check on the instrument. Per-task counts are uneven
+by design, reflecting OSM-tag availability rather than importance
 (\textsf{building\_height}, \num{190}; \textsf{junction\_type}, \num{334}; the other
 five urban tasks, \num{421} each).
 

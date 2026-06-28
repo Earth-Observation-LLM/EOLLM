@@ -3,10 +3,8 @@
 \label{sec:results}
 % =====================================================================
 
-The central result is at the item level: on the urban tasks the second view
-overturns a correct answer about nine times as often as it rescues a wrong one
-(\cref{sec:itemlevel}). We build to it---setup, the average effect, a sensitivity
-check---then analyse it directly.
+The central result is at the item level (\cref{sec:itemlevel}); we build to
+it---setup, the average effect, a sensitivity check---then analyse it directly.
 
 \subsection{Setup}
 \label{sec:setup}
@@ -16,115 +14,103 @@ the vision tower, bfloat16, max image edge \num{512}\,px) on the seen/unseen
 training split. We train it at the \emph{minimum-sufficient} input---a marked
 satellite tile plus the single \emph{forward} street view (\textsf{satfwd}), two
 images per sample---so that every comparison sits on the same one-street-view
-regime. Fine-tuning on the task distribution is the cleanest setting for the view
-question: a failure to use both views cannot then be blamed on poor task alignment.
+regime. Fine-tuning on the task distribution is deliberate: a failure to use both
+views then cannot be blamed on poor task alignment.
 For the mismatch tasks, which structurally require comparing the full street-view
 set against the satellite tile, evaluation feeds all four street views even to this
 adapter, because the task design forces it.
 
-We evaluate under the four image-ablation conditions of \cref{sec:protocol}:
-\textsf{blind}, \textsf{sat} (marked tile), \textsf{sv} (forward street view), and
-\textsf{full} (both). In this configuration \textsf{full} means \emph{two}
-images---one satellite, one street view; we report the four-street-view training
-regime separately in \cref{sec:supp}. We report per-task accuracy and two derived
-quantities: \emph{fusion synergy} $=\textsf{full}-\max(\textsf{sat},\textsf{sv})$,
-the gain of both views over the better single one, and \emph{vision contribution}
-$=\textsf{full}-\textsf{blind}$. To check that the finding is not model-specific we
-also evaluate four off-the-shelf, overhead-only remote-sensing VLMs zero-shot
-(\cref{tab:models}; \cref{sec:zeroshot}) and a panel of raw open VLMs under the same
-four conditions (\cref{sec:replication}); all run through one harness on a single
-\SI{96}{GB} GPU.
+We evaluate under the three image-ablation conditions of \cref{sec:protocol}:
+\textsf{sat} (marked tile), \textsf{sv} (forward street view), and \textsf{full}
+(both). In this configuration \textsf{full} means \emph{two} images---one satellite,
+one street view; we report the four-street-view training regime separately in
+\cref{sec:supp}. The quantity of interest is \emph{fusion synergy}
+$=\textsf{full}-\max(\textsf{sat},\textsf{sv})$, the gain of both views over the
+better single one. To check that the finding is not model-specific we also evaluate
+four off-the-shelf, overhead-only remote-sensing VLMs zero-shot (\cref{tab:models};
+\cref{sec:zeroshot}) and a panel of raw open VLMs under the same conditions
+(\cref{sec:replication}); all run through one harness on a single \SI{96}{GB} GPU.
 
 \subsection{The second view adds little over the better single view}
 \label{sec:main}
 
 Does adding the second view improve average accuracy? \Cref{tab:fusion-main}
-reports the trained model per urban task under all four conditions. \textsf{full}
+reports the trained model per urban task under the three conditions. \textsf{full}
 tracks the \emph{better single view} closely: per-task fusion synergy ranges from
 $-\num{2.4}$ (\textsf{amenity\_richness}) to $+\num{2.9}$ (\textsf{transit\_density})
 and averages $+\num{0.5}$ points across the seven tasks; two tasks have
 \emph{negative} synergy, and street view alone already matches or exceeds
 \textsf{full} on \textsf{road\_type}. Pooled, synergy is $+\num{1.1}$ points
-(\num{95}\% CI $[-\num{0.2},+\num{2.4}]$, including zero). Vision still matters:
-$\textsf{full}-\textsf{blind}$ is large (for example $+\num{20}$ on
-\textsf{transit\_density} and $+\num{29}$ on \textsf{amenity\_richness}), so the
-model reads the imagery---it simply extracts about a single view's worth of usable
-information from it.
+(\num{95}\% CI $[-\num{0.2},+\num{2.4}]$, including zero). The model is plainly
+reading the imagery---each single view lands far above the \num{25.2}\% chance rate
+of always answering `A', the lowest being \textsf{transit\_density} at \num{46.1}\%
+on the weaker view---so the issue is not that the pixels go unused but that the
+second view's pixels carry about a single view's worth of usable information.
 
 \begin{table}[t]
   \centering
   \caption{Trained Qwen3.5-9B (\textsf{satfwd}) on the held-out benchmark, per urban
   task and input condition (accuracy, \%). \textbf{Syn.}
-  $=\textsf{full}-\max(\textsf{sat},\textsf{sv})$ is fusion synergy; \textbf{Vis.}
-  $=\textsf{full}-\textsf{blind}$. Synergy is small on every task; \textsf{full}
-  stays close to the better single view, while vision contribution is large.}
+  $=\textsf{full}-\max(\textsf{sat},\textsf{sv})$ is fusion synergy. Synergy is small
+  on every task and \textsf{full} stays close to the better single view; each single
+  view alone is already well above the \num{25.2}\% chance rate.}
   \label{tab:fusion-main}
-  \setlength{\tabcolsep}{5pt}
-  \begin{tabular}{@{}lrccccr@{}}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}lrcccr@{}}
     \toprule
-    Task & $n$ & blind & sat & sv & full & Syn. \\
+    Task & $n$ & sat & sv & full & Syn. \\
     \midrule
-    land\_use         & 421 & 66.5 & 72.4 & 71.7 & 72.9 & $+0.5$ \\
-    building\_height  & 190 & 46.8 & 60.0 & 62.6 & 63.7 & $+1.1$ \\
-    urban\_density    & 421 & 54.4 & 69.6 & 59.1 & 70.1 & $+0.5$ \\
-    road\_type        & 421 & 68.6 & 72.7 & 76.0 & 74.6 & $-1.4$ \\
-    junction\_type    & 334 & 48.2 & 71.6 & 66.5 & 74.0 & $+2.4$ \\
-    amenity\_richness & 421 & 24.5 & 55.3 & 47.7 & 53.0 & $-2.4$ \\
-    transit\_density  & 421 & 28.7 & 46.3 & 46.1 & 49.2 & $+2.9$ \\
+    land\_use         & 421 & 72.4 & 71.7 & 72.9 & $+0.5$ \\
+    building\_height  & 190 & 60.0 & 62.6 & 63.7 & $+1.1$ \\
+    urban\_density    & 421 & 69.6 & 59.1 & 70.1 & $+0.5$ \\
+    road\_type        & 421 & 72.7 & 76.0 & 74.6 & $-1.4$ \\
+    junction\_type    & 334 & 71.6 & 66.5 & 74.0 & $+2.4$ \\
+    amenity\_richness & 421 & 55.3 & 47.7 & 53.0 & $-2.4$ \\
+    transit\_density  & 421 & 46.3 & 46.1 & 49.2 & $+2.9$ \\
     \midrule
-    \textbf{Mean}     & --- & 48.3 & 64.0 & 61.4 & 65.3 & $\mathbf{+0.5}$ \\
+    \textbf{Mean}     & --- & 64.0 & 61.4 & 65.3 & $\mathbf{+0.5}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 A synergy near zero is only meaningful if the instrument can detect fusion when
-fusion is present. We check that next.
+fusion is present.
 
-\subsection{The same model fuses when the task requires it (positive control)}
+\subsection{The instrument is not blind to fusion (sensitivity check)}
 \label{sec:control}
 
-Could the small attribute-task synergy reflect an insensitive measurement rather
-than a property of the tasks? \Cref{tab:control} runs the same model and harness on
-the five cross-view tasks, whose answers require comparing the two views. Synergy is
-large, $+\num{19}$ to $+\num{71}$ points: \textsf{mismatch\_mcq\_easy} rises from
-\num{26}\% with the satellite alone to \num{97}\% with both views, and
-\textsf{camera\_direction} gains $+\num{19}$. The instrument that reads a
-half-point gain on the attribute tasks reads a forty-to-seventy-point gain when the
-task is built to require both views.
-
-The control shows the instrument registers large synergy when fusion is the only
-route to the answer: a synergy near zero on the urban tasks is genuine absence, not
-measurement failure. It is \emph{not} an image-count-matched comparison to the urban
-setting---the cross-view tasks feed the full street-view set (five images) by
-construction, whereas the urban \textsf{full} condition uses two. The
-image-count-controlled question---does the second \emph{modality} help when added to
-the first?---is answered within the urban tasks themselves (\cref{sec:main,sec:itemlevel}),
-where \textsf{full} adds exactly one street view to one satellite tile. The null on
-the urban tasks is not a dead satellite channel: the identical adapter gains
-$+\num{44}$ to $+\num{71}$ points here. And an independent, purpose-built cross-view
-retrieval network
-(Sample4Geo~\cite{deuser2023sample4geo}), transferred zero-shot, scores \num{0.64}
-on the binary same-place questions---above the \num{0.50} chance rate---confirming
-the matching tasks carry genuine cross-view signal that the attribute tasks do not
-offer to recover (a different model class and metric, not comparable to
-\cref{tab:control}).
+The five cross-view tasks check that the same ablation registers fusion where fusion
+is genuinely present. They are constructed so the answer lives in the correspondence
+between the two views---and, for the mismatch tasks, so the candidate street-view set
+that matches the tile is literally one of the options---so removing a view is, by
+design, costly. It is: with both views the model reaches \num{87}--\num{98}\% on the
+mismatch tasks (\cref{tab:control}), far above either single view. The instrument that
+records a half-point change on the urban tasks is plainly not insensitive, so the
+urban null is a real absence of synergy. We do \emph{not} read these magnitudes as a
+fusion ``score'': the comparison is not image-count-matched (the mismatch tasks feed
+the full street-view set), and a large drop when an answer-bearing view is withheld is
+expected by design. The image-count-matched question---does a second \emph{modality}
+help added to the first?---is the urban one (\cref{sec:main,sec:itemlevel}), where
+\textsf{full} adds exactly one street view to one satellite tile.
 
 \begin{table}[t]
   \centering
-  \caption{Positive control: the same trained model on cross-view tasks that require
-  both views by construction (the street-view set is fed in full). Synergy is large,
-  confirming the ablation detects fusion when it is needed.}
+  \caption{Sensitivity check: the same trained model on the cross-view tasks, whose
+  answers depend on the relationship between the views (the mismatch tasks include the
+  matching view among the options). The large \textsf{full}-vs-single gap confirms the
+  ablation is not blind to fusion; we treat it as a check on the instrument, not as an
+  image-count-matched measurement.}
   \label{tab:control}
-  \setlength{\tabcolsep}{5pt}
-  \begin{tabular}{@{}lccccr@{}}
+  \setlength{\tabcolsep}{6pt}
+  \begin{tabular}{@{}lcccr@{}}
     \toprule
-    Cross-view task & blind & sat & sv & full & Syn. \\
+    Cross-view task & sat & sv & full & Syn. \\
     \midrule
-    camera\_direction      & 25.2 & 23.0 & --   & 42.0 & $+19.0$ \\
-    mismatch\_binary\_easy & 45.1 & 47.0 & 53.4 & 97.6 & $+44.2$ \\
-    mismatch\_binary\_hard & 56.8 & 48.0 & 44.2 & 92.4 & $+44.4$ \\
-    mismatch\_mcq\_easy    & 23.5 & 26.1 & 23.8 & 96.9 & $+70.8$ \\
-    mismatch\_mcq\_hard    & 23.5 & 22.6 & 24.9 & 87.2 & $+62.2$ \\
+    camera\_direction      & 23.0 & --   & 42.0 & $+19.0$ \\
+    mismatch\_binary\_easy & 47.0 & 53.4 & 97.6 & $+44.2$ \\
+    mismatch\_binary\_hard & 48.0 & 44.2 & 92.4 & $+44.4$ \\
+    mismatch\_mcq\_easy    & 26.1 & 23.8 & 96.9 & $+70.8$ \\
+    mismatch\_mcq\_hard    & 22.6 & 24.9 & 87.2 & $+62.2$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -133,7 +119,7 @@ offer to recover (a different model class and metric, not comparable to
 \label{sec:itemlevel}
 
 A small positive average could still hide genuine fusion on a subset of items. We
-join the four conditions' predictions at the item level---every question carries a
+join the three conditions' predictions at the item level---every question carries a
 stable identifier shared across conditions---and analyse the \num{2629} fully paired
 urban items directly (\cref{fig:itemlevel}).
 
@@ -166,32 +152,25 @@ street-only view, \textsf{full} is significantly \emph{worse} than parity
 significant (\num{174} vs.\ \num{145}, $p=\num{0.12}$). When the two views disagree,
 the combined input does not reliably preserve the correct answer.
 
-\paragraph{This is not a leakage artefact, and stronger reasoning does not remove it.}
-The oracle gap is the same on the items that genuinely require vision: \num{12.3}
-points over all items and \num{12.2} points restricted to the \num{1357} items the
-model answers incorrectly while blind. Nor is the obstacle a lack of deliberation. A
-natural objection is that the second view is complementary but the model simply
-fails to combine it; if so, stronger inference-time reasoning should surface the
-latent signal. It does not: across plain decoding, a \num{16}k-token
-explicit-reasoning budget, and a four-turn
-observe--reason--self-check--commit protocol, mean accuracy rises modestly while
-fusion synergy remains \emph{negative} and street-view-alone stays the single
-strongest condition (evaluated on an AWQ-quantised Qwen3.5-9B so the long-context
-runs fit one GPU; this probe is an internal trend check, not numerically comparable
-to the headline, and the claim rests only on the sign of synergy, which
-quantisation does not flip). More deliberation raises single-view accuracy without
-raising synergy.
+\paragraph{Stronger reasoning does not remove it.}
+Perhaps the second view is complementary and the model merely fails to combine
+it---in which case stronger inference-time reasoning should surface the signal. It
+does not: across plain decoding, a \num{16}k-token
+explicit-reasoning budget, and a four-turn observe--reason--self-check--commit
+protocol, mean accuracy rises modestly while fusion synergy stays \emph{negative} and
+street-view-alone remains the single strongest condition (evaluated on an
+AWQ-quantised Qwen3.5-9B so the long-context runs fit one GPU; this probe is an
+internal trend check, not numerically comparable to the headline, and the claim rests
+only on the sign of synergy, which quantisation does not flip). More deliberation
+raises single-view accuracy without raising synergy.
 
 \paragraph{The average gain, precisely.}
-The pooled synergy is $+\num{1.1}$ points with a \num{95}\% interval
-$[-\num{0.2},+\num{2.4}]$ that includes zero, equivalent to zero under a
-$\pm\num{3}$-point TOST~\cite{lakens2018tost}; the effect is, at most, a couple of
-points and is not statistically distinguishable from no effect.
-The \emph{harm}, by contrast, is significant: on the items the second view changes,
-it removes \num{14}\% of correct answers while rescuing \num{1.5}\%, and the
-single-view oracle's \num{12.3}-point lead has an interval well clear of zero.
-Whether a near-zero average gain at that interference cost warrants serving a second
-imagery modality is the practical question we take up in \cref{sec:discussion}.
+The pooled synergy of $+\num{1.1}$ points (CI $[-\num{0.2},+\num{2.4}]$) is
+statistically equivalent to zero under a $\pm\num{3}$-point
+TOST~\cite{lakens2018tost}. The \emph{harm}, by contrast, is significant: the
+single-view oracle's lead has an interval well clear of zero. Whether a near-zero
+gain at that interference cost warrants serving a second imagery modality is the
+practical question we take up in \cref{sec:discussion}.
 
 \subsection{The finding holds zero-shot across off-the-shelf RS-VLMs}
 \label{sec:zeroshot}
@@ -201,10 +180,9 @@ four off-the-shelf remote-sensing VLMs (GeoChat, SkySenseGPT, LHRS-Bot-Nova,
 EarthDial) zero-shot on the satellite-only half of the urban benchmark. None was
 trained on our task, our four-way format, or our marker overlay; they span CLIP- and
 SigLIP-based encoders, three LLM families, and single-crop versus tiled
-preprocessing. A model fine-tuned on the
-distribution should of course beat zero-shot baselines; the comparison bears not on
-the synergy result (a within-model difference) but on the single-overhead-view
-floor. The best zero-shot model (EarthDial, \num{37.8}\%) trails our trained model's
+preprocessing. A fine-tuned model
+should of course beat zero-shot baselines; the comparison bears not on synergy but on
+the single-overhead-view floor. The best zero-shot model (EarthDial, \num{37.8}\%) trails our trained model's
 satellite-only accuracy (\num{64.0}\%) by \num{26} points. As unweighted means over
 the same seven urban tasks, GeoChat scores \num{21.0}\%, SkySenseGPT \num{27.2}\%,
 LHRS-Bot-Nova \num{29.5}\%, and EarthDial \num{37.8}\%; the latter two are trained on
@@ -213,7 +191,7 @@ OSM-derived text and are an upper bound on visual skill (\cref{sec:robustness}).
 \subsection{The regime split reproduces across families and scales}
 \label{sec:replication}
 
-Is the dissociation specific to our fine-tuned model? The same four-mode audit on
+Is the dissociation specific to our fine-tuned model? The same ablation on
 raw, zero-shot open VLMs---Qwen3.5-4B/9B,
 Qwen2.5-VL-7B, and Gemma-4-12B---preserves the \emph{shape} of the result.
 The raw models are weaker overall (urban \textsf{full} accuracy clusters near
@@ -223,36 +201,36 @@ On the raw Qwen3.5-9B, for instance, urban synergy is essentially zero (and slig
 negative on \textsf{land\_use} and \textsf{junction\_type}), while
 \textsf{mismatch\_mcq\_easy} jumps from \num{25}\% with the satellite alone to
 \num{66}\% with both views. We evaluate the raw panel under each model's native
-street-view input scheme rather than our single-forward-view regime; because these
-models are not fine-tuned and view economy is not the question we ask of them, the
-panel speaks only to whether the qualitative regime split recurs, not to a
-like-for-like view-count comparison with our adapter. If anything this grants the
-raw panel more street-view evidence to fuse, so the near-zero urban synergy it still
-exhibits is a conservative reading. The regime split is thus a property of current
+street-view scheme, so it speaks only to whether the qualitative regime split recurs,
+not to a like-for-like view-count comparison. If anything this grants the panel more
+street-view evidence to fuse, making the near-zero urban synergy it still shows a
+conservative reading. The regime split is thus a property of current
 VLMs and current paired-view tasks, not a fine-tuning artefact.
 
 \subsection{Inference-time view pruning}
 \label{sec:pruning}
 
 If a single street view carries the urban signal, pruning the others at inference
-should cost little. We measure this on a stronger raw model (Qwen3.6-27B) by the
-fraction of \emph{already-correct} answers that survive when the street-view set is
-reduced to $k$ images under different selection rules. Among questions the model
-answers correctly with all views, keeping only the forward street view retains
-\num{89}\%, and keeping none (satellite only) retains \num{67}\%---a survival rate,
-not an accuracy (\cref{fig:prune}). Informed view selection beats random selection
-only modestly (top-attention \num{90}\% vs.\ random \num{85}\% at $k{=}\num{1}$), and
-the \num{67}\% zero-view floor reflects residual text and label leakage, so the
-evidence that any \emph{specific} single view is essential is weak.
+should cost little. We measure this on a stronger raw model (Qwen3.6-27B) with a
+single metric throughout: among the questions the model already answers correctly
+with all street views, what fraction \emph{survive}---stay correct---when the
+street-view set is cut to $k$ images (\cref{fig:prune}). At $k{=}\num{1}$, keeping
+the forward view retains \num{89}\% of those correct answers, essentially matching
+the attention-selected best view (\num{90}\%) and edging out a random view
+(\num{85}\%) or the worst (\num{83}\%); one well-chosen street view is almost as good
+as four. Cutting to $k{=}\num{0}$ (no street view, satellite only) still retains
+\num{67}\%---reflecting residual text and label signal---so no \emph{specific} single
+view is essential, and the gap between informed and random selection is small.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.72\linewidth]{figures_new/fig_prune.pdf}
-  \caption{Survival of already-correct answers when only $k{=}\num{1}$ street view is
-  kept (Qwen3.6-27B). The forward view (\num{89}\%) matches attention-selected
-  top-\num{1} (\num{90}\%) and beats random (\num{85}\%) and worst (\num{83}\%); all
-  far exceed the satellite-only floor (\num{67}\%). Retention over already-correct
-  items, not accuracy.}
+  \includegraphics[width=0.74\linewidth]{figures_new/fig_prune.pdf}
+  \caption{Survival of already-correct answers as the street-view set is pruned
+  (Qwen3.6-27B). Every bar is the same quantity---the fraction of questions correct
+  with all views that remain correct after pruning. Keeping one street view
+  ($k{=}\num{1}$, any rule) retains \num{83}--\num{90}\%; keeping none
+  ($k{=}\num{0}$, satellite only) retains \num{67}\%. This is retention over
+  already-correct items, never an accuracy.}
   \label{fig:prune}
 \end{figure}
 

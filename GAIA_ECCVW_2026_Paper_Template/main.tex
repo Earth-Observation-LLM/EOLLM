@@ -66,19 +66,19 @@ Pairing overhead satellite and ground-level street imagery is widely assumed to 
 vision--language models a richer view of a place than either alone. We test when this
 assumption holds. We build OELLM, a deterministic, OpenStreetMap-grounded benchmark
 that pairs a marked satellite tile with road-aligned street views across \num{40}
-cities, spanning urban-attribute tasks (answerable from one location) and cross-view
-tasks (answerable only from the relationship between views). Our instrument is a
-four-way image ablation---blind, satellite-only, street-only, and both---from which
-we read \emph{fusion synergy} (the gain of both views over the better single one) and
-an item-level \emph{interference asymmetry}. On seven urban-attribute tasks, a
-fine-tuned 9B VLM gains only $+\num{0.5}$ points from the second view, and at the
-item level it overturns a correct answer about nine times as often as it rescues a
-wrong one, so a per-item single-view oracle beats the two-view model by \num{12}
-points. On five cross-view tasks the same model and instrument gain $+\num{19}$ to
-$+\num{71}$ points, confirming the audit detects fusion when the task requires it. The
+cities, covering urban-attribute tasks about one location and cross-view tasks whose
+answer depends on the correspondence between the two views. We pose every question
+three ways---satellite only, street only, and both---and read off \emph{fusion
+synergy}, the gain of both views over the better single one. On the seven
+urban-attribute tasks, where we find each single view already carries the answer, a
+fine-tuned 9B VLM gains only $+\num{0.5}$ points from adding the second view; looking
+question by question, the second view in fact flips more answers from right to wrong
+than from wrong to right, so it is mildly harmful rather than merely redundant. The
+cross-view tasks, built so the answer lives between the views, behave oppositely and
+confirm the same ablation does detect fusion when a task requires it. The urban
 pattern replicates across model families and scales, stronger prompting,
-inference-time view pruning, and training-time view count. Multi-view fusion is
-task-shaped, not pervasive.
+inference-time view pruning, and training-time view count. Whether a second view helps
+is task-shaped, not pervasive.
   \keywords{Geosensing \and Vision-language models \and Multi-view fusion}
 \end{abstract}
 
@@ -89,17 +89,17 @@ task-shaped, not pervasive.
   \centering
   \includegraphics[width=\linewidth]{figures_new/fig_teaser.pdf}
   \caption{\textbf{Left:} one held-out location (Sydney). Each benchmark location
-  provides a marked sub-meter satellite tile and four cardinal street-level views;
-  the dataset always supplies all four. Our primary model consumes only \emph{two}
-  images---the satellite tile and the \emph{forward} street view---and the ablation
-  is computed in that configuration: ``full'' here means satellite $+$ forward street
-  view. For this task (urban density) full barely exceeds the better single view,
-  while both far exceed the no-image prior (blind). \textbf{Right:} per-task fusion
-  gain ($\textsf{full}-$ better single view) across all \num{12} evaluated tasks. The
-  second view helps only when the task requires cross-view correspondence:
-  $\approx$0 on the seven urban tasks (some negative), $+\num{19}$ to $+\num{71}$ on
-  the five cross-view tasks. Imagery is unmodified dataset content: satellite tile \copyright\ Esri World
-  Imagery; street-view panels \copyright\ Google (Street View).}
+  provides a marked sub-meter satellite tile and four cardinal street-level views; the
+  dataset always supplies all four. Our primary model consumes only \emph{two}
+  images---the satellite tile and the \emph{forward} street view---and the ablation is
+  computed in that configuration: ``full'' here means satellite $+$ forward street
+  view. For this task (urban density) full barely exceeds the better single view.
+  \textbf{Right:} per-task fusion gain ($\textsf{full}-$ better single view) across all
+  \num{12} evaluated tasks. On the seven urban-attribute tasks the gain is
+  $\approx$0 (some negative); the large gains on the five cross-view tasks come from
+  tasks constructed so the answer lives between the views, where removing one view is
+  costly by design. Imagery is unmodified dataset content: satellite tile \copyright\
+  Esri World Imagery; street-view panels \copyright\ Google (Street View).}
   \label{fig:teaser}
 \end{figure*}
 

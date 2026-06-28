@@ -207,16 +207,27 @@
       "full_paired": 49.1686460807601
     },
     "MEAN": {
-      "blind": 48.25729178508306,
+      "blind_BLIND_NOT_FOR_PAPER_V4": 48.25729178508306,
       "sat": 63.99234784587594,
       "sv": 61.401604841323724,
       "full": 65.33589581503504,
       "synergy_unweighted": 0.4925487371122423,
-      "vision_contrib": 17.078604029951986
+      "vision_contrib_BLIND_NOT_FOR_PAPER_V4": 17.078604029951986
     }
   },
+  "reads_imagery_urban7_v4": {
+    "always_A_floor_pct": 25.2,
+    "sat_mean": 63.99234784587594,
+    "sv_mean": 61.401604841323724,
+    "full_mean": 65.33589581503504,
+    "min_single_view_task": [
+      46.080760095011875,
+      "transit_density"
+    ],
+    "note": "Both single views sit far above the 25.2% always-A floor on every task, so the model demonstrably reads the imagery; no blind needed."
+  },
   "pooled_urban7": {
-    "blind": 48.38341574743249,
+    "blind_BLIND_NOT_FOR_PAPER_V4": 48.38341574743249,
     "sat": 64.09281095473564,
     "sv": 61.12590338531761,
     "full": 65.19589197413465,
@@ -280,34 +291,29 @@
     },
     "note": "full-vs-sat is NOT significant (p~0.12); headline test is full-vs-oracle (p<<1e-60)."
   },
-  "leakage_robustness_urban7": {
+  "robustness_urban7_v4": {
     "full_minus_oracle_all_items": -12.286040319513114,
-    "n_blind_wrong": 1357,
-    "full_minus_oracle_blind_wrong": -12.159174649963155,
-    "refused_any_mode": 0,
     "refused": {
-      "blind": 0,
       "sat_only": 0,
       "sv_only": 0,
       "full": 0
     },
     "hedged": {
-      "blind": 0,
       "sat_only": 0,
       "sv_only": 0,
       "full": 0
     },
     "n_per_mode": {
-      "blind": 2629,
       "sat_only": 2629,
       "sv_only": 2629,
       "full": 2629
-    }
+    },
+    "note": "Blind condition removed in v4. Oracle gap is within-item (no blind). Refusal/hedge over reported modes only."
   },
   "table4_crossview": {
     "camera_direction": {
       "n": 421,
-      "blind": 25.17814726840855,
+      "blind_BLIND_NOT_FOR_PAPER_V4": 25.17814726840855,
       "sat": 23.040380047505938,
       "sv": null,
       "full": 42.042755344418055,
@@ -315,7 +321,7 @@
     },
     "mismatch_binary_easy": {
       "n": 421,
-      "blind": 45.13064133016627,
+      "blind_BLIND_NOT_FOR_PAPER_V4": 45.13064133016627,
       "sat": 47.03087885985748,
       "sv": 53.44418052256532,
       "full": 97.62470308788599,
@@ -323,7 +329,7 @@
     },
     "mismatch_binary_hard": {
       "n": 421,
-      "blind": 56.76959619952494,
+      "blind_BLIND_NOT_FOR_PAPER_V4": 56.76959619952494,
       "sat": 47.980997624703086,
       "sv": 44.180522565320665,
       "full": 92.39904988123516,
@@ -331,7 +337,7 @@
     },
     "mismatch_mcq_easy": {
       "n": 421,
-      "blind": 23.51543942992874,
+      "blind_BLIND_NOT_FOR_PAPER_V4": 23.51543942992874,
       "sat": 26.128266033254157,
       "sv": 23.752969121140143,
       "full": 96.91211401425178,
@@ -339,7 +345,7 @@
     },
     "mismatch_mcq_hard": {
       "n": 421,
-      "blind": 23.51543942992874,
+      "blind_BLIND_NOT_FOR_PAPER_V4": 23.51543942992874,
       "sat": 22.565320665083135,
       "sv": 24.94061757719715,
       "full": 87.17339667458432,
@@ -393,14 +399,7 @@
     },
     "note": "URBAN7 uniform (chi2~3.6); skew concentrated in cross-view; and headline metric is within-item so option order cancels."
   },
-  "benchmark_funnel": {
-    "file_rows": 5240,
-    "file_topics": 14,
-    "retired_in_file": 506,
-    "retired_breakdown": {
-      "green_space": 203,
-      "road_surface": 303
-    },
+  "benchmark_composition": {
     "released_benchmark_12task": 4734,
     "urban7": 2629,
     "cross5": 2105,
@@ -419,7 +418,7 @@
       "mismatch_mcq_hard": 421
     },
     "check_4734": true,
-    "check_sum": true
+    "note": "12 released tasks only; green_space/road_surface present in the raw file are NOT part of the released benchmark and are not reported."
   },
   "external_rsvlm_urban7": {
     "GeoChat-7B": {

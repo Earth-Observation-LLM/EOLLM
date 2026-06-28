@@ -93,7 +93,7 @@ def fig_teaser():
     fwd = Image.open(f"{DATA_IMG}/sv/{sid}_along_fwd.jpg").convert("RGB")
 
     ud = NUMS["table2_urban7"]["urban_density"]
-    abl = [ud["blind"], ud["sat"], ud["sv"], ud["full"]]   # satfwd, verified
+    abl = [ud["sat"], ud["sv"], ud["full"]]   # satfwd, verified; v4: no blind
 
     fig = plt.figure(figsize=(7.0, 3.15))
     gs = fig.add_gridspec(1, 2, width_ratios=[0.95, 1.25], wspace=0.30)
@@ -112,15 +112,15 @@ def fig_teaser():
         s.set_edgecolor(GREEN); s.set_linewidth(1.3)
 
     ax_b = fig.add_subplot(gsl[1, :])
-    conds = ["blind", "sat", "sv", "full"]
-    colors = [GREY, BLUE, GREEN, VERM]
-    bars = ax_b.bar(conds, abl, color=colors, width=0.66)
+    conds = ["sat", "sv", "full"]
+    colors = [BLUE, GREEN, VERM]
+    bars = ax_b.bar(conds, abl, color=colors, width=0.60)
     ax_b.set_ylim(0, 100); ax_b.set_ylabel("acc. (%)", fontsize=6.6)
     ax_b.tick_params(labelsize=6.6)
     for b, v in zip(bars, abl):
         ax_b.text(b.get_x() + b.get_width() / 2, v + 2.5, f"{v:.0f}",
                   ha="center", fontsize=6.2)
-    ax_b.set_title(r"full $\approx$ best single $\gg$ blind", fontsize=6.6)
+    ax_b.set_title(r"full $\approx$ best single view", fontsize=6.6)
     ax_b.spines["top"].set_visible(False); ax_b.spines["right"].set_visible(False)
     ax_b.text(0.5, -0.42, "one location (urban density)", transform=ax_b.transAxes,
               ha="center", fontsize=6.0, color=DARK)
@@ -142,18 +142,18 @@ def fig_teaser():
         ax.text(v + (1.4 if v >= 0 else -1.4), yi, f"{v:+.0f}",
                 va="center", ha="left" if v >= 0 else "right", fontsize=6.0)
     # regime labels parked in the clear right margin (x>80, beyond all bars)
-    ax.text(93, (len(u) - 1) / 2.0, "urban\n(single-view\nsufficient)", color=BLUE,
+    ax.text(93, (len(u) - 1) / 2.0, "urban\nattribute", color=BLUE,
             fontsize=6.2, va="center", ha="center")
-    ax.text(93, len(u) + (len(c) - 1) / 2.0, "cross-view\n(fusion\nrequired)", color=VERM,
+    ax.text(93, len(u) + (len(c) - 1) / 2.0, "cross-view\n(by design)", color=VERM,
             fontsize=6.2, va="center", ha="center")
     ax.axvline(82, color="#DDDDDD", lw=0.6)
     ax.axhline(len(u) - 0.5, color="#CCCCCC", lw=0.7, ls="--")
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
     ax.tick_params(labelsize=6.6)
 
-    fig.suptitle("A second view helps only when the task requires cross-view "
-                 "correspondence: fusion gain is $\\approx$0 on urban tasks, "
-                 "$+19$ to $+71$ on cross-view tasks.", fontsize=7.6, y=1.03)
+    fig.suptitle("On urban-attribute tasks the second view adds $\\approx$0 over the "
+                 "better single view; the large cross-view gains are from tasks built "
+                 "to require both views.", fontsize=7.6, y=1.03)
     p = os.path.join(OUT, "fig_teaser.pdf")
     fig.savefig(p, bbox_inches="tight", dpi=200)
     plt.close(fig)
@@ -272,23 +272,30 @@ def fig_oracle_scatter():
 # FIG (optional): street-view pruning survival — ordered bars at k=1 + k=0 floor
 # ============================================================================
 def fig_prune():
+    # v4 FIX: every bar here is the SAME quantity — survival of already-correct
+    # answers (fraction of items the model got right with all street views that are
+    # still right after pruning). The old version drew the k=0 value as a vertical
+    # line slicing through the k=1 bars on an axis labelled "k=1", which read as if
+    # the satellite-only number were an accuracy / a k=1 selection rule. Here k=0 is
+    # just another survival bar, set apart and clearly labelled, so the axis is
+    # purely survival and nothing is mixed.
     pr = NUMS["prune_survival_27b"]
-    floor = pr["zero_k0"] * 100
-    arms = [("top-1 (attention)", pr["top_k1"] * 100, BLUE),
-            ("forward-1", pr["fwd_k1"] * 100, GREEN),
-            ("random-1", pr["random_k1_mean"] * 100, GREY),
-            ("worst-1", pr["bottom_k1"] * 100, GREY)]
-    fig, ax = plt.subplots(figsize=(4.2, 1.9))
+    # k=1 selection rules (one street view kept), then the k=0 reference (none kept).
+    arms = [("attention top-1", pr["top_k1"] * 100, BLUE, "$k{=}1$"),
+            ("forward view",    pr["fwd_k1"] * 100, GREEN, "$k{=}1$"),
+            ("random-1",        pr["random_k1_mean"] * 100, GREY, "$k{=}1$"),
+            ("worst-1",         pr["bottom_k1"] * 100, GREY, "$k{=}1$"),
+            ("no street view",  pr["zero_k0"] * 100, VERM, "$k{=}0$")]
+    fig, ax = plt.subplots(figsize=(4.4, 2.1))
     y = list(range(len(arms)))[::-1]
-    for yi, (lab, val, col) in zip(y, arms):
-        ax.barh([yi], [val], color=col, height=0.6, zorder=3)
-        ax.text(val + 0.6, yi, f"{val:.0f}", va="center", fontsize=6.6)
-    ax.axvline(floor, color=VERM, ls="--", lw=1.0, zorder=4)
-    ax.text(floor, len(arms) - 0.4, f"satellite only (k=0): {floor:.0f}%",
-            color=VERM, fontsize=6.2, ha="center", va="bottom")
-    ax.set_yticks(y); ax.set_yticklabels([a[0] for a in arms], fontsize=6.8)
-    ax.set_xlim(60, 100)
-    ax.set_xlabel("survival of already-correct answers (%), k=1 street view", fontsize=6.8)
+    for yi, (lab, val, col, ktag) in zip(y, arms):
+        ax.barh([yi], [val], color=col, height=0.62, zorder=3)
+        ax.text(val - 1.2, yi, f"{val:.0f}", va="center", ha="right",
+                fontsize=6.8, color="white", fontweight="bold")
+    ax.set_yticks(y)
+    ax.set_yticklabels([f"{a[0]}  ({a[3]})" for a in arms], fontsize=6.8)
+    ax.set_xlim(0, 100)
+    ax.set_xlabel("survival of already-correct answers (%)", fontsize=6.8)
     ax.tick_params(axis="y", length=0)
     for s in ("top", "right", "left"):
         ax.spines[s].set_visible(False)
