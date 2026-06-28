@@ -1,0 +1,671 @@
+###############################################################
+### RUN A: SV_ANGLES=along_fwd  (marked-sat + forward SV only)
+### epoch-3 checkpoint-1362
+###############################################################
+Val records: 8831
+Profile: rtx_pro_6000_96gb, image_max_edge=512, bs=32, workers=8, max_new_tokens=32
+Model: Qwen/Qwen3.5-9B  (family=qwen)
+Adapter: /home/ain480/training/training/runs/mm_qwen9b_satfwd_r16_seen_unseen/checkpoints/checkpoint-1362
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+Unsloth: Your Flash Attention 2 installation seems to be broken. Using Xformers instead. No performance changes will be seen.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.4.2: Fast Qwen3_5 patching. Transformers: 5.5.0.
+   \\   /|    NVIDIA RTX PRO 6000 Blackwell Workstation Edition. Num GPUs = 1. Max memory: 94.962 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 12.0. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/760 [00:00<?, ?it/s]Loading weights:   0%|          | 1/760 [00:00<01:56,  6.52it/s]Loading weights:   0%|          | 2/760 [00:00<02:09,  5.87it/s]Loading weights:   5%|▌         | 40/760 [00:00<00:05, 120.23it/s]Loading weights:  10%|█         | 78/760 [00:00<00:03, 192.44it/s]Loading weights:  14%|█▎        | 103/760 [00:00<00:03, 194.10it/s]Loading weights:  19%|█▉        | 144/760 [00:00<00:02, 233.38it/s]Loading weights:  26%|██▌       | 194/760 [00:00<00:02, 280.97it/s]Loading weights:  31%|███       | 237/760 [00:01<00:01, 317.63it/s]Loading weights:  36%|███▌      | 271/760 [00:01<00:01, 312.56it/s]Loading weights:  40%|████      | 304/760 [00:01<00:01, 306.61it/s]Loading weights:  46%|████▋     | 353/760 [00:01<00:01, 295.78it/s]Loading weights:  54%|█████▎    | 407/760 [00:01<00:01, 322.71it/s]Loading weights:  94%|█████████▍| 716/760 [00:01<00:00, 987.18it/s]Loading weights: 100%|██████████| 760/760 [00:01<00:00, 440.25it/s]
+Adapter loaded.
+Running batched full val eval...
+  [32/8831] acc=93.8% rate=2.0 s/s eta=73.8min elapsed=0.3min
+  [64/8831] acc=93.8% rate=3.1 s/s eta=46.5min elapsed=0.3min
+  [96/8831] acc=94.8% rate=3.9 s/s eta=37.2min elapsed=0.4min
+  [128/8831] acc=94.5% rate=4.5 s/s eta=32.5min elapsed=0.5min
+  [160/8831] acc=95.0% rate=4.9 s/s eta=29.7min elapsed=0.5min
+  [192/8831] acc=93.2% rate=5.2 s/s eta=27.8min elapsed=0.6min
+  [224/8831] acc=91.1% rate=5.4 s/s eta=26.4min elapsed=0.7min
+  [256/8831] acc=91.4% rate=5.6 s/s eta=25.3min elapsed=0.8min
+  [288/8831] acc=91.3% rate=5.8 s/s eta=24.5min elapsed=0.8min
+  [320/8831] acc=90.6% rate=5.9 s/s eta=24.0min elapsed=0.9min
+  [352/8831] acc=90.6% rate=6.1 s/s eta=23.1min elapsed=1.0min
+  [384/8831] acc=90.4% rate=6.2 s/s eta=22.6min elapsed=1.0min
+  [416/8831] acc=90.1% rate=6.3 s/s eta=22.3min elapsed=1.1min
+  [448/8831] acc=90.8% rate=6.4 s/s eta=21.9min elapsed=1.2min
+  [480/8831] acc=91.2% rate=6.5 s/s eta=21.6min elapsed=1.2min
+  [512/8831] acc=91.6% rate=6.5 s/s eta=21.3min elapsed=1.3min
+  [544/8831] acc=91.9% rate=6.6 s/s eta=21.0min elapsed=1.4min
+  [576/8831] acc=91.7% rate=6.6 s/s eta=20.9min elapsed=1.5min
+  [608/8831] acc=91.4% rate=6.6 s/s eta=20.6min elapsed=1.5min
+  [640/8831] acc=91.2% rate=6.7 s/s eta=20.4min elapsed=1.6min
+  [672/8831] acc=91.5% rate=6.8 s/s eta=20.1min elapsed=1.7min
+  [704/8831] acc=91.6% rate=6.8 s/s eta=19.9min elapsed=1.7min
+  [736/8831] acc=91.3% rate=6.8 s/s eta=19.7min elapsed=1.8min
+  [768/8831] acc=91.4% rate=6.9 s/s eta=19.6min elapsed=1.9min
+  [800/8831] acc=91.1% rate=6.9 s/s eta=19.4min elapsed=1.9min
+  [832/8831] acc=91.2% rate=6.9 s/s eta=19.3min elapsed=2.0min
+  [864/8831] acc=91.3% rate=6.9 s/s eta=19.2min elapsed=2.1min
+  [896/8831] acc=91.4% rate=7.0 s/s eta=19.0min elapsed=2.1min
+  [928/8831] acc=91.4% rate=7.0 s/s eta=18.9min elapsed=2.2min
+  [960/8831] acc=91.6% rate=7.0 s/s eta=18.8min elapsed=2.3min
+  [992/8831] acc=91.5% rate=7.0 s/s eta=18.6min elapsed=2.4min
+  [1024/8831] acc=91.5% rate=7.1 s/s eta=18.4min elapsed=2.4min
+  [1056/8831] acc=91.3% rate=7.1 s/s eta=18.2min elapsed=2.5min
+  [1088/8831] acc=91.1% rate=7.2 s/s eta=18.0min elapsed=2.5min
+  [1120/8831] acc=91.2% rate=7.2 s/s eta=17.9min elapsed=2.6min
+  [1152/8831] acc=91.3% rate=7.2 s/s eta=17.7min elapsed=2.6min
+  [1184/8831] acc=91.4% rate=7.3 s/s eta=17.4min elapsed=2.7min
+  [1216/8831] acc=91.5% rate=7.3 s/s eta=17.3min elapsed=2.8min
+  [1248/8831] acc=91.7% rate=7.4 s/s eta=17.2min elapsed=2.8min
+  [1280/8831] acc=91.7% rate=7.4 s/s eta=17.0min elapsed=2.9min
+  [1312/8831] acc=91.7% rate=7.4 s/s eta=16.9min elapsed=3.0min
+  [1344/8831] acc=91.8% rate=7.4 s/s eta=16.8min elapsed=3.0min
+  [1376/8831] acc=91.9% rate=7.4 s/s eta=16.7min elapsed=3.1min
+  [1408/8831] acc=91.9% rate=7.4 s/s eta=16.6min elapsed=3.2min
+  [1440/8831] acc=91.9% rate=7.5 s/s eta=16.5min elapsed=3.2min
+  [1472/8831] acc=92.0% rate=7.5 s/s eta=16.4min elapsed=3.3min
+  [1504/8831] acc=91.4% rate=7.4 s/s eta=16.5min elapsed=3.4min
+  [1536/8831] acc=90.4% rate=7.3 s/s eta=16.7min elapsed=3.5min
+  [1568/8831] acc=89.5% rate=7.2 s/s eta=16.8min elapsed=3.6min
+  [1600/8831] acc=88.3% rate=7.1 s/s eta=17.0min elapsed=3.8min
+  [1632/8831] acc=87.4% rate=7.0 s/s eta=17.2min elapsed=3.9min
+  [1664/8831] acc=86.2% rate=6.9 s/s eta=17.3min elapsed=4.0min
+  [1696/8831] acc=85.3% rate=6.8 s/s eta=17.4min elapsed=4.1min
+  [1728/8831] acc=85.0% rate=6.8 s/s eta=17.5min elapsed=4.3min
+  [1760/8831] acc=84.3% rate=6.7 s/s eta=17.6min elapsed=4.4min
+  [1792/8831] acc=83.9% rate=6.6 s/s eta=17.6min elapsed=4.5min
+  [1824/8831] acc=83.1% rate=6.6 s/s eta=17.7min elapsed=4.6min
+  [1856/8831] acc=82.4% rate=6.5 s/s eta=17.9min elapsed=4.8min
+  [1888/8831] acc=81.6% rate=6.5 s/s eta=17.9min elapsed=4.9min
+  [1920/8831] acc=81.1% rate=6.4 s/s eta=18.0min elapsed=5.0min
+  [1952/8831] acc=80.2% rate=6.4 s/s eta=18.0min elapsed=5.1min
+  [1984/8831] acc=79.4% rate=6.3 s/s eta=18.1min elapsed=5.2min
+  [2016/8831] acc=78.7% rate=6.3 s/s eta=18.1min elapsed=5.4min
+  [2048/8831] acc=78.1% rate=6.2 s/s eta=18.1min elapsed=5.5min
+  [2080/8831] acc=77.5% rate=6.2 s/s eta=18.2min elapsed=5.6min
+  [2112/8831] acc=77.1% rate=6.1 s/s eta=18.3min elapsed=5.7min
+  [2144/8831] acc=76.6% rate=6.1 s/s eta=18.3min elapsed=5.9min
+  [2176/8831] acc=76.2% rate=6.1 s/s eta=18.3min elapsed=6.0min
+  [2208/8831] acc=75.9% rate=6.0 s/s eta=18.3min elapsed=6.1min
+  [2240/8831] acc=75.9% rate=6.0 s/s eta=18.3min elapsed=6.2min
+  [2272/8831] acc=76.2% rate=6.0 s/s eta=18.3min elapsed=6.3min
+  [2304/8831] acc=76.5% rate=5.9 s/s eta=18.3min elapsed=6.5min
+  [2336/8831] acc=76.7% rate=5.9 s/s eta=18.3min elapsed=6.6min
+  [2368/8831] acc=76.9% rate=5.9 s/s eta=18.4min elapsed=6.7min
+  [2400/8831] acc=77.1% rate=5.8 s/s eta=18.4min elapsed=6.9min
+  [2432/8831] acc=77.3% rate=5.8 s/s eta=18.3min elapsed=7.0min
+  [2464/8831] acc=77.6% rate=5.8 s/s eta=18.3min elapsed=7.1min
+  [2496/8831] acc=77.8% rate=5.8 s/s eta=18.3min elapsed=7.2min
+  [2528/8831] acc=77.9% rate=5.7 s/s eta=18.3min elapsed=7.3min
+  [2560/8831] acc=78.1% rate=5.7 s/s eta=18.3min elapsed=7.5min
+  [2592/8831] acc=78.3% rate=5.7 s/s eta=18.3min elapsed=7.6min
+  [2624/8831] acc=78.5% rate=5.7 s/s eta=18.3min elapsed=7.7min
+  [2656/8831] acc=78.7% rate=5.6 s/s eta=18.2min elapsed=7.8min
+  [2688/8831] acc=78.9% rate=5.6 s/s eta=18.2min elapsed=8.0min
+  [2720/8831] acc=79.1% rate=5.6 s/s eta=18.2min elapsed=8.1min
+  [2752/8831] acc=79.3% rate=5.6 s/s eta=18.1min elapsed=8.2min
+  [2784/8831] acc=79.4% rate=5.6 s/s eta=18.1min elapsed=8.3min
+  [2816/8831] acc=79.6% rate=5.5 s/s eta=18.1min elapsed=8.5min
+  [2848/8831] acc=79.8% rate=5.5 s/s eta=18.0min elapsed=8.6min
+  [2880/8831] acc=80.0% rate=5.5 s/s eta=18.0min elapsed=8.7min
+  [2912/8831] acc=80.2% rate=5.5 s/s eta=18.0min elapsed=8.8min
+  [2944/8831] acc=80.3% rate=5.5 s/s eta=17.9min elapsed=9.0min
+  [2976/8831] acc=80.5% rate=5.5 s/s eta=17.9min elapsed=9.1min
+  [3008/8831] acc=80.7% rate=5.4 s/s eta=17.8min elapsed=9.2min
+  [3040/8831] acc=80.8% rate=5.4 s/s eta=17.8min elapsed=9.3min
+  [3072/8831] acc=80.9% rate=5.4 s/s eta=17.7min elapsed=9.5min
+  [3104/8831] acc=81.0% rate=5.4 s/s eta=17.7min elapsed=9.6min
+  [3136/8831] acc=81.2% rate=5.4 s/s eta=17.6min elapsed=9.7min
+  [3168/8831] acc=81.3% rate=5.4 s/s eta=17.6min elapsed=9.8min
+  [3200/8831] acc=81.4% rate=5.4 s/s eta=17.5min elapsed=10.0min
+  [3232/8831] acc=81.5% rate=5.3 s/s eta=17.4min elapsed=10.1min
+  [3264/8831] acc=81.6% rate=5.3 s/s eta=17.4min elapsed=10.2min
+  [3296/8831] acc=81.6% rate=5.3 s/s eta=17.3min elapsed=10.3min
+  [3328/8831] acc=81.7% rate=5.3 s/s eta=17.2min elapsed=10.4min
+  [3360/8831] acc=81.7% rate=5.3 s/s eta=17.1min elapsed=10.5min
+  [3392/8831] acc=81.9% rate=5.3 s/s eta=17.1min elapsed=10.6min
+  [3424/8831] acc=82.0% rate=5.3 s/s eta=17.0min elapsed=10.7min
+  [3456/8831] acc=82.1% rate=5.3 s/s eta=16.9min elapsed=10.9min
+  [3488/8831] acc=82.2% rate=5.3 s/s eta=16.8min elapsed=11.0min
+  [3520/8831] acc=82.3% rate=5.3 s/s eta=16.7min elapsed=11.1min
+  [3552/8831] acc=82.4% rate=5.3 s/s eta=16.6min elapsed=11.2min
+  [3584/8831] acc=82.5% rate=5.3 s/s eta=16.5min elapsed=11.3min
+  [3616/8831] acc=82.7% rate=5.3 s/s eta=16.5min elapsed=11.4min
+  [3648/8831] acc=82.8% rate=5.3 s/s eta=16.4min elapsed=11.5min
+  [3680/8831] acc=82.9% rate=5.3 s/s eta=16.3min elapsed=11.6min
+  [3712/8831] acc=82.9% rate=5.3 s/s eta=16.2min elapsed=11.7min
+  [3744/8831] acc=82.9% rate=5.3 s/s eta=16.0min elapsed=11.8min
+  [3776/8831] acc=83.0% rate=5.3 s/s eta=15.9min elapsed=11.8min
+  [3808/8831] acc=83.0% rate=5.3 s/s eta=15.7min elapsed=11.9min
+  [3840/8831] acc=83.0% rate=5.4 s/s eta=15.5min elapsed=11.9min
+  [3872/8831] acc=83.1% rate=5.4 s/s eta=15.4min elapsed=12.0min
+  [3904/8831] acc=83.1% rate=5.4 s/s eta=15.2min elapsed=12.1min
+  [3936/8831] acc=83.1% rate=5.4 s/s eta=15.1min elapsed=12.1min
+  [3968/8831] acc=83.1% rate=5.4 s/s eta=14.9min elapsed=12.2min
+  [4000/8831] acc=83.0% rate=5.5 s/s eta=14.7min elapsed=12.2min
+  [4032/8831] acc=83.0% rate=5.5 s/s eta=14.6min elapsed=12.3min
+  [4064/8831] acc=83.0% rate=5.5 s/s eta=14.4min elapsed=12.3min
+  [4096/8831] acc=83.0% rate=5.5 s/s eta=14.3min elapsed=12.4min
+  [4128/8831] acc=83.0% rate=5.5 s/s eta=14.1min elapsed=12.4min
+  [4160/8831] acc=83.0% rate=5.6 s/s eta=14.0min elapsed=12.5min
+  [4192/8831] acc=83.0% rate=5.6 s/s eta=13.9min elapsed=12.5min
+  [4224/8831] acc=83.0% rate=5.6 s/s eta=13.7min elapsed=12.6min
+  [4256/8831] acc=83.0% rate=5.6 s/s eta=13.6min elapsed=12.6min
+  [4288/8831] acc=82.9% rate=5.6 s/s eta=13.4min elapsed=12.7min
+  [4320/8831] acc=82.8% rate=5.7 s/s eta=13.3min elapsed=12.7min
+  [4352/8831] acc=82.7% rate=5.7 s/s eta=13.2min elapsed=12.8min
+  [4384/8831] acc=82.6% rate=5.7 s/s eta=13.0min elapsed=12.8min
+  [4416/8831] acc=82.6% rate=5.7 s/s eta=12.9min elapsed=12.9min
+  [4448/8831] acc=82.5% rate=5.7 s/s eta=12.8min elapsed=13.0min
+  [4480/8831] acc=82.4% rate=5.7 s/s eta=12.6min elapsed=13.0min
+  [4512/8831] acc=82.3% rate=5.8 s/s eta=12.5min elapsed=13.1min
+  [4544/8831] acc=82.2% rate=5.8 s/s eta=12.4min elapsed=13.1min
+  [4576/8831] acc=82.1% rate=5.8 s/s eta=12.2min elapsed=13.2min
+  [4608/8831] acc=82.1% rate=5.8 s/s eta=12.1min elapsed=13.2min
+  [4640/8831] acc=81.9% rate=5.8 s/s eta=12.0min elapsed=13.3min
+  [4672/8831] acc=81.8% rate=5.8 s/s eta=11.9min elapsed=13.3min
+  [4704/8831] acc=81.7% rate=5.9 s/s eta=11.8min elapsed=13.4min
+  [4736/8831] acc=81.7% rate=5.9 s/s eta=11.6min elapsed=13.4min
+  [4768/8831] acc=81.7% rate=5.9 s/s eta=11.5min elapsed=13.5min
+  [4800/8831] acc=81.7% rate=5.9 s/s eta=11.4min elapsed=13.6min
+  [4832/8831] acc=81.6% rate=5.9 s/s eta=11.3min elapsed=13.6min
+  [4864/8831] acc=81.6% rate=5.9 s/s eta=11.1min elapsed=13.7min
+  [4896/8831] acc=81.5% rate=5.9 s/s eta=11.0min elapsed=13.7min
+  [4928/8831] acc=81.4% rate=6.0 s/s eta=10.9min elapsed=13.8min
+  [4960/8831] acc=81.2% rate=6.0 s/s eta=10.8min elapsed=13.8min
+  [4992/8831] acc=81.2% rate=6.0 s/s eta=10.7min elapsed=13.9min
+  [5024/8831] acc=81.2% rate=6.0 s/s eta=10.6min elapsed=14.0min
+  [5056/8831] acc=81.1% rate=6.0 s/s eta=10.5min elapsed=14.0min
+  [5088/8831] acc=81.0% rate=6.0 s/s eta=10.3min elapsed=14.1min
+  [5120/8831] acc=80.9% rate=6.0 s/s eta=10.2min elapsed=14.1min
+  [5152/8831] acc=80.7% rate=6.1 s/s eta=10.1min elapsed=14.2min
+  [5184/8831] acc=80.6% rate=6.1 s/s eta=10.0min elapsed=14.2min
+  [5216/8831] acc=80.5% rate=6.1 s/s eta=9.9min elapsed=14.3min
+  [5248/8831] acc=80.4% rate=6.1 s/s eta=9.8min elapsed=14.3min
+  [5280/8831] acc=80.3% rate=6.1 s/s eta=9.7min elapsed=14.4min
+  [5312/8831] acc=80.3% rate=6.1 s/s eta=9.6min elapsed=14.5min
+  [5344/8831] acc=80.3% rate=6.1 s/s eta=9.5min elapsed=14.5min
+  [5376/8831] acc=80.2% rate=6.2 s/s eta=9.4min elapsed=14.6min
+  [5408/8831] acc=80.2% rate=6.2 s/s eta=9.3min elapsed=14.6min
+  [5440/8831] acc=80.2% rate=6.2 s/s eta=9.1min elapsed=14.7min
+  [5472/8831] acc=80.1% rate=6.2 s/s eta=9.0min elapsed=14.7min
+  [5504/8831] acc=79.9% rate=6.2 s/s eta=8.9min elapsed=14.8min
+  [5536/8831] acc=79.9% rate=6.2 s/s eta=8.8min elapsed=14.8min
+  [5568/8831] acc=79.9% rate=6.2 s/s eta=8.7min elapsed=14.9min
+  [5600/8831] acc=79.9% rate=6.2 s/s eta=8.6min elapsed=15.0min
+  [5632/8831] acc=80.0% rate=6.3 s/s eta=8.5min elapsed=15.0min
+  [5664/8831] acc=80.0% rate=6.3 s/s eta=8.4min elapsed=15.1min
+  [5696/8831] acc=79.9% rate=6.3 s/s eta=8.3min elapsed=15.1min
+  [5728/8831] acc=79.8% rate=6.3 s/s eta=8.2min elapsed=15.2min
+  [5760/8831] acc=79.8% rate=6.3 s/s eta=8.1min elapsed=15.2min
+  [5792/8831] acc=79.8% rate=6.3 s/s eta=8.0min elapsed=15.3min
+  [5824/8831] acc=79.7% rate=6.3 s/s eta=7.9min elapsed=15.4min
+  [5856/8831] acc=79.6% rate=6.3 s/s eta=7.8min elapsed=15.4min
+  [5888/8831] acc=79.6% rate=6.3 s/s eta=7.7min elapsed=15.5min
+  [5920/8831] acc=79.5% rate=6.4 s/s eta=7.6min elapsed=15.5min
+  [5952/8831] acc=79.4% rate=6.4 s/s eta=7.5min elapsed=15.6min
+  [5984/8831] acc=79.3% rate=6.4 s/s eta=7.4min elapsed=15.6min
+  [6016/8831] acc=79.3% rate=6.4 s/s eta=7.3min elapsed=15.7min
+  [6048/8831] acc=79.2% rate=6.4 s/s eta=7.2min elapsed=15.7min
+  [6080/8831] acc=79.0% rate=6.4 s/s eta=7.2min elapsed=15.8min
+  [6112/8831] acc=79.0% rate=6.4 s/s eta=7.1min elapsed=15.9min
+  [6144/8831] acc=79.0% rate=6.4 s/s eta=7.0min elapsed=15.9min
+  [6176/8831] acc=78.9% rate=6.4 s/s eta=6.9min elapsed=16.0min
+  [6208/8831] acc=78.8% rate=6.5 s/s eta=6.8min elapsed=16.0min
+  [6240/8831] acc=78.8% rate=6.5 s/s eta=6.7min elapsed=16.1min
+  [6272/8831] acc=78.7% rate=6.5 s/s eta=6.6min elapsed=16.1min
+  [6304/8831] acc=78.7% rate=6.5 s/s eta=6.5min elapsed=16.2min
+  [6336/8831] acc=78.6% rate=6.5 s/s eta=6.4min elapsed=16.3min
+  [6368/8831] acc=78.6% rate=6.5 s/s eta=6.3min elapsed=16.3min
+  [6400/8831] acc=78.6% rate=6.5 s/s eta=6.2min elapsed=16.4min
+  [6432/8831] acc=78.6% rate=6.5 s/s eta=6.1min elapsed=16.4min
+  [6464/8831] acc=78.6% rate=6.5 s/s eta=6.0min elapsed=16.5min
+  [6496/8831] acc=78.7% rate=6.5 s/s eta=5.9min elapsed=16.5min
+  [6528/8831] acc=78.7% rate=6.6 s/s eta=5.9min elapsed=16.6min
+  [6560/8831] acc=78.7% rate=6.6 s/s eta=5.8min elapsed=16.6min
+  [6592/8831] acc=78.7% rate=6.6 s/s eta=5.7min elapsed=16.7min
+  [6624/8831] acc=78.7% rate=6.6 s/s eta=5.6min elapsed=16.8min
+  [6656/8831] acc=78.7% rate=6.6 s/s eta=5.5min elapsed=16.8min
+  [6688/8831] acc=78.7% rate=6.6 s/s eta=5.4min elapsed=16.9min
+  [6720/8831] acc=78.6% rate=6.6 s/s eta=5.3min elapsed=16.9min
+  [6752/8831] acc=78.6% rate=6.6 s/s eta=5.2min elapsed=17.0min
+  [6784/8831] acc=78.6% rate=6.6 s/s eta=5.1min elapsed=17.0min
+  [6816/8831] acc=78.6% rate=6.6 s/s eta=5.1min elapsed=17.1min
+  [6848/8831] acc=78.5% rate=6.7 s/s eta=5.0min elapsed=17.2min
+  [6880/8831] acc=78.4% rate=6.7 s/s eta=4.9min elapsed=17.2min
+  [6912/8831] acc=78.3% rate=6.7 s/s eta=4.8min elapsed=17.3min
+  [6944/8831] acc=78.2% rate=6.7 s/s eta=4.7min elapsed=17.3min
+  [6976/8831] acc=78.1% rate=6.7 s/s eta=4.6min elapsed=17.4min
+  [7008/8831] acc=78.0% rate=6.7 s/s eta=4.5min elapsed=17.4min
+  [7040/8831] acc=78.0% rate=6.7 s/s eta=4.4min elapsed=17.5min
+  [7072/8831] acc=77.9% rate=6.7 s/s eta=4.4min elapsed=17.5min
+  [7104/8831] acc=77.9% rate=6.7 s/s eta=4.3min elapsed=17.6min
+  [7136/8831] acc=77.8% rate=6.7 s/s eta=4.2min elapsed=17.7min
+  [7168/8831] acc=77.7% rate=6.7 s/s eta=4.1min elapsed=17.7min
+  [7200/8831] acc=77.6% rate=6.8 s/s eta=4.0min elapsed=17.8min
+  [7232/8831] acc=77.5% rate=6.8 s/s eta=3.9min elapsed=17.8min
+  [7264/8831] acc=77.5% rate=6.8 s/s eta=3.9min elapsed=17.9min
+  [7296/8831] acc=77.4% rate=6.8 s/s eta=3.8min elapsed=17.9min
+  [7328/8831] acc=77.3% rate=6.8 s/s eta=3.7min elapsed=18.0min
+  [7360/8831] acc=77.3% rate=6.8 s/s eta=3.6min elapsed=18.1min
+  [7392/8831] acc=77.2% rate=6.8 s/s eta=3.5min elapsed=18.1min
+  [7424/8831] acc=77.1% rate=6.8 s/s eta=3.4min elapsed=18.2min
+  [7456/8831] acc=77.1% rate=6.8 s/s eta=3.4min elapsed=18.2min
+  [7488/8831] acc=77.1% rate=6.8 s/s eta=3.3min elapsed=18.3min
+  [7520/8831] acc=77.0% rate=6.8 s/s eta=3.2min elapsed=18.3min
+  [7552/8831] acc=76.9% rate=6.8 s/s eta=3.1min elapsed=18.4min
+  [7584/8831] acc=76.9% rate=6.9 s/s eta=3.0min elapsed=18.4min
+  [7616/8831] acc=76.9% rate=6.9 s/s eta=3.0min elapsed=18.5min
+  [7648/8831] acc=76.9% rate=6.9 s/s eta=2.9min elapsed=18.6min
+  [7680/8831] acc=76.8% rate=6.9 s/s eta=2.8min elapsed=18.6min
+  [7712/8831] acc=76.9% rate=6.9 s/s eta=2.7min elapsed=18.7min
+  [7744/8831] acc=76.9% rate=6.9 s/s eta=2.6min elapsed=18.7min
+  [7776/8831] acc=76.8% rate=6.9 s/s eta=2.5min elapsed=18.8min
+  [7808/8831] acc=76.9% rate=6.9 s/s eta=2.5min elapsed=18.8min
+  [7840/8831] acc=76.9% rate=6.9 s/s eta=2.4min elapsed=18.9min
+  [7872/8831] acc=76.9% rate=6.9 s/s eta=2.3min elapsed=18.9min
+  [7904/8831] acc=76.9% rate=6.9 s/s eta=2.2min elapsed=19.0min
+  [7936/8831] acc=76.8% rate=6.9 s/s eta=2.1min elapsed=19.1min
+  [7968/8831] acc=76.8% rate=6.9 s/s eta=2.1min elapsed=19.1min
+  [8000/8831] acc=76.9% rate=7.0 s/s eta=2.0min elapsed=19.2min
+  [8032/8831] acc=76.9% rate=7.0 s/s eta=1.9min elapsed=19.2min
+  [8064/8831] acc=76.9% rate=7.0 s/s eta=1.8min elapsed=19.3min
+  [8096/8831] acc=76.8% rate=7.0 s/s eta=1.8min elapsed=19.3min
+  [8128/8831] acc=76.8% rate=7.0 s/s eta=1.7min elapsed=19.4min
+  [8160/8831] acc=76.8% rate=7.0 s/s eta=1.6min elapsed=19.5min
+  [8192/8831] acc=76.8% rate=7.0 s/s eta=1.5min elapsed=19.5min
+  [8224/8831] acc=76.8% rate=7.0 s/s eta=1.4min elapsed=19.6min
+  [8256/8831] acc=76.8% rate=7.0 s/s eta=1.4min elapsed=19.6min
+  [8288/8831] acc=76.7% rate=7.0 s/s eta=1.3min elapsed=19.7min
+  [8320/8831] acc=76.7% rate=7.0 s/s eta=1.2min elapsed=19.7min
+  [8352/8831] acc=76.7% rate=7.0 s/s eta=1.1min elapsed=19.8min
+  [8384/8831] acc=76.7% rate=7.0 s/s eta=1.1min elapsed=19.8min
+  [8416/8831] acc=76.6% rate=7.1 s/s eta=1.0min elapsed=19.9min
+  [8448/8831] acc=76.6% rate=7.1 s/s eta=0.9min elapsed=19.9min
+  [8480/8831] acc=76.5% rate=7.1 s/s eta=0.8min elapsed=20.0min
+  [8512/8831] acc=76.5% rate=7.1 s/s eta=0.8min elapsed=20.0min
+  [8544/8831] acc=76.4% rate=7.1 s/s eta=0.7min elapsed=20.1min
+  [8576/8831] acc=76.4% rate=7.1 s/s eta=0.6min elapsed=20.1min
+  [8608/8831] acc=76.4% rate=7.1 s/s eta=0.5min elapsed=20.2min
+  [8640/8831] acc=76.4% rate=7.1 s/s eta=0.4min elapsed=20.2min
+  [8672/8831] acc=76.3% rate=7.1 s/s eta=0.4min elapsed=20.3min
+  [8704/8831] acc=76.3% rate=7.1 s/s eta=0.3min elapsed=20.3min
+  [8736/8831] acc=76.3% rate=7.2 s/s eta=0.2min elapsed=20.3min
+  [8768/8831] acc=76.3% rate=7.2 s/s eta=0.1min elapsed=20.4min
+  [8800/8831] acc=76.2% rate=7.2 s/s eta=0.1min elapsed=20.4min
+  [8831/8831] acc=76.2% rate=7.2 s/s eta=0.0min elapsed=20.5min
+
+Done in 1230s (20.5 min)
+Overall: 76.2% (6727/8831)
+  amenity_richness: 63.5% (469/739)
+  building_height: 57.7% (157/272)
+  camera_direction: 43.3% (320/739)
+  green_space: 72.8% (163/224)
+  junction_type: 74.7% (386/517)
+  land_use: 75.4% (557/739)
+  mismatch_binary_easy: 95.7% (707/739)
+  mismatch_binary_hard: 92.0% (680/739)
+  mismatch_mcq_easy: 98.1% (725/739)
+  mismatch_mcq_hard: 85.9% (635/739)
+  road_surface: 98.6% (422/428)
+  road_type: 77.8% (575/739)
+  transit_density: 52.4% (387/739)
+  urban_density: 73.6% (544/739)
+
+Verdict: /home/ain480/training/training/runs/checkpoint-1362_eval_full/checkpoint-1362_verdict.md
+Total wall: 20.8 min
+[saved] verdict_A_along_fwd.md  (Overall: 76.2%)
+
+###############################################################
+### RUN B: SV_ANGLES unset      (marked-sat + all 4 SV angles)
+### epoch-3 checkpoint-1362
+###############################################################
+Val records: 8831
+Profile: rtx_pro_6000_96gb, image_max_edge=512, bs=32, workers=8, max_new_tokens=32
+Model: Qwen/Qwen3.5-9B  (family=qwen)
+Adapter: /home/ain480/training/training/runs/mm_qwen9b_satfwd_r16_seen_unseen/checkpoints/checkpoint-1362
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+Unsloth: Your Flash Attention 2 installation seems to be broken. Using Xformers instead. No performance changes will be seen.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.4.2: Fast Qwen3_5 patching. Transformers: 5.5.0.
+   \\   /|    NVIDIA RTX PRO 6000 Blackwell Workstation Edition. Num GPUs = 1. Max memory: 94.962 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 12.0. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+Loading weights:   0%|          | 0/760 [00:00<?, ?it/s]Loading weights:   0%|          | 1/760 [00:00<01:57,  6.45it/s]Loading weights:   0%|          | 2/760 [00:00<02:11,  5.77it/s]Loading weights:   5%|▌         | 38/760 [00:00<00:06, 113.68it/s]Loading weights:   9%|▉         | 72/760 [00:00<00:04, 170.48it/s]Loading weights:  14%|█▎        | 104/760 [00:00<00:03, 204.42it/s]Loading weights:  19%|█▉        | 145/760 [00:00<00:02, 248.87it/s]Loading weights:  26%|██▌       | 194/760 [00:00<00:01, 291.90it/s]Loading weights:  31%|███       | 234/760 [00:01<00:01, 273.72it/s]Loading weights:  38%|███▊      | 287/760 [00:01<00:01, 318.35it/s]Loading weights:  43%|████▎     | 330/760 [00:01<00:01, 335.58it/s]Loading weights:  48%|████▊     | 365/760 [00:01<00:01, 313.36it/s]Loading weights:  54%|█████▎    | 408/760 [00:01<00:01, 325.82it/s]Loading weights:  85%|████████▌ | 646/760 [00:01<00:00, 850.04it/s]Loading weights: 100%|██████████| 760/760 [00:01<00:00, 436.37it/s]
+Adapter loaded.
+Running batched full val eval...
+  [32/8831] acc=93.8% rate=2.0 s/s eta=72.8min elapsed=0.3min
+  [64/8831] acc=93.8% rate=3.2 s/s eta=45.7min elapsed=0.3min
+  [96/8831] acc=94.8% rate=4.0 s/s eta=36.6min elapsed=0.4min
+  [128/8831] acc=94.5% rate=4.5 s/s eta=32.0min elapsed=0.5min
+  [160/8831] acc=95.0% rate=4.9 s/s eta=29.2min elapsed=0.5min
+  [192/8831] acc=93.2% rate=5.3 s/s eta=27.3min elapsed=0.6min
+  [224/8831] acc=91.1% rate=5.6 s/s eta=25.5min elapsed=0.7min
+  [256/8831] acc=91.4% rate=5.8 s/s eta=24.5min elapsed=0.7min
+  [288/8831] acc=91.3% rate=6.1 s/s eta=23.4min elapsed=0.8min
+  [320/8831] acc=90.6% rate=6.2 s/s eta=22.9min elapsed=0.9min
+  [352/8831] acc=90.6% rate=6.3 s/s eta=22.4min elapsed=0.9min
+  [384/8831] acc=90.4% rate=6.4 s/s eta=22.0min elapsed=1.0min
+  [416/8831] acc=90.1% rate=6.5 s/s eta=21.6min elapsed=1.1min
+  [448/8831] acc=90.8% rate=6.6 s/s eta=21.2min elapsed=1.1min
+  [480/8831] acc=91.2% rate=6.7 s/s eta=20.9min elapsed=1.2min
+  [512/8831] acc=91.6% rate=6.8 s/s eta=20.5min elapsed=1.3min
+  [544/8831] acc=91.9% rate=6.8 s/s eta=20.2min elapsed=1.3min
+  [576/8831] acc=91.7% rate=6.9 s/s eta=20.0min elapsed=1.4min
+  [608/8831] acc=91.4% rate=6.9 s/s eta=19.8min elapsed=1.5min
+  [640/8831] acc=91.2% rate=7.0 s/s eta=19.5min elapsed=1.5min
+  [672/8831] acc=91.5% rate=7.0 s/s eta=19.4min elapsed=1.6min
+  [704/8831] acc=91.6% rate=7.1 s/s eta=19.2min elapsed=1.7min
+  [736/8831] acc=91.3% rate=7.1 s/s eta=19.0min elapsed=1.7min
+  [768/8831] acc=91.4% rate=7.1 s/s eta=18.9min elapsed=1.8min
+  [800/8831] acc=91.1% rate=7.1 s/s eta=18.8min elapsed=1.9min
+  [832/8831] acc=91.2% rate=7.2 s/s eta=18.5min elapsed=1.9min
+  [864/8831] acc=91.3% rate=7.2 s/s eta=18.4min elapsed=2.0min
+  [896/8831] acc=91.4% rate=7.2 s/s eta=18.3min elapsed=2.1min
+  [928/8831] acc=91.4% rate=7.2 s/s eta=18.2min elapsed=2.1min
+  [960/8831] acc=91.6% rate=7.3 s/s eta=18.0min elapsed=2.2min
+  [992/8831] acc=91.5% rate=7.3 s/s eta=17.8min elapsed=2.3min
+  [1024/8831] acc=91.5% rate=7.4 s/s eta=17.6min elapsed=2.3min
+  [1056/8831] acc=91.3% rate=7.4 s/s eta=17.4min elapsed=2.4min
+  [1088/8831] acc=91.1% rate=7.5 s/s eta=17.3min elapsed=2.4min
+  [1120/8831] acc=91.2% rate=7.5 s/s eta=17.1min elapsed=2.5min
+  [1152/8831] acc=91.3% rate=7.6 s/s eta=16.9min elapsed=2.5min
+  [1184/8831] acc=91.4% rate=7.6 s/s eta=16.8min elapsed=2.6min
+  [1216/8831] acc=91.5% rate=7.6 s/s eta=16.7min elapsed=2.7min
+  [1248/8831] acc=91.7% rate=7.6 s/s eta=16.5min elapsed=2.7min
+  [1280/8831] acc=91.7% rate=7.7 s/s eta=16.4min elapsed=2.8min
+  [1312/8831] acc=91.7% rate=7.7 s/s eta=16.3min elapsed=2.8min
+  [1344/8831] acc=91.8% rate=7.7 s/s eta=16.2min elapsed=2.9min
+  [1376/8831] acc=91.9% rate=7.7 s/s eta=16.2min elapsed=3.0min
+  [1408/8831] acc=91.9% rate=7.7 s/s eta=16.0min elapsed=3.0min
+  [1440/8831] acc=91.9% rate=7.7 s/s eta=15.9min elapsed=3.1min
+  [1472/8831] acc=92.0% rate=7.8 s/s eta=15.8min elapsed=3.2min
+  [1504/8831] acc=91.4% rate=7.6 s/s eta=16.0min elapsed=3.3min
+  [1536/8831] acc=90.4% rate=7.5 s/s eta=16.1min elapsed=3.4min
+  [1568/8831] acc=89.5% rate=7.4 s/s eta=16.3min elapsed=3.5min
+  [1600/8831] acc=88.3% rate=7.3 s/s eta=16.5min elapsed=3.6min
+  [1632/8831] acc=87.4% rate=7.2 s/s eta=16.6min elapsed=3.8min
+  [1664/8831] acc=86.2% rate=7.1 s/s eta=16.8min elapsed=3.9min
+  [1696/8831] acc=85.3% rate=7.0 s/s eta=16.9min elapsed=4.0min
+  [1728/8831] acc=85.0% rate=7.0 s/s eta=17.0min elapsed=4.1min
+  [1760/8831] acc=84.3% rate=6.9 s/s eta=17.1min elapsed=4.3min
+  [1792/8831] acc=83.9% rate=6.8 s/s eta=17.2min elapsed=4.4min
+  [1824/8831] acc=83.1% rate=6.8 s/s eta=17.3min elapsed=4.5min
+  [1856/8831] acc=82.4% rate=6.7 s/s eta=17.4min elapsed=4.6min
+  [1888/8831] acc=81.6% rate=6.6 s/s eta=17.5min elapsed=4.7min
+  [1920/8831] acc=81.1% rate=6.6 s/s eta=17.5min elapsed=4.9min
+  [1952/8831] acc=80.2% rate=6.5 s/s eta=17.6min elapsed=5.0min
+  [1984/8831] acc=79.4% rate=6.5 s/s eta=17.6min elapsed=5.1min
+  [2016/8831] acc=78.7% rate=6.4 s/s eta=17.7min elapsed=5.2min
+  [2048/8831] acc=78.1% rate=6.4 s/s eta=17.7min elapsed=5.3min
+  [2080/8831] acc=77.5% rate=6.3 s/s eta=17.7min elapsed=5.5min
+  [2112/8831] acc=77.1% rate=6.3 s/s eta=17.8min elapsed=5.6min
+  [2144/8831] acc=76.6% rate=6.2 s/s eta=17.8min elapsed=5.7min
+  [2176/8831] acc=76.2% rate=6.2 s/s eta=17.9min elapsed=5.8min
+  [2208/8831] acc=75.9% rate=6.2 s/s eta=17.9min elapsed=6.0min
+  [2240/8831] acc=75.9% rate=6.1 s/s eta=17.9min elapsed=6.1min
+  [2272/8831] acc=76.2% rate=6.1 s/s eta=17.9min elapsed=6.2min
+  [2304/8831] acc=76.5% rate=6.1 s/s eta=17.9min elapsed=6.3min
+  [2336/8831] acc=76.7% rate=6.0 s/s eta=17.9min elapsed=6.4min
+  [2368/8831] acc=76.9% rate=6.0 s/s eta=18.0min elapsed=6.6min
+  [2400/8831] acc=77.1% rate=6.0 s/s eta=18.0min elapsed=6.7min
+  [2432/8831] acc=77.3% rate=5.9 s/s eta=18.0min elapsed=6.8min
+  [2464/8831] acc=77.6% rate=5.9 s/s eta=18.0min elapsed=6.9min
+  [2496/8831] acc=77.8% rate=5.9 s/s eta=17.9min elapsed=7.1min
+  [2528/8831] acc=77.9% rate=5.9 s/s eta=17.9min elapsed=7.2min
+  [2560/8831] acc=78.1% rate=5.8 s/s eta=17.9min elapsed=7.3min
+  [2592/8831] acc=78.3% rate=5.8 s/s eta=17.9min elapsed=7.4min
+  [2624/8831] acc=78.5% rate=5.8 s/s eta=17.9min elapsed=7.6min
+  [2656/8831] acc=78.7% rate=5.8 s/s eta=17.9min elapsed=7.7min
+  [2688/8831] acc=78.9% rate=5.7 s/s eta=17.8min elapsed=7.8min
+  [2720/8831] acc=79.1% rate=5.7 s/s eta=17.8min elapsed=7.9min
+  [2752/8831] acc=79.3% rate=5.7 s/s eta=17.8min elapsed=8.0min
+  [2784/8831] acc=79.4% rate=5.7 s/s eta=17.7min elapsed=8.2min
+  [2816/8831] acc=79.6% rate=5.7 s/s eta=17.7min elapsed=8.3min
+  [2848/8831] acc=79.8% rate=5.6 s/s eta=17.7min elapsed=8.4min
+  [2880/8831] acc=80.0% rate=5.6 s/s eta=17.6min elapsed=8.5min
+  [2912/8831] acc=80.2% rate=5.6 s/s eta=17.6min elapsed=8.7min
+  [2944/8831] acc=80.3% rate=5.6 s/s eta=17.6min elapsed=8.8min
+  [2976/8831] acc=80.5% rate=5.6 s/s eta=17.5min elapsed=8.9min
+  [3008/8831] acc=80.7% rate=5.5 s/s eta=17.5min elapsed=9.0min
+  [3040/8831] acc=80.8% rate=5.5 s/s eta=17.4min elapsed=9.2min
+  [3072/8831] acc=80.9% rate=5.5 s/s eta=17.4min elapsed=9.3min
+  [3104/8831] acc=81.0% rate=5.5 s/s eta=17.3min elapsed=9.4min
+  [3136/8831] acc=81.2% rate=5.5 s/s eta=17.3min elapsed=9.5min
+  [3168/8831] acc=81.3% rate=5.5 s/s eta=17.2min elapsed=9.6min
+  [3200/8831] acc=81.4% rate=5.5 s/s eta=17.2min elapsed=9.8min
+  [3232/8831] acc=81.5% rate=5.4 s/s eta=17.1min elapsed=9.9min
+  [3264/8831] acc=81.6% rate=5.4 s/s eta=17.1min elapsed=10.0min
+  [3296/8831] acc=81.6% rate=5.4 s/s eta=17.0min elapsed=10.1min
+  [3328/8831] acc=81.7% rate=5.4 s/s eta=16.9min elapsed=10.2min
+  [3360/8831] acc=81.7% rate=5.4 s/s eta=16.9min elapsed=10.4min
+  [3392/8831] acc=81.9% rate=5.4 s/s eta=16.8min elapsed=10.5min
+  [3424/8831] acc=82.0% rate=5.4 s/s eta=16.7min elapsed=10.6min
+  [3456/8831] acc=82.1% rate=5.4 s/s eta=16.7min elapsed=10.7min
+  [3488/8831] acc=82.2% rate=5.4 s/s eta=16.6min elapsed=10.8min
+  [3520/8831] acc=82.3% rate=5.4 s/s eta=16.5min elapsed=11.0min
+  [3552/8831] acc=82.4% rate=5.3 s/s eta=16.5min elapsed=11.1min
+  [3584/8831] acc=82.5% rate=5.3 s/s eta=16.4min elapsed=11.2min
+  [3616/8831] acc=82.7% rate=5.3 s/s eta=16.3min elapsed=11.3min
+  [3648/8831] acc=82.8% rate=5.3 s/s eta=16.2min elapsed=11.4min
+  [3680/8831] acc=82.9% rate=5.3 s/s eta=16.2min elapsed=11.6min
+  [3712/8831] acc=82.9% rate=5.3 s/s eta=16.1min elapsed=11.7min
+  [3744/8831] acc=83.0% rate=5.3 s/s eta=16.0min elapsed=11.8min
+  [3776/8831] acc=83.0% rate=5.3 s/s eta=16.0min elapsed=11.9min
+  [3808/8831] acc=83.1% rate=5.3 s/s eta=15.9min elapsed=12.0min
+  [3840/8831] acc=83.1% rate=5.3 s/s eta=15.8min elapsed=12.1min
+  [3872/8831] acc=83.1% rate=5.3 s/s eta=15.7min elapsed=12.3min
+  [3904/8831] acc=83.1% rate=5.3 s/s eta=15.6min elapsed=12.4min
+  [3936/8831] acc=83.1% rate=5.2 s/s eta=15.6min elapsed=12.5min
+  [3968/8831] acc=83.0% rate=5.2 s/s eta=15.5min elapsed=12.6min
+  [4000/8831] acc=83.0% rate=5.2 s/s eta=15.4min elapsed=12.7min
+  [4032/8831] acc=83.0% rate=5.2 s/s eta=15.3min elapsed=12.9min
+  [4064/8831] acc=82.9% rate=5.2 s/s eta=15.2min elapsed=13.0min
+  [4096/8831] acc=83.0% rate=5.2 s/s eta=15.1min elapsed=13.1min
+  [4128/8831] acc=83.0% rate=5.2 s/s eta=15.0min elapsed=13.2min
+  [4160/8831] acc=83.0% rate=5.2 s/s eta=15.0min elapsed=13.3min
+  [4192/8831] acc=83.0% rate=5.2 s/s eta=14.9min elapsed=13.5min
+  [4224/8831] acc=83.0% rate=5.2 s/s eta=14.8min elapsed=13.6min
+  [4256/8831] acc=83.0% rate=5.2 s/s eta=14.7min elapsed=13.7min
+  [4288/8831] acc=83.0% rate=5.2 s/s eta=14.6min elapsed=13.8min
+  [4320/8831] acc=82.9% rate=5.2 s/s eta=14.5min elapsed=13.9min
+  [4352/8831] acc=82.8% rate=5.2 s/s eta=14.4min elapsed=14.0min
+  [4384/8831] acc=82.7% rate=5.2 s/s eta=14.4min elapsed=14.2min
+  [4416/8831] acc=82.7% rate=5.2 s/s eta=14.3min elapsed=14.3min
+  [4448/8831] acc=82.6% rate=5.1 s/s eta=14.2min elapsed=14.4min
+  [4480/8831] acc=82.5% rate=5.1 s/s eta=14.1min elapsed=14.5min
+  [4512/8831] acc=82.2% rate=5.1 s/s eta=14.0min elapsed=14.6min
+  [4544/8831] acc=82.2% rate=5.1 s/s eta=13.9min elapsed=14.8min
+  [4576/8831] acc=82.1% rate=5.1 s/s eta=13.8min elapsed=14.9min
+  [4608/8831] acc=82.1% rate=5.1 s/s eta=13.7min elapsed=15.0min
+  [4640/8831] acc=81.9% rate=5.1 s/s eta=13.6min elapsed=15.1min
+  [4672/8831] acc=81.9% rate=5.1 s/s eta=13.6min elapsed=15.2min
+  [4704/8831] acc=81.8% rate=5.1 s/s eta=13.5min elapsed=15.4min
+  [4736/8831] acc=81.8% rate=5.1 s/s eta=13.4min elapsed=15.5min
+  [4768/8831] acc=81.7% rate=5.1 s/s eta=13.3min elapsed=15.6min
+  [4800/8831] acc=81.7% rate=5.1 s/s eta=13.2min elapsed=15.7min
+  [4832/8831] acc=81.6% rate=5.1 s/s eta=13.1min elapsed=15.8min
+  [4864/8831] acc=81.6% rate=5.1 s/s eta=13.0min elapsed=16.0min
+  [4896/8831] acc=81.5% rate=5.1 s/s eta=12.9min elapsed=16.1min
+  [4928/8831] acc=81.5% rate=5.1 s/s eta=12.8min elapsed=16.2min
+  [4960/8831] acc=81.5% rate=5.1 s/s eta=12.7min elapsed=16.3min
+  [4992/8831] acc=81.4% rate=5.1 s/s eta=12.7min elapsed=16.5min
+  [5024/8831] acc=81.3% rate=5.1 s/s eta=12.6min elapsed=16.6min
+  [5056/8831] acc=81.2% rate=5.0 s/s eta=12.5min elapsed=16.7min
+  [5088/8831] acc=81.2% rate=5.0 s/s eta=12.4min elapsed=16.8min
+  [5120/8831] acc=81.1% rate=5.0 s/s eta=12.3min elapsed=16.9min
+  [5152/8831] acc=80.9% rate=5.0 s/s eta=12.2min elapsed=17.1min
+  [5184/8831] acc=80.8% rate=5.0 s/s eta=12.1min elapsed=17.2min
+  [5216/8831] acc=80.8% rate=5.0 s/s eta=12.0min elapsed=17.3min
+  [5248/8831] acc=80.7% rate=5.0 s/s eta=11.9min elapsed=17.4min
+  [5280/8831] acc=80.6% rate=5.0 s/s eta=11.8min elapsed=17.5min
+  [5312/8831] acc=80.6% rate=5.0 s/s eta=11.7min elapsed=17.7min
+  [5344/8831] acc=80.5% rate=5.0 s/s eta=11.6min elapsed=17.8min
+  [5376/8831] acc=80.4% rate=5.0 s/s eta=11.5min elapsed=17.9min
+  [5408/8831] acc=80.4% rate=5.0 s/s eta=11.4min elapsed=18.0min
+  [5440/8831] acc=80.4% rate=5.0 s/s eta=11.3min elapsed=18.1min
+  [5472/8831] acc=80.2% rate=5.0 s/s eta=11.2min elapsed=18.3min
+  [5504/8831] acc=80.1% rate=5.0 s/s eta=11.1min elapsed=18.4min
+  [5536/8831] acc=80.0% rate=5.0 s/s eta=11.0min elapsed=18.5min
+  [5568/8831] acc=80.0% rate=5.0 s/s eta=10.9min elapsed=18.6min
+  [5600/8831] acc=80.0% rate=5.0 s/s eta=10.8min elapsed=18.8min
+  [5632/8831] acc=80.1% rate=5.0 s/s eta=10.7min elapsed=18.9min
+  [5664/8831] acc=80.0% rate=5.0 s/s eta=10.6min elapsed=19.0min
+  [5696/8831] acc=80.0% rate=5.0 s/s eta=10.5min elapsed=19.1min
+  [5728/8831] acc=79.9% rate=5.0 s/s eta=10.4min elapsed=19.2min
+  [5760/8831] acc=79.8% rate=5.0 s/s eta=10.3min elapsed=19.4min
+  [5792/8831] acc=79.8% rate=5.0 s/s eta=10.2min elapsed=19.5min
+  [5824/8831] acc=79.8% rate=5.0 s/s eta=10.1min elapsed=19.6min
+  [5856/8831] acc=79.7% rate=4.9 s/s eta=10.0min elapsed=19.7min
+  [5888/8831] acc=79.7% rate=4.9 s/s eta=9.9min elapsed=19.8min
+  [5920/8831] acc=79.5% rate=4.9 s/s eta=9.8min elapsed=20.0min
+  [5952/8831] acc=79.4% rate=4.9 s/s eta=9.7min elapsed=20.1min
+  [5984/8831] acc=79.3% rate=4.9 s/s eta=9.6min elapsed=20.2min
+  [6016/8831] acc=79.3% rate=4.9 s/s eta=9.5min elapsed=20.3min
+  [6048/8831] acc=79.2% rate=4.9 s/s eta=9.4min elapsed=20.5min
+  [6080/8831] acc=79.1% rate=4.9 s/s eta=9.3min elapsed=20.6min
+  [6112/8831] acc=79.1% rate=4.9 s/s eta=9.2min elapsed=20.7min
+  [6144/8831] acc=79.0% rate=4.9 s/s eta=9.1min elapsed=20.8min
+  [6176/8831] acc=78.9% rate=4.9 s/s eta=9.0min elapsed=20.9min
+  [6208/8831] acc=78.9% rate=4.9 s/s eta=8.9min elapsed=21.1min
+  [6240/8831] acc=78.8% rate=4.9 s/s eta=8.8min elapsed=21.2min
+  [6272/8831] acc=78.8% rate=4.9 s/s eta=8.7min elapsed=21.3min
+  [6304/8831] acc=78.8% rate=4.9 s/s eta=8.6min elapsed=21.4min
+  [6336/8831] acc=78.8% rate=4.9 s/s eta=8.5min elapsed=21.5min
+  [6368/8831] acc=78.8% rate=4.9 s/s eta=8.4min elapsed=21.7min
+  [6400/8831] acc=78.7% rate=4.9 s/s eta=8.3min elapsed=21.8min
+  [6432/8831] acc=78.7% rate=4.9 s/s eta=8.2min elapsed=21.9min
+  [6464/8831] acc=78.7% rate=4.9 s/s eta=8.1min elapsed=22.0min
+  [6496/8831] acc=78.8% rate=4.9 s/s eta=8.0min elapsed=22.2min
+  [6528/8831] acc=78.8% rate=4.9 s/s eta=7.9min elapsed=22.3min
+  [6560/8831] acc=78.8% rate=4.9 s/s eta=7.8min elapsed=22.4min
+  [6592/8831] acc=78.8% rate=4.9 s/s eta=7.6min elapsed=22.5min
+  [6624/8831] acc=78.8% rate=4.9 s/s eta=7.5min elapsed=22.6min
+  [6656/8831] acc=78.7% rate=4.9 s/s eta=7.4min elapsed=22.8min
+  [6688/8831] acc=78.8% rate=4.9 s/s eta=7.3min elapsed=22.9min
+  [6720/8831] acc=78.7% rate=4.9 s/s eta=7.2min elapsed=23.0min
+  [6752/8831] acc=78.7% rate=4.9 s/s eta=7.1min elapsed=23.1min
+  [6784/8831] acc=78.7% rate=4.9 s/s eta=7.0min elapsed=23.2min
+  [6816/8831] acc=78.7% rate=4.9 s/s eta=6.9min elapsed=23.4min
+  [6848/8831] acc=78.6% rate=4.9 s/s eta=6.8min elapsed=23.5min
+  [6880/8831] acc=78.5% rate=4.9 s/s eta=6.7min elapsed=23.6min
+  [6912/8831] acc=78.3% rate=4.9 s/s eta=6.6min elapsed=23.7min
+  [6944/8831] acc=78.3% rate=4.9 s/s eta=6.5min elapsed=23.8min
+  [6976/8831] acc=78.2% rate=4.9 s/s eta=6.4min elapsed=24.0min
+  [7008/8831] acc=78.1% rate=4.8 s/s eta=6.3min elapsed=24.1min
+  [7040/8831] acc=78.0% rate=4.8 s/s eta=6.2min elapsed=24.2min
+  [7072/8831] acc=78.0% rate=4.8 s/s eta=6.1min elapsed=24.3min
+  [7104/8831] acc=77.9% rate=4.8 s/s eta=5.9min elapsed=24.5min
+  [7136/8831] acc=77.9% rate=4.8 s/s eta=5.8min elapsed=24.6min
+  [7168/8831] acc=77.8% rate=4.8 s/s eta=5.7min elapsed=24.7min
+  [7200/8831] acc=77.8% rate=4.8 s/s eta=5.6min elapsed=24.8min
+  [7232/8831] acc=77.7% rate=4.8 s/s eta=5.5min elapsed=24.9min
+  [7264/8831] acc=77.6% rate=4.8 s/s eta=5.4min elapsed=25.1min
+  [7296/8831] acc=77.5% rate=4.8 s/s eta=5.3min elapsed=25.2min
+  [7328/8831] acc=77.5% rate=4.8 s/s eta=5.2min elapsed=25.3min
+  [7360/8831] acc=77.4% rate=4.8 s/s eta=5.1min elapsed=25.4min
+  [7392/8831] acc=77.4% rate=4.8 s/s eta=5.0min elapsed=25.6min
+  [7424/8831] acc=77.2% rate=4.8 s/s eta=4.9min elapsed=25.7min
+  [7456/8831] acc=77.2% rate=4.8 s/s eta=4.8min elapsed=25.8min
+  [7488/8831] acc=77.2% rate=4.8 s/s eta=4.6min elapsed=25.9min
+  [7520/8831] acc=77.1% rate=4.8 s/s eta=4.5min elapsed=26.0min
+  [7552/8831] acc=77.0% rate=4.8 s/s eta=4.4min elapsed=26.2min
+  [7584/8831] acc=77.0% rate=4.8 s/s eta=4.3min elapsed=26.3min
+  [7616/8831] acc=77.0% rate=4.8 s/s eta=4.2min elapsed=26.4min
+  [7648/8831] acc=77.0% rate=4.8 s/s eta=4.1min elapsed=26.5min
+  [7680/8831] acc=76.9% rate=4.8 s/s eta=4.0min elapsed=26.6min
+  [7712/8831] acc=76.9% rate=4.8 s/s eta=3.9min elapsed=26.8min
+  [7744/8831] acc=76.9% rate=4.8 s/s eta=3.8min elapsed=26.9min
+  [7776/8831] acc=76.8% rate=4.8 s/s eta=3.7min elapsed=27.0min
+  [7808/8831] acc=76.9% rate=4.8 s/s eta=3.6min elapsed=27.1min
+  [7840/8831] acc=76.9% rate=4.8 s/s eta=3.4min elapsed=27.3min
+  [7872/8831] acc=76.9% rate=4.8 s/s eta=3.3min elapsed=27.4min
+  [7904/8831] acc=76.9% rate=4.8 s/s eta=3.2min elapsed=27.5min
+  [7936/8831] acc=76.8% rate=4.8 s/s eta=3.1min elapsed=27.6min
+  [7968/8831] acc=76.9% rate=4.8 s/s eta=3.0min elapsed=27.7min
+  [8000/8831] acc=76.9% rate=4.8 s/s eta=2.9min elapsed=27.9min
+  [8032/8831] acc=76.9% rate=4.8 s/s eta=2.8min elapsed=28.0min
+  [8064/8831] acc=76.9% rate=4.8 s/s eta=2.7min elapsed=28.1min
+  [8096/8831] acc=76.9% rate=4.8 s/s eta=2.6min elapsed=28.2min
+  [8128/8831] acc=76.9% rate=4.8 s/s eta=2.5min elapsed=28.4min
+  [8160/8831] acc=76.8% rate=4.8 s/s eta=2.3min elapsed=28.5min
+  [8192/8831] acc=76.8% rate=4.8 s/s eta=2.2min elapsed=28.6min
+  [8224/8831] acc=76.8% rate=4.8 s/s eta=2.1min elapsed=28.7min
+  [8256/8831] acc=76.8% rate=4.8 s/s eta=2.0min elapsed=28.8min
+  [8288/8831] acc=76.8% rate=4.8 s/s eta=1.9min elapsed=29.0min
+  [8320/8831] acc=76.8% rate=4.8 s/s eta=1.8min elapsed=29.1min
+  [8352/8831] acc=76.7% rate=4.8 s/s eta=1.7min elapsed=29.2min
+  [8384/8831] acc=76.7% rate=4.8 s/s eta=1.6min elapsed=29.3min
+  [8416/8831] acc=76.7% rate=4.8 s/s eta=1.4min elapsed=29.4min
+  [8448/8831] acc=76.6% rate=4.8 s/s eta=1.3min elapsed=29.5min
+  [8480/8831] acc=76.5% rate=4.8 s/s eta=1.2min elapsed=29.6min
+  [8512/8831] acc=76.6% rate=4.8 s/s eta=1.1min elapsed=29.7min
+  [8544/8831] acc=76.5% rate=4.8 s/s eta=1.0min elapsed=29.8min
+  [8576/8831] acc=76.4% rate=4.8 s/s eta=0.9min elapsed=29.9min
+  [8608/8831] acc=76.4% rate=4.8 s/s eta=0.8min elapsed=30.0min
+  [8640/8831] acc=76.4% rate=4.8 s/s eta=0.7min elapsed=30.1min
+  [8672/8831] acc=76.4% rate=4.8 s/s eta=0.6min elapsed=30.2min
+  [8704/8831] acc=76.4% rate=4.8 s/s eta=0.4min elapsed=30.3min
+  [8736/8831] acc=76.4% rate=4.8 s/s eta=0.3min elapsed=30.4min
+  [8768/8831] acc=76.3% rate=4.8 s/s eta=0.2min elapsed=30.5min
+  [8800/8831] acc=76.3% rate=4.8 s/s eta=0.1min elapsed=30.6min
+  [8831/8831] acc=76.2% rate=4.8 s/s eta=0.0min elapsed=30.7min
+
+Done in 1845s (30.8 min)
+Overall: 76.2% (6731/8831)
+  amenity_richness: 66.3% (490/739)
+  building_height: 57.4% (156/272)
+  camera_direction: 43.3% (320/739)
+  green_space: 76.3% (171/224)
+  junction_type: 74.7% (386/517)
+  land_use: 75.2% (556/739)
+  mismatch_binary_easy: 95.7% (707/739)
+  mismatch_binary_hard: 92.0% (680/739)
+  mismatch_mcq_easy: 98.1% (725/739)
+  mismatch_mcq_hard: 85.9% (635/739)
+  road_surface: 97.7% (418/428)
+  road_type: 76.5% (565/739)
+  transit_density: 49.9% (369/739)
+  urban_density: 74.8% (553/739)
+
+Verdict: /home/ain480/training/training/runs/checkpoint-1362_eval_full/checkpoint-1362_verdict.md
+Total wall: 31.1 min
+[saved] verdict_B_all4sv.md  (Overall: 76.2%)
+[saved] COMPARISON.md
+# Validation by Image Mode — Qwen3.5-9B satfwd **epoch-3** (checkpoint-1362)
+
+Same base + epoch-3 adapter, same 8831-record seen_unseen validation set, 
+deterministic greedy decode. Only the street-view images fed to 
+`satellite_marked` records differ.
+
+| Config | Images per satellite_marked record | Overall accuracy |
+|--------|-------------------------------------|------------------|
+| **A: SV_ANGLES=along_fwd** (training config) | marked-sat + **forward SV only** (2 imgs) | **76.2%** (6727/8831) |
+| **B: all 4 SV angles** | marked-sat + all 4 SV (5 imgs) | **76.2%** (6731/8831) |
+| Epoch-3 training eval (job 269) | (under test) | 76.0% |
+
+## Conclusion
+
+- Run A (sat + forward only): **76.2%**, |delta vs epoch-3 eval| = 0.2 pts
+- Run B (sat + all 4 SV):     **76.2%**, |delta vs epoch-3 eval| = 0.2 pts
+- **The epoch-3 training eval (76.0%) matches config B (sat + all 4 SV).**
+
+## Per-Topic: A (fwd-only) vs B (all-4-SV)
+
+| Topic | A: sat+fwd | B: sat+4SV | B − A |
+|-------|-----------|-----------|-------|
+| amenity_richness | 63.5% | 66.3% | +2.8 |
+| building_height | 57.7% | 57.4% | -0.3 |
+
+=== EPOCH-3 BOTH EVALS DONE — artifacts in /home/ain480/training/training/runs/mm_qwen9b_satfwd_r16_seen_unseen/val_imgmode_ep3 ===
+total 60
+drwxr-xr-x 2 ain480 ain480   103 Jun 27 22:36 .
+drwxr-xr-x 6 ain480 ain480  4096 Jun 27 21:05 ..
+-rw-r--r-- 1 ain480 ain480  1717 Jun 27 22:36 COMPARISON.md
+-rw-r--r-- 1 ain480 ain480 43344 Jun 27 22:36 job-274.out
+-rw-r--r-- 1 ain480 ain480  1173 Jun 27 22:05 verdict_A_along_fwd.md
+-rw-r--r-- 1 ain480 ain480  1173 Jun 27 22:36 verdict_B_all4sv.md

@@ -1,0 +1,11 @@
+model,metric,topic,n,accuracy,threshold,note
+Sample4Geo-CVUSA,cosine_retrieval(threshold/argmax),mismatch_binary_easy,421,0.639,0.2278,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-CVUSA,cosine_retrieval(threshold/argmax),mismatch_binary_hard,421,0.6223,0.2278,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-CVUSA,cosine_retrieval(threshold/argmax),mismatch_mcq_easy,421,0.2518,0.2278,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-CVUSA,cosine_retrieval(threshold/argmax),mismatch_mcq_hard,421,0.2613,0.2278,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-CVUSA,cosine_retrieval,OVERALL,1684,0.4436,0.2278,"NOT comparable to VQA accuracy; retrieval model, no LLM"
+Sample4Geo-VIGOR,cosine_retrieval(threshold/argmax),mismatch_binary_easy,421,0.6461,0.1938,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-VIGOR,cosine_retrieval(threshold/argmax),mismatch_binary_hard,421,0.6461,0.1938,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-VIGOR,cosine_retrieval(threshold/argmax),mismatch_mcq_easy,421,0.266,0.1938,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-VIGOR,cosine_retrieval(threshold/argmax),mismatch_mcq_hard,421,0.3088,0.1938,"binary=threshold, mcq=argmax; chance 0.5/0.25; DOMAIN-TRANSFER baseline"
+Sample4Geo-VIGOR,cosine_retrieval,OVERALL,1684,0.4667,0.1938,"NOT comparable to VQA accuracy; retrieval model, no LLM"

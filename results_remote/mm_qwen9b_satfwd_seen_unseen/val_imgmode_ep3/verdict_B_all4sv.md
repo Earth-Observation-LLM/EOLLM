@@ -1,0 +1,40 @@
+# checkpoint-1362 — Full Val Eval
+
+**Model:** Qwen/Qwen3.5-9B + adapter /home/ain480/training/training/runs/mm_qwen9b_satfwd_r16_seen_unseen/checkpoints/checkpoint-1362
+
+**Samples:** 8831 (full validation set)
+
+**Config:** bs=32, workers=8, max_new_tokens=32, greedy, lenient-parse
+
+**Eval time:** 1845s (30.8 min)
+
+
+## Overall: 76.2% (6731/8831)
+
+
+## Per-Topic Accuracy
+
+| Topic | Accuracy | Correct/Total |
+|-------|----------|---------------|
+| amenity_richness | 66.3% | 490/739 |
+| building_height | 57.4% | 156/272 |
+| camera_direction | 43.3% | 320/739 |
+| green_space | 76.3% | 171/224 |
+| junction_type | 74.7% | 386/517 |
+| land_use | 75.2% | 556/739 |
+| mismatch_binary_easy | 95.7% | 707/739 |
+| mismatch_binary_hard | 92.0% | 680/739 |
+| mismatch_mcq_easy | 98.1% | 725/739 |
+| mismatch_mcq_hard | 85.9% | 635/739 |
+| road_surface | 97.7% | 418/428 |
+| road_type | 76.5% | 565/739 |
+| transit_density | 49.9% | 369/739 |
+| urban_density | 74.8% | 553/739 |
+
+## Per-Difficulty Accuracy
+
+| Difficulty | Accuracy | Correct/Total |
+|------------|----------|---------------|
+| easy | 85.0% | 3298/3880 |
+| hard | 89.0% | 1315/1478 |
+| medium | 61.0% | 2118/3473 |
